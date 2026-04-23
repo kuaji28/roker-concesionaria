@@ -222,3 +222,103 @@ export async function getCuotasVencidas() {
     .order('fecha_vencimiento')
   return data || []
 }
+
+// ── Prospectos (Leads) ────────────────────────────────────────
+export async function getProspectos({ estado } = {}) {
+  let q = supabase
+    .from('prospectos')
+    .select('*, vehiculos(marca, modelo, anio), vendedores(nombre)')
+    .order('created_at', { ascending: false })
+  if (estado) q = q.eq('estado', estado)
+  const { data } = await q
+  return data || []
+}
+
+export async function createProspecto(data) {
+  const { error } = await supabase.from('prospectos').insert([data])
+  if (error) throw error
+}
+
+export async function updateProspecto(id, data) {
+  const { error } = await supabase.from('prospectos').update(data).eq('id', id)
+  if (error) throw error
+}
+
+// ── Clientes ──────────────────────────────────────────────────
+export async function getClientes({ search } = {}) {
+  let q = supabase
+    .from('clientes')
+    .select('id, nombre, dni, telefono, email, whatsapp, localidad, activo, created_at')
+    .order('nombre')
+  if (search) q = q.or(`nombre.ilike.%${search}%,dni.ilike.%${search}%,telefono.ilike.%${search}%`)
+  const { data } = await q
+  return data || []
+}
+
+export async function getCliente(id) {
+  const { data } = await supabase.from('clientes').select('*').eq('id', id).single()
+  return data
+}
+
+export async function createCliente(data) {
+  const { data: c, error } = await supabase.from('clientes').insert([data]).select().single()
+  if (error) throw error
+  return c
+}
+
+export async function updateCliente(id, data) {
+  const { error } = await supabase.from('clientes').update(data).eq('id', id)
+  if (error) throw error
+}
+
+// ── Gastos de vehículo ────────────────────────────────────────
+export async function getGastosByVehiculo(vehiculoId) {
+  const { data } = await supabase
+    .from('gastos_vehiculo')
+    .select('*')
+    .eq('vehiculo_id', vehiculoId)
+    .order('fecha_gasto', { ascending: false })
+  return data || []
+}
+
+export async function createGasto(data) {
+  const { error } = await supabase.from('gastos_vehiculo').insert([data])
+  if (error) throw error
+}
+
+// ── Reservas ──────────────────────────────────────────────────
+export async function getReservasByVehiculo(vehiculoId) {
+  const { data } = await supabase
+    .from('reservas')
+    .select('*')
+    .eq('vehiculo_id', vehiculoId)
+    .order('created_at', { ascending: false })
+  return data || []
+}
+
+export async function createReserva(data) {
+  const { error } = await supabase.from('reservas').insert([data])
+  if (error) throw error
+}
+
+export async function updateReserva(id, data) {
+  const { error } = await supabase.from('reservas').update(data).eq('id', id)
+  if (error) throw error
+}
+
+// ── Documentación ─────────────────────────────────────────────
+export async function getDocumentacion(vehiculoId) {
+  const { data } = await supabase
+    .from('documentacion')
+    .select('*')
+    .eq('vehiculo_id', vehiculoId)
+    .single()
+  return data || null
+}
+
+export async function upsertDocumentacion(vehiculoId, data) {
+  const { error } = await supabase
+    .from('documentacion')
+    .upsert({ ...data, vehiculo_id: vehiculoId }, { onConflict: 'vehiculo_id' })
+  if (error) throw error
+}

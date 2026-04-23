@@ -6,6 +6,7 @@ import Icon from '../components/Icon'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
 import { getVehiculo, updateVehiculo } from '../lib/supabase'
+import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 
 const TC = 1415
 
@@ -32,6 +33,29 @@ export default function Detalle({ onLogout }) {
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({})
   const [saving, setSaving] = useState(false)
+  const [aiModal, setAiModal]   = useState(null)  // null | 'descripcion' | 'wsp' | 'fotos'
+  const [aiResult, setAiResult] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+
+  async function runAI(tipo) {
+    setAiModal(tipo); setAiResult(''); setAiLoading(true)
+    try {
+      if (tipo === 'descripcion') {
+        const data = await callAI('/ai/descripcion-ml', { vehiculo: v, specs: v.specs || {} })
+        setAiResult(data.texto)
+      } else if (tipo === 'wsp') {
+        const data = await callAI('/ai/mensaje-wsp', { vehiculo: v, specs: v.specs || {}, precio_usd: v.precio_base || 0, tipo_cambio: TC })
+        setAiResult(data.texto)
+      } else if (tipo === 'fotos') {
+        const blobs = await Promise.all(fotos.slice(0, 3).map(f => fetch(f.url).then(r => r.blob())))
+        const fileObjs = blobs.map((b, i) => new File([b], `foto${i}.jpg`, { type: b.type || 'image/jpeg' }))
+        const data = await callAIFiles('/ai/analizar-fotos', fileObjs)
+        setAiResult(data.texto)
+      }
+    } catch (e) {
+      setAiResult('Error: ' + e.message)
+    } finally { setAiLoading(false) }
+  }
 
   function openEdit() {
     setEditForm({
@@ -102,7 +126,10 @@ export default function Detalle({ onLogout }) {
             </p>
           </div>
           <div style={{ flex: 1 }} />
-          <button className="btn secondary"><Icon name="share" size={14} />Compartir</button>
+          {aiConfigured() && <>
+            <button className="btn secondary" onClick={() => runAI('descripcion')}><Icon name="doc" size={14} />Desc. ML</button>
+            <button className="btn secondary" onClick={() => runAI('wsp')}><Icon name="share" size={14} />Msg WSP</button>
+          </>}
           <button className="btn primary" onClick={openEdit}><Icon name="edit" size={14} />Editar</button>
         </div>
 
@@ -175,6 +202,14 @@ export default function Detalle({ onLogout }) {
           fotos.length === 0
             ? <div className="banner info"><Icon name="info" size={16} />Sin fotos cargadas.</div>
             : (
+              <>
+              {aiConfigured() && fotos.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <button className="btn secondary" onClick={() => runAI('fotos')}>
+                    <Icon name="image" size={14} /> Analizar estado con IA
+                  </button>
+                </div>
+              )}
               <div>
                 <div style={{
                   aspectRatio: '16/9', background: 'var(--c-card-2)',
@@ -210,6 +245,7 @@ export default function Detalle({ onLogout }) {
                   ))}
                 </div>
               </div>
+              </>
             )
         )}
 
@@ -227,6 +263,32 @@ export default function Detalle({ onLogout }) {
           </div>
         )}
       </div>
+
+      {aiModal && (
+        <Modal
+          title={aiModal === 'descripcion' ? 'Descripción MercadoLibre' : aiModal === 'wsp' ? 'Mensaje WhatsApp' : 'Análisis de fotos con IA'}
+          onClose={() => { setAiModal(null); setAiResult('') }}
+          wide
+        >
+          {aiLoading
+            ? <p style={{ color: 'var(--c-fg-2)', padding: '24px 0', textAlign: 'center' }}>Generando con IA…</p>
+            : (
+              <>
+                <textarea
+                  className="input" rows={12} readOnly value={aiResult}
+                  style={{ resize: 'vertical', fontFamily: aiModal === 'wsp' ? 'inherit' : 'var(--mono)', fontSize: 13 }}
+                />
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 12 }}>
+                  <button className="btn secondary" onClick={() => navigator.clipboard.writeText(aiResult)}>
+                    <Icon name="clipboard" size={14} /> Copiar
+                  </button>
+                  <button className="btn primary" onClick={() => { setAiModal(null); setAiResult('') }}>Cerrar</button>
+                </div>
+              </>
+            )
+          }
+        </Modal>
+      )}
 
       {editing && (
         <Modal title="Editar vehículo" onClose={() => setEditing(false)} wide>

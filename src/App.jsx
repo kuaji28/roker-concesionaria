@@ -12,6 +12,8 @@ import Gerente from './screens/Gerente'
 import Vendedores from './screens/Vendedores'
 import Cobranza from './screens/Cobranza'
 import Config from './screens/Config'
+import Leads from './screens/Leads'
+import Clientes from './screens/Clientes'
 import Placeholder from './screens/Placeholder'
 
 function AppShell({ onLogout }) {
@@ -26,6 +28,8 @@ function AppShell({ onLogout }) {
           <Route path="/vehiculo/:id" element={<Detalle    onLogout={onLogout} />} />
           <Route path="/ingreso"      element={<Ingreso    onLogout={onLogout} />} />
           <Route path="/ventas"       element={<Ventas     onLogout={onLogout} />} />
+          <Route path="/leads"        element={<Leads      onLogout={onLogout} />} />
+          <Route path="/clientes"     element={<Clientes   onLogout={onLogout} />} />
           <Route path="/doc"          element={<Placeholder title="Documentación" onLogout={onLogout} />} />
           <Route path="/reportes"     element={<Reportes   onLogout={onLogout} />} />
           <Route path="/gerente"      element={<Gerente    onLogout={onLogout} />} />

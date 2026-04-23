@@ -4,6 +4,7 @@ import TopBar from '../components/TopBar'
 import Icon from '../components/Icon'
 import FormField from '../components/FormField'
 import { createVehiculo, uploadFoto } from '../lib/supabase'
+import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 
 const TIPOS  = ['auto', 'moto', 'cuatriciclo', 'moto_de_agua']
 const ESTADOS = ['disponible', 'en_revision', 'en_preparacion']
@@ -142,10 +143,12 @@ function Step2({ files, setFiles, previews, setPreviews }) {
 
 export default function Ingreso({ onLogout }) {
   const navigate = useNavigate()
-  const [step, setStep]     = useState(1)
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
-  const [files, setFiles]   = useState([])
+  const [step, setStep]       = useState(1)
+  const [saving, setSaving]   = useState(false)
+  const [error, setError]     = useState('')
+  const [aiLoading, setAiLoading] = useState('')
+  const [aiMsg, setAiMsg]     = useState(null)
+  const [files, setFiles]     = useState([])
   const [previews, setPreviews] = useState([])
   const [form, setForm] = useState({
     tipo: 'auto', marca: '', modelo: '', anio: '', version: '',
@@ -153,6 +156,63 @@ export default function Ingreso({ onLogout }) {
     combustible: '', transmision: '', origen: 'compra_directa',
     nro_motor: '', nro_chasis: '', notas_internas: '', estado: 'disponible',
   })
+
+  async function handleCedulaFiles(e) {
+    const fls = Array.from(e.target.files)
+    if (!fls.length) return
+    setAiLoading('cedula'); setAiMsg(null)
+    try {
+      const data = await callAIFiles('/ai/ocr-cedula', fls)
+      setForm(p => ({
+        ...p,
+        marca: data.marca || p.marca,
+        modelo: data.modelo || p.modelo,
+        anio: data.anio ? String(data.anio) : p.anio,
+        version: data.version || p.version,
+        patente: data.patente || p.patente,
+        color: data.color || p.color,
+        nro_motor: data.nro_motor || p.nro_motor,
+        nro_chasis: data.nro_chasis || p.nro_chasis,
+      }))
+      setAiMsg({ type: 'success', text: `Cédula leída${data.confianza_general === 'baja' ? ' (confianza baja — verificar)' : '. Datos autocargados.'}` })
+    } catch (err) {
+      setAiMsg({ type: 'warning', text: 'Error IA: ' + err.message })
+    } finally { setAiLoading(''); e.target.value = '' }
+  }
+
+  async function handleCompletarSpecs() {
+    if (!form.marca || !form.modelo || !form.anio) return
+    setAiLoading('specs'); setAiMsg(null)
+    try {
+      const specs = await callAI('/ai/completar-specs', {
+        marca: form.marca, modelo: form.modelo, anio: Number(form.anio),
+        version: form.version, nro_motor: form.nro_motor, nro_chasis: form.nro_chasis,
+      })
+      setForm(p => ({
+        ...p,
+        combustible: specs.combustible || p.combustible,
+        transmision: specs.transmision || p.transmision,
+      }))
+      setAiMsg({ type: 'success', text: `Specs completadas. Combustible: ${specs.combustible || '—'} · Trans: ${specs.transmision || '—'} · ${specs.potencia_hp || '?'} HP` })
+    } catch (err) {
+      setAiMsg({ type: 'warning', text: 'Error IA: ' + err.message })
+    } finally { setAiLoading('') }
+  }
+
+  async function handleSugerirPrecio() {
+    if (!form.marca || !form.modelo || !form.anio) return
+    setAiLoading('precio'); setAiMsg(null)
+    try {
+      const data = await callAI('/ai/sugerir-precio', {
+        marca: form.marca, modelo: form.modelo, anio: Number(form.anio),
+        version: form.version, km: Number(form.km_hs) || 0,
+      })
+      setForm(p => ({ ...p, precio_base: String(data.precio_sugerido || p.precio_base) }))
+      setAiMsg({ type: 'info', text: `Precio sugerido: USD ${data.precio_sugerido?.toLocaleString('es-AR')} (rango: ${data.precio_min?.toLocaleString('es-AR')} – ${data.precio_max?.toLocaleString('es-AR')}) — confianza: ${data.confianza}` })
+    } catch (err) {
+      setAiMsg({ type: 'warning', text: 'Error IA: ' + err.message })
+    } finally { setAiLoading('') }
+  }
 
   async function handleSubmit() {
     if (!form.marca || !form.modelo || !form.anio || !form.precio_base) {
@@ -205,6 +265,37 @@ export default function Ingreso({ onLogout }) {
         {error && (
           <div className="banner warning">
             <Icon name="alert" size={16} />{error}
+          </div>
+        )}
+
+        {step === 1 && aiConfigured() && (
+          <div className="card" style={{ marginBottom: 12 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: 'var(--c-fg-2)', fontWeight: 600 }}>Asistente IA</span>
+              <button className="btn secondary" disabled={!!aiLoading}
+                onClick={() => document.getElementById('cedula-scan').click()}>
+                <Icon name="image" size={14} />
+                {aiLoading === 'cedula' ? 'Escaneando…' : 'Escanear cédula verde'}
+              </button>
+              <button className="btn secondary" disabled={!!aiLoading || !form.marca || !form.modelo || !form.anio}
+                onClick={handleCompletarSpecs}>
+                <Icon name="cog" size={14} />
+                {aiLoading === 'specs' ? 'Completando…' : 'Completar specs'}
+              </button>
+              <button className="btn secondary" disabled={!!aiLoading || !form.marca || !form.modelo || !form.anio}
+                onClick={handleSugerirPrecio}>
+                <Icon name="tag" size={14} />
+                {aiLoading === 'precio' ? 'Analizando…' : 'Sugerir precio'}
+              </button>
+              <input id="cedula-scan" type="file" accept="image/*" multiple style={{ display: 'none' }}
+                onChange={handleCedulaFiles} />
+            </div>
+            {aiMsg && (
+              <div className={`banner ${aiMsg.type}`} style={{ marginTop: 10, marginBottom: 0 }}>
+                <Icon name={aiMsg.type === 'success' ? 'check' : aiMsg.type === 'warning' ? 'alert' : 'info'} size={16} />
+                {aiMsg.text}
+              </div>
+            )}
           </div>
         )}
 
