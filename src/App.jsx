@@ -16,8 +16,13 @@ import Leads from './screens/Leads'
 import Clientes from './screens/Clientes'
 import Placeholder from './screens/Placeholder'
 
+const tc = 1415
+
+function ProtectedRoute({ element, isAuth }) {
+  return isAuth ? element : <Navigate to="/login" replace />
+}
+
 function AppShell({ onLogout }) {
-  const tc = 1415
   return (
     <div className="app">
       <Sidebar tc={tc} />
@@ -47,10 +52,16 @@ export default function App() {
   const [auth, setAuth] = useState(() => sessionStorage.getItem('gh_auth') === '1')
   function handleLogin()  { sessionStorage.setItem('gh_auth', '1'); setAuth(true) }
   function handleLogout() { sessionStorage.removeItem('gh_auth'); setAuth(false) }
-  if (!auth) return <Login onLogin={handleLogin} />
+
   return (
     <BrowserRouter>
-      <AppShell onLogout={handleLogout} />
+      <Routes>
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route
+          path="*"
+          element={<ProtectedRoute isAuth={auth} element={<AppShell onLogout={handleLogout} />} />}
+        />
+      </Routes>
     </BrowserRouter>
   )
 }
