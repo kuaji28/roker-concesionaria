@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import TopBar from '../components/TopBar'
 import Icon from '../components/Icon'
-import { getFinanciamientos, getCuotasVencidas, getCuotasProximas, pagarCuotaConMetadata } from '../lib/supabase'
+import { getFinanciamientos, getCuotasVencidas, getCuotasProximas, pagarCuotaConMetadata, getSeguimientos, updateSeguimiento } from '../lib/supabase'
 import { useTc } from '../hooks/useTc'
 
 const FORMAS_COBRO = ['Efectivo', 'Transferencia', 'Efectivo + Transferencia']
@@ -17,14 +17,45 @@ const URGENCIA = (fechaVenc) => {
 
 const EMPTY_PAGO = { monto_pagado: '', forma_cobro: 'Efectivo', moneda_cobro: 'ARS', tc_cobro: '', notas_cobro: '' }
 
+function mensajeSeguimientoFinanciamiento(cliente, meses) {
+  const nombre = (cliente?.nombre || '').split(' ')[0] || 'Cliente'
+  return encodeURIComponent(
+    `Hola ${nombre}! 👋\n\n` +
+    `Te contactamos desde GH Cars para hacerte un seguimiento.\n` +
+    `Han pasado ${meses} meses desde que adquiriste tu vehículo con financiamiento bancario.\n\n` +
+    `¿Cómo estás llevando las cuotas? ¿Necesitás ayuda con algo?\n\n` +
+    `Quedamos a tu disposición 🙌`
+  )
+}
+
+function urgenciaSeguimiento(fechaStr) {
+  if (!fechaStr) return { label: '—', cls: 'neutral' }
+  const hoy = new Date(); hoy.setHours(0,0,0,0)
+  const fecha = new Date(fechaStr + 'T00:00:00')
+  const dias = Math.ceil((fecha - hoy) / 86400000)
+  if (dias < 0)  return { label: 'Vencido',      cls: 'danger'  }
+  if (dias === 0) return { label: 'Hoy',          cls: 'warning' }
+  if (dias <= 7)  return { label: `${dias}d`,     cls: 'warning' }
+  return              { label: `${dias}d`,         cls: 'success' }
+}
+
+function mesesDesdeHoy(fechaProgramada) {
+  if (!fechaProgramada) return '?'
+  const hoy = new Date()
+  const f = new Date(fechaProgramada)
+  return Math.round((f - hoy) / (1000 * 60 * 60 * 24 * 30)) || 1
+}
+
 export default function Cobranza({ onLogout }) {
   const TC = useTc()
   const [finan, setFinan]         = useState([])
   const [vencidas, setVencidas]   = useState([])
   const [proximas, setProximas]   = useState([])
+  const [seguimientos, setSeguimientos] = useState([])
   const [tab, setTab]             = useState('vencidas')
   const [loading, setLoading]     = useState(true)
   const [filtroEstado, setFiltroEstado] = useState('todos')
+  const [filtroSeg, setFiltroSeg] = useState('pendientes')
   const [dias, setDias]           = useState(30)
 
   // Modal pago
@@ -33,13 +64,20 @@ export default function Cobranza({ onLogout }) {
   const [pagando, setPagando]     = useState(false)
   const [pagoErr, setPagoErr]     = useState('')
 
+  // Modal contactar seguimiento
+  const [modalSeg, setModalSeg]   = useState(null)
+  const [notasSeg, setNotasSeg]   = useState('')
+  const [guardandoSeg, setGuardandoSeg] = useState(false)
+  const [segErr, setSegErr]       = useState('')
+
   async function load() {
-    const [f, v, p] = await Promise.all([
+    const [f, v, p, s] = await Promise.all([
       getFinanciamientos(),
       getCuotasVencidas(),
       getCuotasProximas(dias),
+      getSeguimientos(),
     ])
-    setFinan(f); setVencidas(v); setProximas(p); setLoading(false)
+    setFinan(f); setVencidas(v); setProximas(p); setSeguimientos(s); setLoading(false)
   }
 
   useEffect(() => { load() }, [dias])
@@ -70,9 +108,48 @@ export default function Cobranza({ onLogout }) {
     }
   }
 
+  async function abrirModalSeg(seg) {
+    setModalSeg(seg)
+    setNotasSeg('')
+    setSegErr('')
+  }
+
+  async function confirmarContacto() {
+    setGuardandoSeg(true)
+    try {
+      await updateSeguimiento(modalSeg.id, {
+        estado: 'contactado',
+        fecha_contacto: new Date().toISOString().split('T')[0],
+        notas: notasSeg || undefined,
+      })
+      setModalSeg(null)
+      const s = await getSeguimientos()
+      setSeguimientos(s)
+    } catch (e) {
+      setSegErr(e.message || 'Error al guardar')
+    } finally {
+      setGuardandoSeg(false)
+    }
+  }
+
   const totalVencido  = vencidas.reduce((s, c) => s + (Number(c.monto) || 0), 0)
   const totalProximo  = proximas.reduce((s, c) => s + (Number(c.monto) || 0), 0)
   const finanFil = filtroEstado === 'todos' ? finan : finan.filter(fn => fn.estado === filtroEstado)
+
+  const hoy = new Date(); hoy.setHours(0,0,0,0)
+  const finSemana = new Date(hoy); finSemana.setDate(finSemana.getDate() + 7)
+  const segFiltrados = seguimientos.filter(s => {
+    if (filtroSeg === 'pendientes') return s.estado === 'pendiente'
+    if (filtroSeg === 'semana') {
+      const f = new Date(s.fecha_programada + 'T00:00:00')
+      return s.estado === 'pendiente' && f >= hoy && f <= finSemana
+    }
+    return true
+  })
+  const segPendientesHoy = seguimientos.filter(s => {
+    const f = new Date((s.fecha_programada || '') + 'T00:00:00')
+    return s.estado === 'pendiente' && f <= hoy
+  }).length
 
   const CuotaRow = ({ c, badge }) => (
     <div className="list-row" style={{ cursor: 'default' }}>
@@ -127,9 +204,10 @@ export default function Cobranza({ onLogout }) {
 
         <div className="tabs">
           {[
-            ['vencidas', 'alert',     vencidas.length > 0 ? `Vencidas (${vencidas.length})` : 'Vencidas'],
-            ['proximas', 'cash',      proximas.length > 0 ? `Próximas (${proximas.length})` : 'Próximas'],
-            ['todos',    'briefcase', 'Financiamientos'],
+            ['vencidas',      'alert',     vencidas.length > 0 ? `Vencidas (${vencidas.length})` : 'Vencidas'],
+            ['proximas',      'cash',      proximas.length > 0 ? `Próximas (${proximas.length})` : 'Próximas'],
+            ['todos',         'briefcase', 'Financiamientos'],
+            ['seguimientos',  'cal',       segPendientesHoy > 0 ? `Seguimientos (${segPendientesHoy})` : 'Seguimientos'],
           ].map(([k, ic, l]) => (
             <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
               <Icon name={ic} size={13} />{l}
@@ -158,7 +236,7 @@ export default function Cobranza({ onLogout }) {
             }
           </div>
 
-        ) : (
+        ) : tab === 'todos' ? (
           <div>
             <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center' }}>
               <select className="input" style={{ width: 180 }} value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
@@ -198,8 +276,127 @@ export default function Cobranza({ onLogout }) {
               ))
             }
           </div>
+
+        ) : (
+          /* ── Tab Seguimientos ── */
+          <div>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center' }}>
+              {[
+                ['todos',      'Todos'],
+                ['pendientes', 'Pendientes'],
+                ['semana',     'Esta semana'],
+              ].map(([v, l]) => (
+                <button
+                  key={v}
+                  className={`btn ${filtroSeg === v ? 'primary' : 'ghost'}`}
+                  style={{ fontSize: 12, padding: '4px 12px' }}
+                  onClick={() => setFiltroSeg(v)}
+                >{l}</button>
+              ))}
+              <span style={{ color: 'var(--c-fg-2)', fontSize: 13, marginLeft: 4 }}>
+                {segFiltrados.length} seguimiento{segFiltrados.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {segFiltrados.length === 0 ? (
+              <div className="banner success"><Icon name="check" size={16} />No hay seguimientos con ese filtro.</div>
+            ) : segFiltrados.map(seg => {
+              const urgencia = urgenciaSeguimiento(seg.fecha_programada)
+              const tel = seg.cliente?.telefono || ''
+              const telLimpio = tel.replace(/\D/g, '')
+              const meses = mesesDesdeHoy(seg.fecha_programada)
+              const waMsg = mensajeSeguimientoFinanciamiento(seg.cliente, meses)
+              const waUrl = `https://wa.me/${telLimpio}?text=${waMsg}`
+
+              return (
+                <div key={seg.id} className="list-row" style={{ cursor: 'default' }}>
+                  <div style={{ flex: 1 }}>
+                    <div className="v-title">{seg.cliente?.nombre || '—'}</div>
+                    <div className="v-meta">
+                      {tel && <>{tel} · </>}
+                      {seg.tipo} · {seg.canal}
+                      {seg.vendedor?.nombre && <> · {seg.vendedor.nombre}</>}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', minWidth: 90 }}>
+                    <div style={{ fontSize: 11, color: 'var(--c-fg-2)' }}>Programado</div>
+                    <div style={{ fontSize: 13 }}>{seg.fecha_programada || '—'}</div>
+                  </div>
+                  <div>
+                    <span className={`badge ${urgencia.cls}`}>
+                      <span className="cdot" /> {urgencia.label}
+                    </span>
+                  </div>
+                  <div>
+                    <span className={`badge ${seg.estado === 'contactado' ? 'success' : seg.estado === 'pendiente' ? 'warning' : 'neutral'}`}>
+                      <span className="cdot" /> {seg.estado}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {telLimpio && (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn ghost"
+                        style={{ fontSize: 12, padding: '4px 10px', textDecoration: 'none' }}
+                      >
+                        <Icon name="message" size={13} /> WA
+                      </a>
+                    )}
+                    {seg.estado === 'pendiente' && (
+                      <button
+                        className="btn primary"
+                        style={{ fontSize: 12, padding: '4px 12px', whiteSpace: 'nowrap' }}
+                        onClick={() => abrirModalSeg(seg)}
+                      >
+                        <Icon name="check" size={13} /> Contactado
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
+
+      {/* ── Modal marcar contactado ── */}
+      {modalSeg && (
+        <div className="modal-overlay" onClick={() => setModalSeg(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <div className="modal-head">
+              <h3>Marcar como contactado</h3>
+              <button className="btn ghost" onClick={() => setModalSeg(null)}><Icon name="close" size={16} /></button>
+            </div>
+            <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ background: 'var(--c-bg-2)', borderRadius: 8, padding: '10px 14px', fontSize: 13 }}>
+                <strong>{modalSeg.cliente?.nombre || '—'}</strong>
+                <span style={{ color: 'var(--c-fg-2)', marginLeft: 8 }}>
+                  {modalSeg.tipo} · {modalSeg.fecha_programada}
+                </span>
+              </div>
+              <label style={{ fontSize: 12, color: 'var(--c-fg-2)' }}>
+                Notas del contacto (opcional)
+                <textarea
+                  className="input"
+                  style={{ marginTop: 4, minHeight: 80, resize: 'vertical' }}
+                  value={notasSeg}
+                  onChange={e => setNotasSeg(e.target.value)}
+                  placeholder="¿Cómo fue el contacto? ¿Algún dato importante?"
+                />
+              </label>
+              {segErr && <div className="banner danger"><Icon name="alert" size={14} />{segErr}</div>}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button className="btn ghost" onClick={() => setModalSeg(null)}>Cancelar</button>
+                <button className="btn primary" disabled={guardandoSeg} onClick={confirmarContacto}>
+                  {guardandoSeg ? 'Guardando…' : <><Icon name="check" size={14} /> Confirmar contacto</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal registrar pago ── */}
       {modalCuota && (

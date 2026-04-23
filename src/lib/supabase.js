@@ -442,6 +442,43 @@ export async function createFinanciamiento({ vehiculo_id, deudor_nombre, deudor_
   return fin
 }
 
+
+// ── Agenda ───────────────────────────────────────────────────
+export async function getAgenda(filtros = {}) {
+  let q = supabase
+    .from('agenda')
+    .select('*, vehiculo:vehiculos(marca, modelo, anio, patente), vendedor:vendedores(nombre), prospecto:prospectos(nombre, telefono)')
+    .order('fecha', { ascending: true })
+    .order('hora', { ascending: true })
+
+  if (filtros.desde) q = q.gte('fecha', filtros.desde)
+  if (filtros.hasta) q = q.lte('fecha', filtros.hasta)
+  if (filtros.estado) q = q.eq('estado', filtros.estado)
+
+  const { data, error } = await q
+  if (error) throw error
+  return data || []
+}
+
+export async function crearTurno(turno) {
+  const { data, error } = await supabase
+    .from('agenda')
+    .insert([turno])
+    .select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateTurno(id, campos) {
+  const { data, error } = await supabase
+    .from('agenda')
+    .update({ ...campos, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select().single()
+  if (error) throw error
+  return data
+}
+
 // ── Historial del vehículo ────────────────────────────────────
 export async function getHistorialVehiculo(vehiculoId) {
   const { data, error } = await supabase
@@ -584,3 +621,54 @@ export async function setFotoPortada(vehiculoId, mediaId) {
     .update({ es_portada: true })
     .eq('id', mediaId)
 }
+
+// ── Seguimientos ──────────────────────────────────────────────────────────────
+
+export async function getSeguimientos(filtros = {}) {
+  let q = supabase
+    .from('seguimientos')
+    .select('*, cliente:clientes(nombre, telefono, email), venta:con_ventas(vehiculo_id, precio_venta, vendedor_id), vendedor:vendedores(nombre)')
+    .order('fecha_programada', { ascending: true })
+
+  if (filtros.estado) q = q.eq('estado', filtros.estado)
+  if (filtros.tipo)   q = q.eq('tipo', filtros.tipo)
+
+  const { data, error } = await q
+  if (error) throw error
+  return data || []
+}
+
+export async function crearSeguimientosTrimestrales(clienteId, ventaId, vendedorId) {
+  const hoy = new Date()
+  const items = [3, 6, 9, 12].map(meses => {
+    const fecha = new Date(hoy)
+    fecha.setMonth(fecha.getMonth() + meses)
+    return {
+      cliente_id: clienteId,
+      venta_id: ventaId,
+      tipo: 'financiamiento',
+      estado: 'pendiente',
+      fecha_programada: fecha.toISOString().split('T')[0],
+      canal: 'whatsapp',
+      vendedor_id: vendedorId,
+    }
+  })
+
+  const { data, error } = await supabase
+    .from('seguimientos')
+    .insert(items)
+    .select()
+  if (error) throw error
+  return data
+}
+
+export async function updateSeguimiento(id, campos) {
+  const { data, error } = await supabase
+    .from('seguimientos')
+    .update({ ...campos, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select().single()
+  if (error) throw error
+  return data
+}
+
