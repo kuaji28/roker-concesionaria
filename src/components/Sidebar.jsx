@@ -4,6 +4,7 @@ import Icon from './Icon'
 const NAV = [
   { to: '/',          icon: 'home',      label: 'Dashboard' },
   { to: '/catalogo',  icon: 'car',       label: 'Catálogo' },
+  { to: '/buscar',    icon: 'search',    label: 'Buscar para cliente' },
   { to: '/ingreso',   icon: 'plus',      label: 'Ingresar vehículo' },
   { to: '/ventas',    icon: 'cash',      label: 'Ventas' },
   { to: '/leads',     icon: 'users',     label: 'Leads' },
@@ -12,6 +13,8 @@ const NAV = [
 ]
 const NAV_ADMIN = [
   { to: '/gerente',   icon: 'home',      label: 'Dashboard Gerente' },
+  { to: '/gastos',    icon: 'cash',      label: 'Gastos y Margen' },
+  { to: '/rotacion',  icon: 'chart',     label: 'Rotación de Stock' },
   { to: '/vendedores',icon: 'users',     label: 'Vendedores' },
   { to: '/cobranza',  icon: 'card',      label: 'Cobranza' },
   { to: '/config',    icon: 'cog',       label: 'Configuración' },

@@ -333,6 +333,71 @@ export async function updateReserva(id, data) {
   if (error) throw error
 }
 
+// ── Gastos global ─────────────────────────────────────────────
+export async function getGastosGlobal({ desde, hasta, tipo } = {}) {
+  let q = supabase.from('gastos_vehiculo').select('*').order('fecha_gasto', { ascending: false }).limit(500)
+  if (desde) q = q.gte('fecha_gasto', desde)
+  if (hasta) q = q.lte('fecha_gasto', hasta)
+  if (tipo && tipo !== 'todos') q = q.eq('tipo', tipo)
+  const { data } = await q
+  return data || []
+}
+
+export async function getVehiculosConCostos() {
+  const { data } = await supabase
+    .from('vehiculos')
+    .select('id, marca, modelo, anio, estado, costo_compra, precio_base, gastos_total_ars, gastos_total_usd, fecha_ingreso, created_at')
+    .order('created_at', { ascending: false })
+  return data || []
+}
+
+export async function updateVehiculoGastos(id, { gastos_total_ars, gastos_total_usd } = {}) {
+  const upd = {}
+  if (gastos_total_ars !== undefined) upd.gastos_total_ars = gastos_total_ars
+  if (gastos_total_usd !== undefined) upd.gastos_total_usd = gastos_total_usd
+  const { error } = await supabase.from('vehiculos').update(upd).eq('id', id)
+  if (error) throw error
+}
+
+// ── Rotación ──────────────────────────────────────────────────
+export async function getVehiculosEnStock() {
+  const { data } = await supabase
+    .from('vehiculos')
+    .select('id, marca, modelo, anio, version, color, km_hs, estado, tipo, patente, precio_base, costo_compra, gastos_total_usd, fecha_ingreso, created_at')
+    .neq('estado', 'vendido')
+    .order('fecha_ingreso', { ascending: true })
+  return data || []
+}
+
+// ── Cobranza — marcar cuota pagada ────────────────────────────
+export async function pagarCuota(cuotaId) {
+  const { error } = await supabase
+    .from('cuotas')
+    .update({ estado: 'pagada', fecha_pago: new Date().toISOString().split('T')[0] })
+    .eq('id', cuotaId)
+  if (error) throw error
+}
+
+// ── Financiamientos — crear con cuotas ───────────────────────
+export async function createFinanciamiento({ vehiculo_id, deudor_nombre, deudor_telefono, monto_total, cantidad_cuotas, fecha_primera_cuota, notas }) {
+  const { data: fin, error } = await supabase
+    .from('financiamientos')
+    .insert([{ vehiculo_id, deudor_nombre, deudor_telefono: deudor_telefono || null, monto_total, cantidad_cuotas, estado: 'activo', notas: notas || null }])
+    .select()
+    .single()
+  if (error) throw error
+  const montoPorCuota = Math.round(monto_total / cantidad_cuotas)
+  const cuotas = []
+  let fecha = new Date(fecha_primera_cuota || new Date())
+  for (let i = 0; i < cantidad_cuotas; i++) {
+    cuotas.push({ financiamiento_id: fin.id, numero_cuota: i + 1, monto: montoPorCuota, fecha_vencimiento: fecha.toISOString().split('T')[0], estado: 'pendiente' })
+    fecha = new Date(fecha.getFullYear(), fecha.getMonth() + 1, fecha.getDate())
+  }
+  const { error: ce } = await supabase.from('cuotas').insert(cuotas)
+  if (ce) console.error('createFinanciamiento: cuotas no creadas', ce)
+  return fin
+}
+
 // ── Documentación ─────────────────────────────────────────────
 export async function getDocumentacion(vehiculoId) {
   const { data } = await supabase

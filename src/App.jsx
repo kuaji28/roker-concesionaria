@@ -14,33 +14,39 @@ import Cobranza from './screens/Cobranza'
 import Config from './screens/Config'
 import Leads from './screens/Leads'
 import Clientes from './screens/Clientes'
+import Gastos from './screens/Gastos'
+import Rotacion from './screens/Rotacion'
+import Buscar from './screens/Buscar'
 import Placeholder from './screens/Placeholder'
-
-const tc = 1415
+import { useTc } from './hooks/useTc'
 
 function ProtectedRoute({ element, isAuth }) {
   return isAuth ? element : <Navigate to="/login" replace />
 }
 
 function AppShell({ onLogout }) {
+  const tc = useTc()
   return (
     <div className="app">
       <Sidebar tc={tc} />
       <div style={{ minWidth: 0, flex: 1 }}>
         <Routes>
-          <Route path="/"             element={<Dashboard  onLogout={onLogout} />} />
-          <Route path="/catalogo"     element={<Catalogo   onLogout={onLogout} />} />
-          <Route path="/vehiculo/:id" element={<Detalle    onLogout={onLogout} />} />
-          <Route path="/ingreso"      element={<Ingreso    onLogout={onLogout} />} />
-          <Route path="/ventas"       element={<Ventas     onLogout={onLogout} />} />
-          <Route path="/leads"        element={<Leads      onLogout={onLogout} />} />
-          <Route path="/clientes"     element={<Clientes   onLogout={onLogout} />} />
+          <Route path="/"             element={<Dashboard   onLogout={onLogout} />} />
+          <Route path="/catalogo"     element={<Catalogo    onLogout={onLogout} />} />
+          <Route path="/vehiculo/:id" element={<Detalle     onLogout={onLogout} />} />
+          <Route path="/ingreso"      element={<Ingreso     onLogout={onLogout} />} />
+          <Route path="/ventas"       element={<Ventas      onLogout={onLogout} />} />
+          <Route path="/leads"        element={<Leads       onLogout={onLogout} />} />
+          <Route path="/clientes"     element={<Clientes    onLogout={onLogout} />} />
+          <Route path="/gastos"       element={<Gastos      onLogout={onLogout} />} />
+          <Route path="/rotacion"     element={<Rotacion    onLogout={onLogout} />} />
+          <Route path="/buscar"       element={<Buscar      onLogout={onLogout} />} />
           <Route path="/doc"          element={<Placeholder title="Documentación" onLogout={onLogout} />} />
-          <Route path="/reportes"     element={<Reportes   onLogout={onLogout} />} />
-          <Route path="/gerente"      element={<Gerente    onLogout={onLogout} />} />
-          <Route path="/vendedores"   element={<Vendedores onLogout={onLogout} />} />
-          <Route path="/cobranza"     element={<Cobranza   onLogout={onLogout} />} />
-          <Route path="/config"       element={<Config     onLogout={onLogout} />} />
+          <Route path="/reportes"     element={<Reportes    onLogout={onLogout} />} />
+          <Route path="/gerente"      element={<Gerente     onLogout={onLogout} />} />
+          <Route path="/vendedores"   element={<Vendedores  onLogout={onLogout} />} />
+          <Route path="/cobranza"     element={<Cobranza    onLogout={onLogout} />} />
+          <Route path="/config"       element={<Config      onLogout={onLogout} />} />
           <Route path="*"             element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -50,7 +56,7 @@ function AppShell({ onLogout }) {
 
 export default function App() {
   const [auth, setAuth] = useState(() => !!sessionStorage.getItem('gh_auth_user'))
-  function handleLogin(user)  {
+  function handleLogin(user) {
     sessionStorage.setItem('gh_auth_user', JSON.stringify(user))
     setAuth(true)
   }
