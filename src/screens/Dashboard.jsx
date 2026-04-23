@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar'
 import MetricCard from '../components/MetricCard'
 import Icon from '../components/Icon'
-import { getStats } from '../lib/supabase'
+import AlertasWidget from '../components/AlertasWidget'
+import { getStats, getVehiculos } from '../lib/supabase'
 
 function QuickAction({ icon, title, desc, cta, to }) {
   const navigate = useNavigate()
@@ -20,10 +21,12 @@ function QuickAction({ icon, title, desc, cta, to }) {
 export default function Dashboard({ onLogout }) {
   const navigate = useNavigate()
   const [stats, setStats] = useState(null)
+  const [vehiculos, setVehiculos] = useState([])
   const today = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   useEffect(() => {
     getStats().then(setStats)
+    getVehiculos().then(data => setVehiculos(data || []))
   }, [])
 
   return (
@@ -49,6 +52,9 @@ export default function Dashboard({ onLogout }) {
           <MetricCard label="Vendidos"                     value={stats?.vendido     ?? '—'} tone="r"              onClick={() => navigate('/catalogo?estado=vendido')} />
           <MetricCard label="Ventas del mes"  icon="cash"  value="—"                         sub="ver reportes"    onClick={() => navigate('/reportes')} />
         </div>
+
+        <h2 className="section-title">Vencimientos</h2>
+        <AlertasWidget vehiculos={vehiculos} />
 
         <h2 className="section-title">Accesos rápidos</h2>
         <div className="qa-grid">
