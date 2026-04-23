@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import Icon from './Icon'
 import StateBadge from './StateBadge'
-
-const TC = 1415
+import { useTcContext } from '../hooks/useTc'
 
 export default function VehicleCard({ v }) {
   const navigate = useNavigate()
+  const TC = useTcContext()
   const isNew = !v.km_hs || v.km_hs === 0
 
   return (

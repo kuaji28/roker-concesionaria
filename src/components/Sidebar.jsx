@@ -48,7 +48,7 @@ export default function Sidebar({ tc }) {
       <div className="side-block">
         <h6>Cotización USD</h6>
         <div className="tc-row">
-          <strong>$ {(tc || 1415).toLocaleString('es-AR')}</strong>
+          <strong>$ {(tc || 0).toLocaleString('es-AR')}</strong>
           <small>ARS</small>
         </div>
       </div>

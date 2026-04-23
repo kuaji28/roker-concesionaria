@@ -18,7 +18,7 @@ import Gastos from './screens/Gastos'
 import Rotacion from './screens/Rotacion'
 import Buscar from './screens/Buscar'
 import Placeholder from './screens/Placeholder'
-import { useTc } from './hooks/useTc'
+import { useTc, TcContext } from './hooks/useTc'
 
 function ProtectedRoute({ element, isAuth }) {
   return isAuth ? element : <Navigate to="/login" replace />
@@ -27,6 +27,7 @@ function ProtectedRoute({ element, isAuth }) {
 function AppShell({ onLogout }) {
   const tc = useTc()
   return (
+    <TcContext.Provider value={tc}>
     <div className="app">
       <Sidebar tc={tc} />
       <div style={{ minWidth: 0, flex: 1 }}>
@@ -51,6 +52,7 @@ function AppShell({ onLogout }) {
         </Routes>
       </div>
     </div>
+    </TcContext.Provider>
   )
 }
 
