@@ -79,9 +79,10 @@ export async function uploadFoto(vehiculoId, file) {
   const { data: { publicUrl } } = supabase.storage
     .from('vehiculos-fotos')
     .getPublicUrl(data.path)
-  await supabase.from('medias').insert([{
+  const { error: mediaErr } = await supabase.from('medias').insert([{
     vehiculo_id: vehiculoId, tipo: 'foto', url: publicUrl, orden: 0
   }])
+  if (mediaErr) console.warn('uploadFoto: foto subida pero no registrada en medias', mediaErr)
   return publicUrl
 }
 
@@ -128,7 +129,11 @@ export async function createVenta(venta) {
     .select()
     .single()
   if (error) throw error
-  await updateVehiculo(venta.vehiculo_id, { estado: 'vendido' })
+  try {
+    await updateVehiculo(venta.vehiculo_id, { estado: 'vendido' })
+  } catch (e) {
+    console.error('createVenta: venta registrada pero estado vehiculo no actualizado', e)
+  }
   return data
 }
 
