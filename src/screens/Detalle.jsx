@@ -8,7 +8,6 @@ import FormField from '../components/FormField'
 import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry } from '../lib/supabase'
 import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 import { useTc } from '../hooks/useTc'
-import { useUser, canSeeCosto, canSeePrecioBase, canSeeMargen } from '../hooks/useUser'
 
 // ── Publicar helpers ──────────────────────────────────────────
 export function generateChipsFromSpecs(specs = {}) {
@@ -92,14 +91,125 @@ const TIPOS_GASTO = {
 const EMPTY_GASTO = { tipo: 'mecanica', descripcion: '', monto: '', moneda: 'ARS', proveedor: '', fecha_gasto: new Date().toISOString().split('T')[0] }
 const EMPTY_RESERVA = { cliente_nombre: '', cliente_telefono: '', monto_senia: '', moneda: 'USD', fecha_vencimiento: '', notas: '' }
 
+// ── Galería con miniaturas ────────────────────────────────────
+function Galeria({ fotos }) {
+  const [idx, setIdx] = useState(0)
+  const total = fotos.length
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ position: 'relative', aspectRatio: '16/9', borderRadius: 'var(--r-lg)', overflow: 'hidden', background: 'var(--c-card)', marginBottom: 8 }}>
+        {fotos[idx] ? (
+          <img src={fotos[idx].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--c-fg-3)' }}>
+            Sin fotos
+          </div>
+        )}
+        {total > 1 && (
+          <>
+            <button onClick={() => setIdx(i => (i - 1 + total) % total)} style={{
+              position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,.6)', border: 'none', borderRadius: '50%',
+              width: 36, height: 36, cursor: 'pointer', color: '#fff', fontSize: 18,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>&#8249;</button>
+            <button onClick={() => setIdx(i => (i + 1) % total)} style={{
+              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,.6)', border: 'none', borderRadius: '50%',
+              width: 36, height: 36, cursor: 'pointer', color: '#fff', fontSize: 18,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>&#8250;</button>
+          </>
+        )}
+        {total > 0 && (
+          <div style={{
+            position: 'absolute', bottom: 12, right: 12,
+            background: 'rgba(0,0,0,.7)', borderRadius: 6,
+            padding: '4px 10px', fontSize: 12, color: '#fff',
+          }}>
+            {idx + 1} / {total}
+          </div>
+        )}
+      </div>
+      {total > 1 && (
+        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+          {fotos.map((f, i) => (
+            <button key={f.id || i} onClick={() => setIdx(i)} style={{
+              flexShrink: 0, width: 64, height: 48, borderRadius: 6, overflow: 'hidden',
+              border: i === idx ? '2px solid var(--c-accent)' : '2px solid transparent',
+              cursor: 'pointer', padding: 0, background: 'var(--c-card)',
+            }}>
+              <img src={f.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Card Precio (panel derecho) ───────────────────────────────
+function CardPrecio({ v, tc, onVenta, onSena }) {
+  const precioARS = v.precio_base ? (v.precio_base * tc).toLocaleString('es-AR') : '—'
+  return (
+    <div className="card" style={{ padding: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--c-fg-3)', marginBottom: 8 }}>
+        Precio
+      </div>
+      <div style={{ fontSize: 32, fontWeight: 700, marginBottom: 4 }}>
+        USD {v.precio_base?.toLocaleString('es-AR') || '—'}
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--c-fg-3)', marginBottom: 16 }}>
+        ≈ ARS {precioARS} · TC ${tc?.toLocaleString?.() || '—'}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button className="btn primary" style={{ width: '100%' }} onClick={onVenta}>
+          Registrar venta
+        </button>
+        <button className="btn secondary" style={{ width: '100%' }} onClick={onSena}>
+          Marcar como señado
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Card Especificaciones (panel derecho) ─────────────────────
+function CardSpecs({ v }) {
+  const specs = v.specs || {}
+  const items = [
+    { label: 'Año', value: v.anio },
+    { label: 'Km', value: v.km_hs ? `${Number(v.km_hs).toLocaleString('es-AR')} km` : '—' },
+    { label: 'Motor', value: specs.potencia_hp ? `${specs.cilindrada || ''}cc · ${specs.potencia_hp} HP` : (v.motor_cv || v.combustible || '—') },
+    { label: 'Transmisión', value: v.transmision || '—' },
+    { label: 'Combustible', value: v.combustible || '—' },
+    { label: 'Color', value: v.color || '—' },
+    { label: 'Patente', value: v.patente || '—' },
+    { label: 'Titular', value: v.specs?.titular || '1°' },
+  ]
+  return (
+    <div className="card" style={{ padding: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--c-fg-3)', marginBottom: 12 }}>
+        Especificaciones
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px' }}>
+        {items.map(({ label, value }) => (
+          <div key={label}>
+            <div style={{ fontSize: 10, color: 'var(--c-fg-3)', textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
+            <div style={{ fontSize: 13, fontWeight: 500 }}>{value || '—'}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function Detalle({ onLogout }) {
   const { id }   = useParams()
   const navigate = useNavigate()
   const TC       = useTc()
-  const user     = useUser()
-  const rol      = user?.rol || 'externo'
 
-  // ── ALL hooks before any conditional return ──────────────────
   const [data, setData]     = useState(null)
   const [tab, setTab]       = useState('info')
   const [foto, setFoto]     = useState(0)
@@ -138,13 +248,15 @@ export default function Detalle({ onLogout }) {
   const [ubicacionVal,  setUbicacionVal]  = useState('')
   const [savingUbicacion, setSavingUbicacion] = useState(false)
 
-  // ── Publicar tab state ────────────────────────────────────────
   const [pubDesc, setPubDesc]         = useState('')
   const [pubDescLoading, setPubDescLoading] = useState(false)
   const [pubDescSaved, setPubDescSaved]     = useState(false)
   const [pubDescSaving, setPubDescSaving]   = useState(false)
   const [pubWspCopied, setPubWspCopied]     = useState(false)
   const [pubChipsCopied, setPubChipsCopied] = useState(false)
+
+  // panel derecho: modal de reserva desde botón señado
+  const [showSideReservaModal, setShowSideReservaModal] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -160,7 +272,6 @@ export default function Detalle({ onLogout }) {
     })
   }, [id])
 
-  // Cargar historial al montar y cuando el tab se activa
   useEffect(() => {
     if (tab !== 'historial') return
     setHistLoading(true)
@@ -195,7 +306,6 @@ export default function Detalle({ onLogout }) {
   const df = (k) => (e) => setDocsForm(p => ({ ...p, [k]: e.target.value }))
   const dc = (k) => (e) => setDocsForm(p => ({ ...p, [k]: e.target.checked }))
 
-  // ── Loading state ─────────────────────────────────────────────
   if (!data) return (
     <div>
       <TopBar onLogout={onLogout} />
@@ -216,12 +326,10 @@ export default function Detalle({ onLogout }) {
 
   const fotos = medias.filter(m => m.tipo === 'foto' && m.url)
 
-  // ── Derived values ────────────────────────────────────────────
   const gastosTotalARS  = gastos.filter(g => g.moneda === 'ARS').reduce((s, g) => s + Number(g.monto || 0), 0)
   const gastosTotalUSD  = gastos.filter(g => g.moneda === 'USD').reduce((s, g) => s + Number(g.monto || 0), 0)
   const gastosEquivUSD  = gastosTotalUSD + (TC > 0 ? gastosTotalARS / TC : 0)
   const margenBruto     = v.precio_base && v.costo_compra ? v.precio_base - v.costo_compra - gastosEquivUSD : null
-  const margenPct       = margenBruto !== null && v.costo_compra ? ((margenBruto / v.costo_compra) * 100).toFixed(1) : null
 
   const specs = [
     ['Combustible', v.combustible],
@@ -232,7 +340,8 @@ export default function Detalle({ onLogout }) {
     ...(v.specs ? Object.entries(v.specs) : []),
   ].filter(([, val]) => val)
 
-  // ── Handlers ──────────────────────────────────────────────────
+  const chips = generateChipsFromSpecs(v.specs || {})
+
   function openEdit() {
     setEditForm({
       marca: v.marca, modelo: v.modelo, anio: v.anio,
@@ -321,6 +430,7 @@ export default function Detalle({ onLogout }) {
       const [r, d] = await Promise.all([getReservasByVehiculo(id), getVehiculo(id)])
       setReservas(r); setData(d)
       setShowReservaForm(false)
+      setShowSideReservaModal(false)
       setReservaForm(EMPTY_RESERVA)
     } finally { setSavingReserva(false) }
   }
@@ -477,102 +587,160 @@ export default function Detalle({ onLogout }) {
           ))}
         </div>
 
-        {/* ── TAB: INFO ── */}
-        {tab === 'info' && (
-          <div className="info-grid">
-            <div className="card info-card">
-              <h3><Icon name="cog" size={14} />Especificaciones</h3>
-              {specs.length > 0
-                ? specs.map(([k, val]) => <div key={k} className="kv"><span>{k}</span><span>{val}</span></div>)
-                : <p style={{ color: 'var(--c-fg-3)', fontSize: 13 }}>Sin datos cargados.</p>
-              }
-            </div>
-            <div className="card info-card">
-              <h3><Icon name="clipboard" size={14} />Identificación</h3>
-              <div className="kv"><span>Color</span><span>{v.color || '—'}</span></div>
-              <div className="kv"><span>Patente</span><span style={{ fontFamily: 'var(--mono)' }}>{v.patente || '—'}</span></div>
-              <div className="kv"><span>Tipo</span><span style={{ textTransform: 'capitalize' }}>{v.tipo}</span></div>
-              {v.vin && <div className="kv"><span>VIN</span><span style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{v.vin}</span></div>}
-              {v.link_ml && <div className="kv"><span>MercadoLibre</span><a href={v.link_ml} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--c-accent)', fontSize: 12 }}>Ver publicación</a></div>}
-              {v.link_drive && <div className="kv"><span>Drive</span><a href={v.link_drive} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--c-accent)', fontSize: 12 }}>Carpeta</a></div>}
-            </div>
-            <div className="card info-card">
-              <h3><Icon name="tag" size={14} />Precio</h3>
-              {/* precio_lista: visible para todos */}
-              <div className="kv">
-                <span>Precio lista</span>
-                <span>USD {(v.precio_lista || v.precio_base)?.toLocaleString('es-AR') || '—'}</span>
-              </div>
-              <div className="kv">
-                <span>En ARS</span>
-                <span>$ {(((v.precio_lista || v.precio_base) || 0) * TC).toLocaleString('es-AR')}</span>
-              </div>
-              {/* precio_base (piso de negociación): solo dueno y vendedor */}
-              {canSeePrecioBase(rol) && v.precio_lista && v.precio_base && v.precio_base !== v.precio_lista && (
-                <div className="kv">
-                  <span>Piso negociación</span>
-                  <span style={{ color: 'var(--c-fg-2)' }}>USD {v.precio_base?.toLocaleString('es-AR')}</span>
+        {/* ── LAYOUT 2 COLUMNAS — tabs info y fotos ── */}
+        {(tab === 'info' || tab === 'fotos') && (
+          <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+
+            {/* Columna principal */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+
+              {/* ── TAB: INFO ── */}
+              {tab === 'info' && (
+                <div>
+                  {/* Galería en tab info */}
+                  {fotos.length > 0 && <Galeria fotos={fotos} />}
+
+                  <div className="info-grid">
+                    <div className="card info-card">
+                      <h3><Icon name="cog" size={14} />Especificaciones</h3>
+                      {specs.length > 0
+                        ? specs.map(([k, val]) => <div key={k} className="kv"><span>{k}</span><span>{val}</span></div>)
+                        : <p style={{ color: 'var(--c-fg-3)', fontSize: 13 }}>Sin datos cargados.</p>
+                      }
+                    </div>
+                    <div className="card info-card">
+                      <h3><Icon name="clipboard" size={14} />Identificación</h3>
+                      <div className="kv"><span>Color</span><span>{v.color || '—'}</span></div>
+                      <div className="kv"><span>Patente</span><span style={{ fontFamily: 'var(--mono)' }}>{v.patente || '—'}</span></div>
+                      <div className="kv"><span>Tipo</span><span style={{ textTransform: 'capitalize' }}>{v.tipo}</span></div>
+                      {v.vin && <div className="kv"><span>VIN</span><span style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{v.vin}</span></div>}
+                      {v.link_ml && <div className="kv"><span>MercadoLibre</span><a href={v.link_ml} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--c-accent)', fontSize: 12 }}>Ver publicación</a></div>}
+                      {v.link_drive && <div className="kv"><span>Drive</span><a href={v.link_drive} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--c-accent)', fontSize: 12 }}>Carpeta</a></div>}
+                    </div>
+                    <div className="card info-card">
+                      <h3><Icon name="tag" size={14} />Precio</h3>
+                      <div className="kv"><span>Precio base</span><span>USD {v.precio_base?.toLocaleString('es-AR') || '—'}</span></div>
+                      <div className="kv"><span>En ARS</span><span>$ {((v.precio_base || 0) * TC).toLocaleString('es-AR')}</span></div>
+                      {v.costo_compra > 0 && <div className="kv"><span>Costo compra</span><span>USD {v.costo_compra?.toLocaleString('es-AR')}</span></div>}
+                      {margenBruto !== null && (
+                        <div className="kv">
+                          <span>Margen neto</span>
+                          <span style={{ color: margenBruto >= 0 ? 'var(--c-success)' : 'var(--c-danger)', fontWeight: 600 }}>
+                            USD {margenBruto.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Chips de equipamiento */}
+                  {chips.length > 0 && (
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: 'var(--c-fg-3)', marginBottom: 8 }}>
+                        Equipamiento destacado
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {chips.map(chip => (
+                          <span key={chip} style={{
+                            background: 'var(--c-card-2)', border: '1px solid var(--c-border)',
+                            borderRadius: 20, padding: '4px 12px', fontSize: 12, color: 'var(--c-fg-2)',
+                          }}>
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Notas internas */}
+                  {v.notas_internas && (
+                    <div className="card" style={{ marginTop: 16, padding: 16 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: 'var(--c-fg-3)', marginBottom: 8 }}>
+                        Notas internas
+                      </div>
+                      <p style={{ fontSize: 13, color: 'var(--c-fg-2)', margin: 0, lineHeight: 1.6 }}>{v.notas_internas}</p>
+                    </div>
+                  )}
                 </div>
               )}
-              {/* costo_compra: solo dueno */}
-              {canSeeCosto(rol) && v.costo_compra > 0 && (
-                <div className="kv">
-                  <span>Costo compra</span>
-                  <span>USD {v.costo_compra?.toLocaleString('es-AR')}</span>
-                </div>
+
+              {/* ── TAB: FOTOS ── */}
+              {tab === 'fotos' && (
+                fotos.length === 0
+                  ? <div className="banner info"><Icon name="info" size={16} />Sin fotos cargadas.</div>
+                  : (
+                    <>
+                      {aiConfigured() && (
+                        <div style={{ marginBottom: 12 }}>
+                          <button className="btn secondary" onClick={() => runAI('fotos')}>
+                            <Icon name="image" size={14} /> Analizar estado con IA
+                          </button>
+                        </div>
+                      )}
+                      <div style={{ aspectRatio: '16/9', background: 'var(--c-card-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 12, position: 'relative' }}>
+                        <img src={fotos[foto].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <span style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: 12, padding: '3px 10px', borderRadius: 999 }}>
+                          {foto + 1} / {fotos.length}
+                        </span>
+                        {foto > 0 && (
+                          <button onClick={() => setFoto(f => f - 1)} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Icon name="chev-l" size={18} />
+                          </button>
+                        )}
+                        {foto < fotos.length - 1 && (
+                          <button onClick={() => setFoto(f => f + 1)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Icon name="chev-r" size={18} />
+                          </button>
+                        )}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 6 }}>
+                        {fotos.map((f, i) => (
+                          <div key={i} onClick={() => setFoto(i)} style={{ aspectRatio: '4/3', borderRadius: 'var(--r-sm)', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${i === foto ? 'var(--c-success)' : 'transparent'}` }}>
+                            <img src={f.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )
               )}
-              {/* margen: solo dueno */}
-              {canSeeMargen(rol) && margenBruto !== null && (
-                <div className="kv">
-                  <span>Margen neto</span>
-                  <span style={{ color: margenBruto >= 0 ? 'var(--c-success)' : 'var(--c-danger)', fontWeight: 600 }}>
-                    USD {margenBruto.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
-                    {margenPct !== null && <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, opacity: 0.8 }}>({margenPct}%)</span>}
-                  </span>
+            </div>
+
+            {/* Panel derecho fijo — 340px */}
+            <div style={{ width: 340, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <CardPrecio
+                v={v}
+                tc={TC}
+                onVenta={() => { setReservaForm(EMPTY_RESERVA); setShowSideReservaModal(true) }}
+                onSena={() => { setReservaForm(EMPTY_RESERVA); setShowSideReservaModal(true) }}
+              />
+              <CardSpecs v={v} />
+              {reservas.length > 0 && (
+                <div className="card" style={{ padding: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--c-fg-3)', marginBottom: 12 }}>
+                    Prospectos interesados
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {reservas.slice(0, 5).map(r => (
+                      <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 500 }}>{r.cliente_nombre}</div>
+                          {r.cliente_telefono && <div style={{ fontSize: 11, color: 'var(--c-fg-3)' }}>{r.cliente_telefono}</div>}
+                        </div>
+                        <span className={`badge ${r.estado === 'activa' || !r.estado ? 'success' : r.estado === 'vencida' ? 'danger' : 'neutral'}`} style={{ fontSize: 10 }}>
+                          <span className="cdot" />{r.estado || 'activa'}
+                        </span>
+                      </div>
+                    ))}
+                    {reservas.length > 5 && (
+                      <div style={{ fontSize: 12, color: 'var(--c-fg-3)', textAlign: 'center' }}>
+                        +{reservas.length - 5} más
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </div>
-        )}
-
-        {/* ── TAB: FOTOS ── */}
-        {tab === 'fotos' && (
-          fotos.length === 0
-            ? <div className="banner info"><Icon name="info" size={16} />Sin fotos cargadas.</div>
-            : (
-              <>
-                {aiConfigured() && (
-                  <div style={{ marginBottom: 12 }}>
-                    <button className="btn secondary" onClick={() => runAI('fotos')}>
-                      <Icon name="image" size={14} /> Analizar estado con IA
-                    </button>
-                  </div>
-                )}
-                <div style={{ aspectRatio: '16/9', background: 'var(--c-card-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 12, position: 'relative' }}>
-                  <img src={fotos[foto].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <span style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: 12, padding: '3px 10px', borderRadius: 999 }}>
-                    {foto + 1} / {fotos.length}
-                  </span>
-                  {foto > 0 && (
-                    <button onClick={() => setFoto(f => f - 1)} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="chev-l" size={18} />
-                    </button>
-                  )}
-                  {foto < fotos.length - 1 && (
-                    <button onClick={() => setFoto(f => f + 1)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="chev-r" size={18} />
-                    </button>
-                  )}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 6 }}>
-                  {fotos.map((f, i) => (
-                    <div key={i} onClick={() => setFoto(i)} style={{ aspectRatio: '4/3', borderRadius: 'var(--r-sm)', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${i === foto ? 'var(--c-success)' : 'transparent'}` }}>
-                      <img src={f.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                  ))}
-                </div>
-              </>
-            )
         )}
 
         {/* ── TAB: GASTOS ── */}
@@ -907,7 +1075,6 @@ export default function Detalle({ onLogout }) {
 
             {!histLoading && historial.length > 0 && (
               <div style={{ position: 'relative', paddingLeft: 32 }}>
-                {/* línea vertical */}
                 <div style={{
                   position: 'absolute', left: 10, top: 8, bottom: 8,
                   width: 2, background: 'var(--c-border)', borderRadius: 2,
@@ -917,7 +1084,6 @@ export default function Detalle({ onLogout }) {
                   const meta = TIPO_META[ev.tipo] || { icono: '•', color: 'var(--c-fg-3)' }
                   return (
                     <div key={ev.id} style={{ position: 'relative', marginBottom: i < historial.length - 1 ? 20 : 0 }}>
-                      {/* punto */}
                       <div style={{
                         position: 'absolute', left: -27, top: 2,
                         width: 20, height: 20, borderRadius: '50%',
@@ -985,7 +1151,7 @@ export default function Detalle({ onLogout }) {
 
         {/* ── TAB: PUBLICAR ── */}
         {tab === 'pub' && (() => {
-          const chips = generateChipsFromSpecs(v.specs || {})
+          const pubChips = generateChipsFromSpecs(v.specs || {})
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
@@ -1002,8 +1168,8 @@ export default function Detalle({ onLogout }) {
                         const d = await callAI('/ai/descripcion-ml', { vehiculo: v, specs: v.specs || {} })
                         setPubDesc(d.texto || '')
                       } catch {
-                        const equipTxt = chips.length > 0
-                          ? `\n\n🔧 Equipamiento:\n${chips.map(c => '• ' + c).join('\n')}`
+                        const equipTxt = pubChips.length > 0
+                          ? `\n\n🔧 Equipamiento:\n${pubChips.map(c => '• ' + c).join('\n')}`
                           : ''
                         setPubDesc(
                           `🚗 ${v.marca} ${v.modelo} ${v.anio}${v.version ? ` — ${v.version}` : ''}\n\n` +
@@ -1062,12 +1228,12 @@ export default function Detalle({ onLogout }) {
               <div className="card" style={{ padding: 18 }}>
                 <h4 style={{ margin: '0 0 14px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>🏷️ Equipamiento destacado</span>
-                  {chips.length > 0 && (
+                  {pubChips.length > 0 && (
                     <button
                       className="btn secondary"
                       style={{ fontSize: 12 }}
                       onClick={() => {
-                        navigator.clipboard.writeText(chips.join(', '))
+                        navigator.clipboard.writeText(pubChips.join(', '))
                         setPubChipsCopied(true)
                         setTimeout(() => setPubChipsCopied(false), 2000)
                       }}
@@ -1076,9 +1242,9 @@ export default function Detalle({ onLogout }) {
                     </button>
                   )}
                 </h4>
-                {chips.length > 0 ? (
+                {pubChips.length > 0 ? (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {chips.map(chip => (
+                    {pubChips.map(chip => (
                       <span
                         key={chip}
                         title="Clic para copiar"
@@ -1112,7 +1278,7 @@ export default function Detalle({ onLogout }) {
                   <button
                     className="btn secondary"
                     onClick={() => {
-                      navigator.clipboard.writeText(generarMsgWhatsApp(v, chips, TC))
+                      navigator.clipboard.writeText(generarMsgWhatsApp(v, pubChips, TC))
                       setPubWspCopied(true)
                       setTimeout(() => setPubWspCopied(false), 2500)
                     }}
@@ -1132,7 +1298,7 @@ export default function Detalle({ onLogout }) {
                   fontFamily: 'inherit',
                   lineHeight: 1.6,
                 }}>
-                  {generarMsgWhatsApp(v, chips, TC)}
+                  {generarMsgWhatsApp(v, pubChips, TC)}
                 </pre>
               </div>
 
@@ -1219,6 +1385,41 @@ export default function Detalle({ onLogout }) {
             <button className="btn secondary" onClick={() => setEditing(false)}>Cancelar</button>
             <button className="btn primary" onClick={saveEdit} disabled={saving}>
               {saving ? 'Guardando…' : <><Icon name="check" size={14} /> Guardar cambios</>}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Modal seña desde panel derecho ── */}
+      {showSideReservaModal && (
+        <Modal title="Registrar seña" onClose={() => setShowSideReservaModal(false)}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <FormField label="Nombre cliente" required>
+              <input className="input" value={reservaForm.cliente_nombre} onChange={fr('cliente_nombre')} placeholder="Juan Pérez" />
+            </FormField>
+            <FormField label="Teléfono">
+              <input className="input" value={reservaForm.cliente_telefono} onChange={fr('cliente_telefono')} placeholder="+54 9 11…" />
+            </FormField>
+            <FormField label="Monto seña" required>
+              <input className="input" type="number" value={reservaForm.monto_senia} onChange={fr('monto_senia')} min={0} />
+            </FormField>
+            <FormField label="Moneda">
+              <select className="input" value={reservaForm.moneda} onChange={fr('moneda')}>
+                <option value="USD">USD</option>
+                <option value="ARS">ARS</option>
+              </select>
+            </FormField>
+            <FormField label="Fecha vencimiento" hint="Si no paga antes de esta fecha la seña caduca">
+              <input className="input" type="date" value={reservaForm.fecha_vencimiento} onChange={fr('fecha_vencimiento')} />
+            </FormField>
+            <FormField label="Notas">
+              <input className="input" value={reservaForm.notas} onChange={fr('notas')} />
+            </FormField>
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
+            <button className="btn secondary" onClick={() => setShowSideReservaModal(false)}>Cancelar</button>
+            <button className="btn primary" onClick={submitReserva} disabled={savingReserva || !reservaForm.cliente_nombre || !reservaForm.monto_senia}>
+              {savingReserva ? 'Registrando…' : <><Icon name="check" size={14} /> Guardar seña</>}
             </button>
           </div>
         </Modal>
