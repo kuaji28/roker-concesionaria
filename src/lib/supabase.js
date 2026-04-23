@@ -58,7 +58,7 @@ export async function getStats() {
 export async function getVehiculos({ estado, tipo, search } = {}) {
   let q = supabase
     .from('vehiculos')
-    .select('id,tipo,marca,modelo,anio,version,km_hs,precio_base,estado,patente,color,combustible,transmision')
+    .select('id,tipo,marca,modelo,anio,version,km_hs,precio_base,estado,patente,color,combustible,transmision,en_negociacion,negociacion_vendedor_id')
     .order('created_at', { ascending: false })
 
   if (estado && estado !== 'todos') q = q.eq('estado', estado)
@@ -670,5 +670,59 @@ export async function updateSeguimiento(id, campos) {
     .select().single()
   if (error) throw error
   return data
+}
+
+// ─────────────────────────────────────────────────────────
+// MULTI-VENDEDOR — Asignación de leads y negociaciones
+// ─────────────────────────────────────────────────────────
+
+/**
+ * El vendedor "toma" un lead — lo asigna a sí mismo.
+ * Si ya tiene otro vendedor asignado, lanza error.
+ */
+export async function tomarLead(prospectoId, vendedorId) {
+  // Primero verificar si ya tiene vendedor
+  const { data: actual } = await supabase
+    .from('prospectos')
+    .select('tomado_por, vendedor_id')
+    .eq('id', prospectoId)
+    .single()
+
+  if (actual?.tomado_por && actual.tomado_por !== vendedorId) {
+    throw new Error('Este lead ya fue tomado por otro vendedor')
+  }
+
+  const { error } = await supabase
+    .from('prospectos')
+    .update({ tomado_por: vendedorId, tomado_at: new Date().toISOString(), vendedor_id: vendedorId })
+    .eq('id', prospectoId)
+
+  if (error) throw error
+}
+
+/**
+ * Marca un vehículo como "en negociación".
+ */
+export async function iniciarNegociacion(vehiculoId, vendedorId) {
+  const { error } = await supabase
+    .from('vehiculos')
+    .update({
+      en_negociacion: true,
+      negociacion_vendedor_id: vendedorId,
+      negociacion_inicio: new Date().toISOString(),
+    })
+    .eq('id', vehiculoId)
+  if (error) throw error
+}
+
+/**
+ * Libera un vehículo de negociación.
+ */
+export async function liberarNegociacion(vehiculoId) {
+  const { error } = await supabase
+    .from('vehiculos')
+    .update({ en_negociacion: false, negociacion_vendedor_id: null, negociacion_inicio: null })
+    .eq('id', vehiculoId)
+  if (error) throw error
 }
 
