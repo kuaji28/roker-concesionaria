@@ -354,55 +354,176 @@ function Step3({ form, setForm }) {
   )
 }
 
-function Step2({ files, setFiles, previews, setPreviews }) {
-  function handleFiles(newFiles) {
+const SHOT_LIST = [
+  { key: 'frente_3_4_izq',  label: 'Frente 3/4 Izq.',  required: true,  icon: '📸' },
+  { key: 'frente_3_4_der',  label: 'Frente 3/4 Der.',  required: true,  icon: '📸' },
+  { key: 'lateral_izq',     label: 'Lateral Izq.',      required: true,  icon: '📸' },
+  { key: 'lateral_der',     label: 'Lateral Der.',      required: true,  icon: '📸' },
+  { key: 'trasero_3_4',     label: 'Trasero 3/4',       required: true,  icon: '📸' },
+  { key: 'tablero',         label: 'Tablero',           required: true,  icon: '📸' },
+  { key: 'asientos_del',    label: 'Asientos Del.',     required: false, icon: '📷' },
+  { key: 'asientos_tras',   label: 'Asientos Tras.',    required: false, icon: '📷' },
+  { key: 'baul',            label: 'Baúl/Maletero',     required: false, icon: '📷' },
+  { key: 'odometro',        label: 'Odómetro',          required: false, icon: '📷' },
+  { key: 'llantas',         label: 'Llantas',           required: false, icon: '📷' },
+  { key: 'motor',           label: 'Motor',             required: false, icon: '📷' },
+]
+
+function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFiles, setExtraFiles, extraPreviews, setExtraPreviews }) {
+  const requiredCount = SHOT_LIST.filter(s => s.required).length
+  const uploadedRequired = SHOT_LIST.filter(s => s.required && shotFiles[s.key]).length
+  const pct = requiredCount > 0 ? (uploadedRequired / requiredCount) * 100 : 0
+
+  function handleShotFile(key, file) {
+    if (!file || !file.type.startsWith('image/')) return
+    setShotFiles(p => ({ ...p, [key]: file }))
+    const r = new FileReader()
+    r.onload = ev => setShotPreviews(p => ({ ...p, [key]: ev.target.result }))
+    r.readAsDataURL(file)
+  }
+
+  function removeShot(key) {
+    setShotFiles(p => { const n = { ...p }; delete n[key]; return n })
+    setShotPreviews(p => { const n = { ...p }; delete n[key]; return n })
+  }
+
+  function handleExtraFiles(newFiles) {
     const imgs = Array.from(newFiles).filter(f => f.type.startsWith('image/'))
-    setFiles(p => [...p, ...imgs])
+    setExtraFiles(p => [...p, ...imgs])
     imgs.forEach(f => {
       const r = new FileReader()
-      r.onload = ev => setPreviews(p => [...p, ev.target.result])
+      r.onload = ev => setExtraPreviews(p => [...p, ev.target.result])
       r.readAsDataURL(f)
     })
   }
-  function remove(i) {
-    setFiles(p => p.filter((_, j) => j !== i))
-    setPreviews(p => p.filter((_, j) => j !== i))
+
+  function removeExtra(i) {
+    setExtraFiles(p => p.filter((_, j) => j !== i))
+    setExtraPreviews(p => p.filter((_, j) => j !== i))
   }
+
   return (
     <div>
-      <div
-        onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files) }}
-        onDragOver={e => e.preventDefault()}
-        onClick={() => document.getElementById('foto-input').click()}
-        style={{
-          border: '2px dashed var(--c-border)', borderRadius: 'var(--r-lg)',
-          padding: 40, textAlign: 'center', cursor: 'pointer', color: 'var(--c-fg-2)',
-          marginBottom: 16,
-        }}
-      >
-        <Icon name="image" size={32} style={{ stroke: 'var(--c-fg-3)', display: 'block', margin: '0 auto 8px' }} />
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>Arrastrá fotos o hacé click</div>
-        <div style={{ fontSize: 12, color: 'var(--c-fg-3)' }}>JPG, PNG, WEBP — múltiples archivos</div>
-        <input id="foto-input" type="file" accept="image/*" multiple style={{ display: 'none' }}
-          onChange={e => handleFiles(e.target.files)} />
-      </div>
-      {previews.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
-          {previews.map((src, i) => (
-            <div key={i} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 'var(--r)', overflow: 'hidden' }}>
-              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <button onClick={() => remove(i)} style={{
-                position: 'absolute', top: 4, right: 4,
-                background: 'rgba(0,0,0,.6)', border: 'none', borderRadius: '50%',
-                width: 24, height: 24, cursor: 'pointer', color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Icon name="x" size={12} />
-              </button>
-            </div>
-          ))}
+      {/* Barra de progreso */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>
+            {uploadedRequired} de {requiredCount} fotos requeridas
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--c-fg-3)' }}>
+            {Object.keys(shotFiles).length} total cargadas
+          </span>
         </div>
-      )}
+        <div style={{ height: 6, background: 'var(--c-border)', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{
+            height: '100%',
+            width: `${pct}%`,
+            background: pct === 100 ? '#22c55e' : 'var(--c-accent)',
+            borderRadius: 3,
+            transition: 'width .3s',
+          }} />
+        </div>
+      </div>
+
+      {/* Grilla 4 columnas */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+        {SHOT_LIST.map(shot => {
+          const hasPhoto = !!shotFiles[shot.key]
+          const preview = shotPreviews[shot.key]
+          return (
+            <div key={shot.key} style={{
+              borderRadius: 'var(--r)',
+              border: hasPhoto ? '2px solid var(--c-accent)' : '2px dashed var(--c-border)',
+              overflow: 'hidden',
+              background: 'var(--c-bg-2)',
+            }}>
+              <div style={{ aspectRatio: '4/3', position: 'relative' }}>
+                {hasPhoto ? (
+                  <>
+                    <img src={preview} alt={shot.label}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <button
+                      onClick={() => removeShot(shot.key)}
+                      style={{
+                        position: 'absolute', top: 4, right: 4,
+                        background: 'rgba(0,0,0,.65)', border: 'none', borderRadius: '50%',
+                        width: 22, height: 22, cursor: 'pointer', color: '#fff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                      }}
+                    >
+                      <Icon name="x" size={11} />
+                    </button>
+                  </>
+                ) : (
+                  <label style={{
+                    width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 4,
+                  }}>
+                    <span style={{ fontSize: 20 }}>{shot.icon}</span>
+                    <span style={{ fontSize: 24, color: 'var(--c-fg-3)', lineHeight: 1 }}>+</span>
+                    <input
+                      type="file" accept="image/*" style={{ display: 'none' }}
+                      onChange={e => { if (e.target.files[0]) handleShotFile(shot.key, e.target.files[0]); e.target.value = '' }}
+                    />
+                  </label>
+                )}
+              </div>
+              <div style={{ padding: '5px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-fg)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {shot.label}
+                </span>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, borderRadius: 3, padding: '1px 5px',
+                  background: shot.required ? 'rgba(99,102,241,.12)' : 'var(--c-border)',
+                  color: shot.required ? 'var(--c-accent)' : 'var(--c-fg-3)',
+                  whiteSpace: 'nowrap', flexShrink: 0,
+                }}>
+                  {shot.required ? 'REQ' : 'OPC'}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Fotos adicionales */}
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: 'var(--c-fg-2)' }}>
+          Fotos adicionales
+        </div>
+        <div
+          onDrop={e => { e.preventDefault(); handleExtraFiles(e.dataTransfer.files) }}
+          onDragOver={e => e.preventDefault()}
+          onClick={() => document.getElementById('foto-extra-input').click()}
+          style={{
+            border: '2px dashed var(--c-border)', borderRadius: 'var(--r)',
+            padding: '16px 24px', textAlign: 'center', cursor: 'pointer',
+            color: 'var(--c-fg-3)', marginBottom: extraPreviews.length ? 10 : 0,
+          }}
+        >
+          <Icon name="image" size={20} style={{ stroke: 'var(--c-fg-3)', display: 'block', margin: '0 auto 6px' }} />
+          <div style={{ fontSize: 13 }}>Arrastrá o hacé click para agregar fotos extra</div>
+          <input id="foto-extra-input" type="file" accept="image/*" multiple style={{ display: 'none' }}
+            onChange={e => { handleExtraFiles(e.target.files); e.target.value = '' }} />
+        </div>
+        {extraPreviews.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8 }}>
+            {extraPreviews.map((src, i) => (
+              <div key={i} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 'var(--r)', overflow: 'hidden' }}>
+                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button onClick={() => removeExtra(i)} style={{
+                  position: 'absolute', top: 4, right: 4,
+                  background: 'rgba(0,0,0,.6)', border: 'none', borderRadius: '50%',
+                  width: 22, height: 22, cursor: 'pointer', color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                }}>
+                  <Icon name="x" size={11} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -418,8 +539,10 @@ export default function Ingreso({ onLogout }) {
   const [aiSpecs, setAiSpecs]   = useState(null)
   const [tasacion, setTasacion] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [files, setFiles]       = useState([])
-  const [previews, setPreviews] = useState([])
+  const [shotFiles, setShotFiles]         = useState({})
+  const [shotPreviews, setShotPreviews]   = useState({})
+  const [extraFiles, setExtraFiles]       = useState([])
+  const [extraPreviews, setExtraPreviews] = useState([])
   const [vendedores, setVendedores] = useState([])
   const [form, setForm] = useState({
     tipo: 'auto', marca: '', modelo: '', anio: '', version: '',
@@ -606,8 +729,19 @@ export default function Ingreso({ onLogout }) {
         specs: Object.keys(form.specs || {}).length > 0 ? form.specs : null,
       }
       const v = await createVehiculo(payload)
-      for (const file of files) {
-        await uploadFoto(v.id, file)
+      // Upload shot list fotos
+      for (const shot of SHOT_LIST) {
+        const file = shotFiles[shot.key]
+        if (!file) continue
+        const esPortada = shot.key === 'frente_3_4_izq' ||
+          (Object.keys(shotFiles)[0] === shot.key && !shotFiles['frente_3_4_izq'])
+        const fotoData = await uploadFotoVehiculo(v.id, file, shot.key)
+        await saveFotoRecord(v.id, fotoData, esPortada)
+      }
+      // Upload fotos adicionales
+      for (let i = 0; i < extraFiles.length; i++) {
+        const fotoData = await uploadFotoVehiculo(v.id, extraFiles[i], 'extra')
+        await saveFotoRecord(v.id, fotoData, false)
       }
       navigate(`/vehiculo/${v.id}`)
     } catch (e) {
@@ -816,7 +950,7 @@ export default function Ingreso({ onLogout }) {
 
         <div className="card" style={{ marginBottom: 20 }}>
           {step === 1 && <Step1 form={form} set={setForm} vendedores={vendedores} />}
-          {step === 2 && <Step2 files={files} setFiles={setFiles} previews={previews} setPreviews={setPreviews} />}
+          {step === 2 && <Step2 shotFiles={shotFiles} setShotFiles={setShotFiles} shotPreviews={shotPreviews} setShotPreviews={setShotPreviews} extraFiles={extraFiles} setExtraFiles={setExtraFiles} extraPreviews={extraPreviews} setExtraPreviews={setExtraPreviews} />}
           {step === 3 && <Step3 form={form} setForm={setForm} />}
         </div>
 
