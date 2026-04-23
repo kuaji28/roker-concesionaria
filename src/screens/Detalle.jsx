@@ -953,6 +953,163 @@ export default function Detalle({ onLogout }) {
             </div>
           </div>
         )}
+
+        {/* ── TAB: PUBLICAR ── */}
+        {tab === 'pub' && (() => {
+          const chips = generateChipsFromSpecs(v.specs || {})
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              {/* Descripción MercadoLibre */}
+              <div className="card" style={{ padding: 18 }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14 }}>📝 Descripción para MercadoLibre</h4>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button
+                    className="btn secondary"
+                    disabled={pubDescLoading}
+                    onClick={async () => {
+                      setPubDescLoading(true)
+                      try {
+                        const d = await callAI('/ai/descripcion-ml', { vehiculo: v, specs: v.specs || {} })
+                        setPubDesc(d.texto || '')
+                      } catch {
+                        const equipTxt = chips.length > 0
+                          ? `\n\n🔧 Equipamiento:\n${chips.map(c => '• ' + c).join('\n')}`
+                          : ''
+                        setPubDesc(
+                          `🚗 ${v.marca} ${v.modelo} ${v.anio}${v.version ? ` — ${v.version}` : ''}\n\n` +
+                          `✅ ${Number(v.km_hs || 0).toLocaleString('es-AR')} km\n` +
+                          `🎨 Color: ${v.color || 'a confirmar'}\n` +
+                          `⚙️ ${[v.transmision, v.combustible].filter(Boolean).join(' — ')}` +
+                          equipTxt
+                        )
+                      } finally { setPubDescLoading(false) }
+                    }}
+                  >
+                    {pubDescLoading ? '⏳ Generando…' : '✨ Generar con IA'}
+                  </button>
+                  {(pubDesc || v.descripcion_publica) && (
+                    <>
+                      <button
+                        className="btn secondary"
+                        onClick={() => navigator.clipboard.writeText(pubDesc || v.descripcion_publica || '')}
+                      >
+                        <Icon name="clipboard" size={14} /> Copiar
+                      </button>
+                      <button
+                        className="btn primary"
+                        disabled={pubDescSaving}
+                        onClick={async () => {
+                          setPubDescSaving(true)
+                          try {
+                            await updateVehiculo(v.id, { descripcion_publica: pubDesc || v.descripcion_publica })
+                            setPubDescSaved(true)
+                            setTimeout(() => setPubDescSaved(false), 3000)
+                          } finally { setPubDescSaving(false) }
+                        }}
+                      >
+                        {pubDescSaving ? 'Guardando…' : <><Icon name="check" size={14} /> Guardar</>}
+                      </button>
+                      {pubDescSaved && <span style={{ color: 'var(--c-success)', fontSize: 13 }}>✓ Guardado</span>}
+                    </>
+                  )}
+                </div>
+                {(pubDesc || v.descripcion_publica) ? (
+                  <textarea
+                    className="input"
+                    rows={10}
+                    value={pubDesc || v.descripcion_publica || ''}
+                    onChange={e => setPubDesc(e.target.value)}
+                    style={{ resize: 'vertical', fontSize: 13, fontFamily: 'inherit' }}
+                  />
+                ) : (
+                  <p style={{ color: 'var(--c-fg-3)', fontSize: 13, margin: 0 }}>
+                    Hacé clic en &ldquo;Generar con IA&rdquo; para crear una descripción lista para publicar.
+                  </p>
+                )}
+              </div>
+
+              {/* Chips de equipamiento */}
+              <div className="card" style={{ padding: 18 }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>🏷️ Equipamiento destacado</span>
+                  {chips.length > 0 && (
+                    <button
+                      className="btn secondary"
+                      style={{ fontSize: 12 }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(chips.join(', '))
+                        setPubChipsCopied(true)
+                        setTimeout(() => setPubChipsCopied(false), 2000)
+                      }}
+                    >
+                      <Icon name="clipboard" size={13} /> {pubChipsCopied ? '✓ Copiado' : 'Copiar todo'}
+                    </button>
+                  )}
+                </h4>
+                {chips.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {chips.map(chip => (
+                      <span
+                        key={chip}
+                        title="Clic para copiar"
+                        onClick={() => navigator.clipboard.writeText(chip)}
+                        style={{
+                          background: 'var(--c-bg-2)',
+                          border: '1px solid var(--c-border)',
+                          borderRadius: 999,
+                          padding: '4px 12px',
+                          fontSize: 12,
+                          color: 'var(--c-fg)',
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                        }}
+                      >
+                        {chip}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: 'var(--c-fg-3)', fontSize: 13, margin: 0 }}>
+                    No hay equipamiento cargado en las specs. Editá el vehículo y completá las specs para ver los chips.
+                  </p>
+                )}
+              </div>
+
+              {/* Mensaje WhatsApp */}
+              <div className="card" style={{ padding: 18 }}>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14 }}>💬 Mensaje WhatsApp</h4>
+                <div style={{ marginBottom: 12 }}>
+                  <button
+                    className="btn secondary"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generarMsgWhatsApp(v, chips, TC))
+                      setPubWspCopied(true)
+                      setTimeout(() => setPubWspCopied(false), 2500)
+                    }}
+                  >
+                    {pubWspCopied ? '✓ ¡Copiado!' : '📋 Generar y copiar'}
+                  </button>
+                </div>
+                <pre style={{
+                  background: 'var(--c-bg-2)',
+                  borderRadius: 'var(--r)',
+                  padding: '12px 14px',
+                  fontSize: 12,
+                  color: 'var(--c-fg-2)',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  margin: 0,
+                  fontFamily: 'inherit',
+                  lineHeight: 1.6,
+                }}>
+                  {generarMsgWhatsApp(v, chips, TC)}
+                </pre>
+              </div>
+
+            </div>
+          )
+        })()}
       </div>
 
       {/* ── AI Modal ── */}
