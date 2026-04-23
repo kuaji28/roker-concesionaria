@@ -235,6 +235,10 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .badge.info    { background: var(--c-info-tint);    color: var(--c-info); }
 .badge.danger  { background: var(--c-danger-tint);  color: var(--c-danger); }
 .badge.neutral { background: var(--c-card-2);       color: var(--c-fg-2); }
+.badge.caution { background: #fef9c3;               color: #a16207; }
+.badge.purple  { background: #f3e8ff;               color: #7c3aed; }
+.badge.teal    { background: #ccfbf1;               color: #0f766e; }
+.badge-sm      { font-size: 10px; padding: 2px 7px; gap: 4px; }
 
 /* ────────────────────────────────────────────────────────────── */
 /*  CARDS & METRICS                                               */

@@ -33,6 +33,11 @@ export default function VehicleCard({ v }) {
             </span>
           )}
         </div>
+        {v.ubicacion && (
+          <div className="row" style={{ marginTop: 4 }}>
+            <StateBadge ubicacion={v.ubicacion} small />
+          </div>
+        )}
         <div className="price">
           <span className="cur">USD</span>
           {v.precio_base?.toLocaleString('es-AR')}

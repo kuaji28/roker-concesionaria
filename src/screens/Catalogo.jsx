@@ -227,7 +227,10 @@ export default function Catalogo({ onLogout }) {
                     <div className="v-title">{v.marca} {v.modelo} {v.anio}{v.version ? ` · ${v.version}` : ''}</div>
                     <div className="v-meta">{v.patente || '—'} · #{v.id} · {v.color || '—'}</div>
                   </div>
-                  <div><StateBadge estado={v.estado} /></div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <StateBadge estado={v.estado} />
+                    {v.ubicacion && <StateBadge ubicacion={v.ubicacion} small />}
+                  </div>
                   <div className="num">{v.km_hs?.toLocaleString('es-AR') || '0'} km</div>
                   <div className="price-cell">
                     <strong>USD {v.precio_base?.toLocaleString('es-AR')}</strong>

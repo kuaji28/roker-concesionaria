@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar'
-import StateBadge from '../components/StateBadge'
+import StateBadge, { UBICACION_META, RECON_META } from '../components/StateBadge'
 import Icon from '../components/Icon'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
@@ -57,6 +57,10 @@ export default function Detalle({ onLogout }) {
   const [docsForm, setDocsForm] = useState({})
   const [savingDocs, setSavingDocs] = useState(false)
   const [docsSaved, setDocsSaved]   = useState(false)
+
+  const [ubicacionEdit, setUbicacionEdit] = useState(false)
+  const [ubicacionVal,  setUbicacionVal]  = useState('')
+  const [savingUbicacion, setSavingUbicacion] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -131,6 +135,8 @@ export default function Detalle({ onLogout }) {
       combustible: v.combustible || '', transmision: v.transmision || '',
       patente: v.patente || '', notas_internas: v.notas_internas || '',
       link_ml: v.link_ml || '', link_drive: v.link_drive || '',
+      ubicacion: v.ubicacion || 'showroom',
+      estado_recon: v.estado_recon || 'ingresado',
     })
     setEditing(true)
   }
@@ -212,6 +218,20 @@ export default function Detalle({ onLogout }) {
     } finally { setSavingReserva(false) }
   }
 
+  async function openUbicacionEdit() {
+    setUbicacionVal(v.ubicacion || 'showroom')
+    setUbicacionEdit(true)
+  }
+
+  async function saveUbicacion() {
+    setSavingUbicacion(true)
+    try {
+      await updateVehiculo(v.id, { ubicacion: ubicacionVal })
+      setUbicacionEdit(false)
+      getVehiculo(id).then(setData)
+    } finally { setSavingUbicacion(false) }
+  }
+
   // ── Render ────────────────────────────────────────────────────
   return (
     <div>
@@ -245,6 +265,45 @@ export default function Detalle({ onLogout }) {
           <div className="dm">
             <div className="lbl">Estado</div>
             <div className="val" style={{ fontSize: 16 }}><StateBadge estado={v.estado} /></div>
+          </div>
+          <div className="dm">
+            <div className="lbl">Ubicación</div>
+            <div className="val" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {ubicacionEdit ? (
+                <>
+                  <select
+                    className="input"
+                    style={{ fontSize: 12, padding: '2px 6px', height: 'auto' }}
+                    value={ubicacionVal}
+                    onChange={e => setUbicacionVal(e.target.value)}
+                  >
+                    {Object.entries(UBICACION_META).map(([val, m]) => (
+                      <option key={val} value={val}>{m.label}</option>
+                    ))}
+                  </select>
+                  <button className="btn primary" style={{ fontSize: 11, padding: '3px 8px' }}
+                    disabled={savingUbicacion} onClick={saveUbicacion}>
+                    {savingUbicacion ? '…' : 'Guardar'}
+                  </button>
+                  <button className="btn ghost" style={{ fontSize: 11, padding: '3px 6px' }}
+                    onClick={() => setUbicacionEdit(false)}>
+                    <Icon name="x" size={12} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <StateBadge ubicacion={v.ubicacion || 'showroom'} />
+                  <button className="btn ghost" style={{ padding: '2px 5px' }}
+                    onClick={openUbicacionEdit} title="Cambiar ubicación">
+                    <Icon name="edit" size={12} />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="dm">
+            <div className="lbl">Reacond.</div>
+            <div className="val"><StateBadge recon={v.estado_recon || 'ingresado'} /></div>
           </div>
           <div className="dm">
             <div className="lbl">Kilometraje</div>
@@ -757,6 +816,20 @@ export default function Detalle({ onLogout }) {
             </FormField>
             <FormField label="Link Drive">
               <input className="input" value={editForm.link_drive} onChange={fe('link_drive')} placeholder="https://drive.google.com/…" />
+            </FormField>
+            <FormField label="Ubicación">
+              <select className="input" value={editForm.ubicacion} onChange={fe('ubicacion')}>
+                {Object.entries(UBICACION_META).map(([val, m]) => (
+                  <option key={val} value={val}>{m.label}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Estado reacond.">
+              <select className="input" value={editForm.estado_recon} onChange={fe('estado_recon')}>
+                {Object.entries(RECON_META).map(([val, m]) => (
+                  <option key={val} value={val}>{m.label}</option>
+                ))}
+              </select>
             </FormField>
           </div>
           <div style={{ marginTop: 14 }}>
