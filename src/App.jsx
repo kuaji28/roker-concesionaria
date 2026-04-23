@@ -19,6 +19,7 @@ import Rotacion from './screens/Rotacion'
 import Buscar from './screens/Buscar'
 import Agenda from './screens/Agenda'
 import Placeholder from './screens/Placeholder'
+import CatalogoPublico from './screens/CatalogoPublico'
 import { useTc, TcContext } from './hooks/useTc'
 import { UserContext } from './hooks/useUser'
 
@@ -81,6 +82,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Rutas públicas — sin auth */}
+        <Route path="/p/catalogo" element={<CatalogoPublico />} />
+
         <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />} />
         <Route
           path="*"

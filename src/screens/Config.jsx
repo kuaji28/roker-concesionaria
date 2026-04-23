@@ -86,6 +86,33 @@ export default function Config({ onLogout }) {
           </div>
         </div>
 
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 600 }}>🔗 Link del catálogo público</h3>
+          <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--c-fg-2)' }}>
+            Compartí este link con vendedores externos y clientes. No requiere login.
+          </p>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <code style={{ flex: 1, padding: '8px 12px', background: 'var(--c-card-2)', borderRadius: 6, fontSize: 12, wordBreak: 'break-all' }}>
+              {window.location.origin}/p/catalogo
+            </code>
+            <button
+              className="btn btn-ghost"
+              onClick={() => navigator.clipboard.writeText(window.location.origin + '/p/catalogo')}
+            >
+              Copiar
+            </button>
+            <a
+              href="/p/catalogo"
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-ghost"
+              style={{ textDecoration: 'none' }}
+            >
+              Ver
+            </a>
+          </div>
+        </div>
+
         <div className="card">
           <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Icon name="cash" size={14} /> Tipo de cambio USD/ARS
