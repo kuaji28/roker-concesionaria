@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react'
 import TopBar from '../components/TopBar'
 import Icon from '../components/Icon'
 import FormField from '../components/FormField'
-import { updatePin, getTC, updateTC } from '../lib/supabase'
+import { updatePinUsuario, getTC, updateTC } from '../lib/supabase'
 
 export default function Config({ onLogout }) {
+  const currentUser = (() => {
+    try { return JSON.parse(sessionStorage.getItem('gh_auth_user') || '{}') } catch { return {} }
+  })()
+
   const [pin, setPin]           = useState({ new1: '', new2: '' })
   const [pinMsg, setPinMsg]     = useState(null)
   const [tc, setTc]             = useState('')
@@ -18,10 +22,11 @@ export default function Config({ onLogout }) {
     setPinMsg(null)
     if (!pin.new1 || pin.new1.length < 4) { setPinMsg({ type: 'warning', text: 'El PIN debe tener al menos 4 dígitos.' }); return }
     if (pin.new1 !== pin.new2) { setPinMsg({ type: 'warning', text: 'Los PINs no coinciden.' }); return }
+    if (!currentUser?.id) { setPinMsg({ type: 'warning', text: 'Sesión inválida — volvé a iniciar sesión.' }); return }
     setSavingPin(true)
     try {
-      await updatePin(pin.new1)
-      setPinMsg({ type: 'success', text: 'PIN actualizado correctamente.' })
+      await updatePinUsuario(currentUser.id, pin.new1)
+      setPinMsg({ type: 'success', text: `PIN de ${currentUser.nombre} actualizado.` })
       setPin({ new1: '', new2: '' })
     } catch (e) {
       setPinMsg({ type: 'warning', text: e.message || 'Error al cambiar PIN.' })
@@ -59,7 +64,7 @@ export default function Config({ onLogout }) {
 
         <div className="card" style={{ marginBottom: 16 }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="cog" size={14} /> Cambiar PIN de acceso
+            <Icon name="cog" size={14} /> Mi PIN{currentUser?.nombre ? ` — ${currentUser.nombre}` : ''}
           </h3>
           <div style={{ display: 'grid', gap: 12 }}>
             <FormField label="PIN nuevo">
