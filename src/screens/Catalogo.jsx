@@ -6,6 +6,7 @@ import StateBadge from '../components/StateBadge'
 import Icon from '../components/Icon'
 import { getVehiculos, updateVehiculo } from '../lib/supabase'
 import { useTc } from '../hooks/useTc'
+import { useUser, canSeePrecioBase } from '../hooks/useUser'
 
 const ESTADOS      = ['todos', 'disponible', 'señado', 'en_revision', 'en_preparacion', 'vendido']
 const TIPOS        = ['todos', 'auto', 'moto', 'cuatriciclo', 'moto_de_agua']
@@ -14,6 +15,8 @@ const ESTADOS_EDIT = ['disponible', 'señado', 'en_revision', 'en_preparacion', 
 export default function Catalogo({ onLogout }) {
   const navigate = useNavigate()
   const TC = useTc()
+  const user = useUser()
+  const rol = user?.rol || 'externo'
   const [params] = useSearchParams()
 
   const [vehiculos, setVehiculos] = useState([])
@@ -48,13 +51,15 @@ export default function Catalogo({ onLogout }) {
 
   useEffect(() => { reload() }, [estado, tipo, search])
 
-  // Filtrado numérico client-side
+  // Filtrado numérico client-side + filtro por rol
   const shown = vehiculos.filter(v => {
     if (anioMin  && v.anio       <  Number(anioMin))  return false
     if (anioMax  && v.anio       >  Number(anioMax))  return false
     if (kmMax    && v.km_hs      >  Number(kmMax))    return false
     if (precioMin && (v.precio_base || 0) < Number(precioMin)) return false
     if (precioMax && (v.precio_base || 0) > Number(precioMax)) return false
+    // externos solo ven vehículos disponibles
+    if (rol === 'externo' && v.estado !== 'disponible') return false
     return true
   })
 
@@ -233,8 +238,11 @@ export default function Catalogo({ onLogout }) {
                   </div>
                   <div className="num">{v.km_hs?.toLocaleString('es-AR') || '0'} km</div>
                   <div className="price-cell">
-                    <strong>USD {v.precio_base?.toLocaleString('es-AR')}</strong>
-                    <div className="ars">$ {((v.precio_base || 0) * TC).toLocaleString('es-AR')} ARS</div>
+                    <strong>USD {(v.precio_lista || v.precio_base)?.toLocaleString('es-AR')}</strong>
+                    {canSeePrecioBase(rol) && v.precio_lista && v.precio_base && v.precio_base !== v.precio_lista && (
+                      <div style={{ fontSize: 11, color: 'var(--c-fg-3)' }}>Piso USD {v.precio_base?.toLocaleString('es-AR')}</div>
+                    )}
+                    <div className="ars">$ {(((v.precio_lista || v.precio_base) || 0) * TC).toLocaleString('es-AR')} ARS</div>
                   </div>
                   <div style={{ display: 'flex', gap: 6, justifySelf: 'end' }}>
                     <button className="btn ghost" style={{ padding: '4px 8px' }}

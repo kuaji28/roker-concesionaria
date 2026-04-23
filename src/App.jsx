@@ -20,14 +20,16 @@ import Buscar from './screens/Buscar'
 import Agenda from './screens/Agenda'
 import Placeholder from './screens/Placeholder'
 import { useTc, TcContext } from './hooks/useTc'
+import { UserContext } from './hooks/useUser'
 
 function ProtectedRoute({ element, isAuth }) {
   return isAuth ? element : <Navigate to="/login" replace />
 }
 
-function AppShell({ onLogout }) {
+function AppShell({ onLogout, user }) {
   const tc = useTc()
   return (
+    <UserContext.Provider value={user}>
     <TcContext.Provider value={tc}>
     <div className="app">
       <Sidebar tc={tc} />
@@ -55,16 +57,26 @@ function AppShell({ onLogout }) {
       </div>
     </div>
     </TcContext.Provider>
+    </UserContext.Provider>
   )
 }
 
 export default function App() {
   const [auth, setAuth] = useState(() => !!sessionStorage.getItem('gh_auth_user'))
-  function handleLogin(user) {
-    sessionStorage.setItem('gh_auth_user', JSON.stringify(user))
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('gh_auth_user') || 'null') } catch { return null }
+  })
+
+  function handleLogin(u) {
+    sessionStorage.setItem('gh_auth_user', JSON.stringify(u))
     setAuth(true)
+    setUser(u)
   }
-  function handleLogout() { sessionStorage.removeItem('gh_auth_user'); setAuth(false) }
+  function handleLogout() {
+    sessionStorage.removeItem('gh_auth_user')
+    setAuth(false)
+    setUser(null)
+  }
 
   return (
     <BrowserRouter>
@@ -72,7 +84,7 @@ export default function App() {
         <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />} />
         <Route
           path="*"
-          element={<ProtectedRoute isAuth={auth} element={<AppShell onLogout={handleLogout} />} />}
+          element={<ProtectedRoute isAuth={auth} element={<AppShell onLogout={handleLogout} user={user} />} />}
         />
       </Routes>
     </BrowserRouter>

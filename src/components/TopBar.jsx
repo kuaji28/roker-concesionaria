@@ -1,10 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from './Icon'
+import { useUser } from '../hooks/useUser'
+
+const ROL_META = {
+  dueno:    { label: 'Dueño',    color: '#f59e0b' },
+  vendedor: { label: 'Vendedor', color: '#6366f1' },
+  externo:  { label: 'Externo',  color: 'var(--c-fg-3)' },
+}
 
 export default function TopBar({ placeholder = 'Buscar vehículos, clientes, patente…', onLogout }) {
   const [q, setQ] = useState('')
   const navigate = useNavigate()
+  const user = useUser()
+  const rol = user?.rol || 'externo'
+  const rolMeta = ROL_META[rol] || ROL_META.externo
 
   function handleSearch(e) {
     e.preventDefault()
@@ -29,6 +39,26 @@ export default function TopBar({ placeholder = 'Buscar vehículos, clientes, pat
         />
       </form>
       <div style={{ flex: 1 }} />
+      {user && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-fg)', lineHeight: 1.2 }}>
+              {user.nombre || user.email}
+            </div>
+            <div style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: rolMeta.color,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              lineHeight: 1.2,
+              marginTop: 1,
+            }}>
+              {rolMeta.label}
+            </div>
+          </div>
+        </div>
+      )}
       {onLogout && (
         <button
           onClick={onLogout}
@@ -37,7 +67,9 @@ export default function TopBar({ placeholder = 'Buscar vehículos, clientes, pat
           Salir
         </button>
       )}
-      <div className="avatar">GH</div>
+      <div className="avatar" style={{ background: rolMeta.color, color: '#fff', fontWeight: 700 }}>
+        {user?.nombre ? user.nombre.charAt(0).toUpperCase() : 'GH'}
+      </div>
     </div>
   )
 }

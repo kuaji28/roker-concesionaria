@@ -8,6 +8,7 @@ import FormField from '../components/FormField'
 import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry } from '../lib/supabase'
 import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 import { useTc } from '../hooks/useTc'
+import { useUser, canSeeCosto, canSeePrecioBase, canSeeMargen } from '../hooks/useUser'
 
 // ── Publicar helpers ──────────────────────────────────────────
 export function generateChipsFromSpecs(specs = {}) {
@@ -95,6 +96,8 @@ export default function Detalle({ onLogout }) {
   const { id }   = useParams()
   const navigate = useNavigate()
   const TC       = useTc()
+  const user     = useUser()
+  const rol      = user?.rol || 'externo'
 
   // ── ALL hooks before any conditional return ──────────────────
   const [data, setData]     = useState(null)
@@ -218,6 +221,7 @@ export default function Detalle({ onLogout }) {
   const gastosTotalUSD  = gastos.filter(g => g.moneda === 'USD').reduce((s, g) => s + Number(g.monto || 0), 0)
   const gastosEquivUSD  = gastosTotalUSD + (TC > 0 ? gastosTotalARS / TC : 0)
   const margenBruto     = v.precio_base && v.costo_compra ? v.precio_base - v.costo_compra - gastosEquivUSD : null
+  const margenPct       = margenBruto !== null && v.costo_compra ? ((margenBruto / v.costo_compra) * 100).toFixed(1) : null
 
   const specs = [
     ['Combustible', v.combustible],
@@ -494,14 +498,36 @@ export default function Detalle({ onLogout }) {
             </div>
             <div className="card info-card">
               <h3><Icon name="tag" size={14} />Precio</h3>
-              <div className="kv"><span>Precio base</span><span>USD {v.precio_base?.toLocaleString('es-AR') || '—'}</span></div>
-              <div className="kv"><span>En ARS</span><span>$ {((v.precio_base || 0) * TC).toLocaleString('es-AR')}</span></div>
-              {v.costo_compra > 0 && <div className="kv"><span>Costo compra</span><span>USD {v.costo_compra?.toLocaleString('es-AR')}</span></div>}
-              {margenBruto !== null && (
+              {/* precio_lista: visible para todos */}
+              <div className="kv">
+                <span>Precio lista</span>
+                <span>USD {(v.precio_lista || v.precio_base)?.toLocaleString('es-AR') || '—'}</span>
+              </div>
+              <div className="kv">
+                <span>En ARS</span>
+                <span>$ {(((v.precio_lista || v.precio_base) || 0) * TC).toLocaleString('es-AR')}</span>
+              </div>
+              {/* precio_base (piso de negociación): solo dueno y vendedor */}
+              {canSeePrecioBase(rol) && v.precio_lista && v.precio_base && v.precio_base !== v.precio_lista && (
+                <div className="kv">
+                  <span>Piso negociación</span>
+                  <span style={{ color: 'var(--c-fg-2)' }}>USD {v.precio_base?.toLocaleString('es-AR')}</span>
+                </div>
+              )}
+              {/* costo_compra: solo dueno */}
+              {canSeeCosto(rol) && v.costo_compra > 0 && (
+                <div className="kv">
+                  <span>Costo compra</span>
+                  <span>USD {v.costo_compra?.toLocaleString('es-AR')}</span>
+                </div>
+              )}
+              {/* margen: solo dueno */}
+              {canSeeMargen(rol) && margenBruto !== null && (
                 <div className="kv">
                   <span>Margen neto</span>
                   <span style={{ color: margenBruto >= 0 ? 'var(--c-success)' : 'var(--c-danger)', fontWeight: 600 }}>
                     USD {margenBruto.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                    {margenPct !== null && <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, opacity: 0.8 }}>({margenPct}%)</span>}
                   </span>
                 </div>
               )}
