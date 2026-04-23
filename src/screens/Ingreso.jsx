@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar'
 import Icon from '../components/Icon'
 import FormField from '../components/FormField'
-import { createVehiculo, uploadFoto } from '../lib/supabase'
+import { createVehiculo, uploadFoto, getVendedores } from '../lib/supabase'
 import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 
 const TIPOS   = ['auto', 'moto', 'cuatriciclo', 'moto_de_agua']
@@ -59,7 +59,7 @@ function parseFechaDMY(str) {
   return null
 }
 
-function Step1({ form, set }) {
+function Step1({ form, set, vendedores }) {
   const f = (k) => (e) => set(p => ({ ...p, [k]: e.target.value }))
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -117,6 +117,12 @@ function Step1({ form, set }) {
           <option value="compra_directa">Compra directa</option>
           <option value="parte_de_pago">Parte de pago</option>
           <option value="consignacion">Consignación</option>
+        </select>
+      </FormField>
+      <FormField label="Responsable (quien ingresa)">
+        <select className="input" value={form.responsable_id} onChange={f('responsable_id')}>
+          <option value="">Sin asignar</option>
+          {vendedores.map(v => <option key={v.id} value={v.id}>{v.nombre}</option>)}
         </select>
       </FormField>
       <FormField label="Nro Motor">
@@ -197,15 +203,20 @@ export default function Ingreso({ onLogout }) {
   const [aiLoading, setAiLoading] = useState('')
   const [aiMsg, setAiMsg]       = useState(null)
   const [aiWarnings, setAiWarnings] = useState([])
+  const [aiSpecs, setAiSpecs]   = useState(null)
   const [isDragging, setIsDragging] = useState(false)
   const [files, setFiles]       = useState([])
   const [previews, setPreviews] = useState([])
+  const [vendedores, setVendedores] = useState([])
   const [form, setForm] = useState({
     tipo: 'auto', marca: '', modelo: '', anio: '', version: '',
     patente: '', color: '', km_hs: '', precio_base: '', costo_compra: '',
     combustible: '', transmision: '', origen: 'compra_directa',
+    responsable_id: '',
     nro_motor: '', nro_chasis: '', notas_internas: '', estado: 'disponible',
   })
+
+  useEffect(() => { getVendedores().then(setVendedores) }, [])
 
   async function _completarSpecs(marca, modelo, anio, version, nro_motor, nro_chasis) {
     if (!marca || !modelo || !anio) return null
@@ -217,6 +228,7 @@ export default function Ingreso({ onLogout }) {
       combustible: specs.combustible || p.combustible,
       transmision: specs.transmision || p.transmision,
     }))
+    setAiSpecs(specs)
     return specs
   }
 
@@ -329,13 +341,13 @@ export default function Ingreso({ onLogout }) {
 
   async function handleCompletarSpecs() {
     if (!form.marca || !form.modelo) return
-    setAiLoading('specs'); setAiMsg(null)
+    setAiLoading('specs'); setAiMsg(null); setAiSpecs(null)
     try {
       const specs = await _completarSpecs(
         form.marca, form.modelo, form.anio, form.version, form.nro_motor, form.nro_chasis
       )
       if (specs) {
-        setAiMsg({ type: 'success', text: `Specs completadas. Combustible: ${specs.combustible || '—'} · Trans: ${specs.transmision || '—'} · ${specs.potencia_hp || '?'} HP` })
+        setAiMsg({ type: 'success', text: 'Especificaciones técnicas completadas por IA.' })
       }
     } catch (err) {
       setAiMsg({ type: 'warning', text: 'Error IA: ' + err.message })
@@ -373,6 +385,7 @@ export default function Ingreso({ onLogout }) {
         precio_base: Number(form.precio_base),
         costo_compra: form.costo_compra ? Number(form.costo_compra) : null,
         patente: form.patente ? form.patente.toUpperCase() : null,
+        responsable_id: form.responsable_id || null,
       }
       const v = await createVehiculo(payload)
       for (const file of files) {
@@ -412,39 +425,60 @@ export default function Ingreso({ onLogout }) {
         )}
 
         {step === 1 && aiConfigured() && (
-          <div
-            className="card"
-            style={{ marginBottom: 12, outline: isDragging ? '2px dashed var(--c-accent)' : 'none' }}
-            onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={e => {
-              e.preventDefault(); setIsDragging(false)
-              const imgs = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
-              if (imgs.length) handleCedulaFiles({ target: { files: imgs, value: '' } })
-            }}
-          >
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12, color: 'var(--c-fg-2)', fontWeight: 600 }}>
-                Asistente IA {isDragging && <span style={{ color: 'var(--c-accent)' }}>— soltá la foto aquí</span>}
-              </span>
-              <button className="btn secondary" disabled={!!aiLoading}
-                onClick={() => document.getElementById('cedula-scan').click()}>
-                <Icon name="image" size={14} />
-                {aiLoading === 'cedula' ? 'Escaneando…' : aiLoading === 'specs' ? 'Completando specs…' : 'Escanear cédula verde'}
-              </button>
+          <div className="card" style={{ marginBottom: 12 }}>
+            {/* Drop zone — siempre visible */}
+            <div
+              onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+              onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setIsDragging(false) }}
+              onDrop={e => {
+                e.preventDefault(); setIsDragging(false)
+                const imgs = Array.from(e.dataTransfer.files)
+                if (imgs.length) handleCedulaFiles({ target: { files: imgs, value: '' } })
+              }}
+              onClick={() => document.getElementById('cedula-scan').click()}
+              style={{
+                border: isDragging ? '2px solid var(--c-accent)' : '2px dashed var(--c-border)',
+                borderRadius: 'var(--r)',
+                background: isDragging ? 'var(--c-accent-tint, rgba(99,102,241,.07))' : 'var(--c-bg-2)',
+                padding: '18px 24px',
+                display: 'flex', alignItems: 'center', gap: 14,
+                cursor: 'pointer',
+                transition: 'border-color .15s, background .15s',
+                marginBottom: 12,
+              }}
+            >
+              <Icon name="image" size={28} style={{ stroke: isDragging ? 'var(--c-accent)' : 'var(--c-fg-3)', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: isDragging ? 'var(--c-accent)' : 'var(--c-fg)' }}>
+                  {isDragging ? 'Soltá el documento aquí' : 'Arrastrá aquí la cédula verde u otro documento'}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--c-fg-3)', marginTop: 2 }}>
+                  También podés hacer click para seleccionar — JPG, PNG, PDF
+                </div>
+              </div>
+              {aiLoading === 'cedula' && (
+                <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--c-accent)' }}>Escaneando…</span>
+              )}
+              <input id="cedula-scan" type="file" accept="image/*,application/pdf" multiple style={{ display: 'none' }}
+                onChange={handleCedulaFiles} />
+            </div>
+
+            {/* Botones adicionales */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, color: 'var(--c-fg-3)', fontWeight: 600, marginRight: 4 }}>IA</span>
               <button className="btn secondary" disabled={!!aiLoading || !form.marca || !form.modelo}
-                onClick={handleCompletarSpecs}>
-                <Icon name="cog" size={14} />
+                onClick={handleCompletarSpecs} style={{ fontSize: 12 }}>
+                <Icon name="cog" size={13} />
                 {aiLoading === 'specs' ? 'Completando…' : 'Completar specs'}
               </button>
               <button className="btn secondary" disabled={!!aiLoading || !form.marca || !form.modelo}
-                onClick={handleSugerirPrecio}>
-                <Icon name="tag" size={14} />
+                onClick={handleSugerirPrecio} style={{ fontSize: 12 }}>
+                <Icon name="tag" size={13} />
                 {aiLoading === 'precio' ? 'Analizando…' : 'Sugerir precio'}
               </button>
-              <input id="cedula-scan" type="file" accept="image/*" multiple style={{ display: 'none' }}
-                onChange={handleCedulaFiles} />
             </div>
+
+            {/* Mensajes y warnings */}
             {aiMsg && (
               <div className={`banner ${aiMsg.type}`} style={{ marginTop: 10, marginBottom: aiWarnings.length ? 6 : 0 }}>
                 <Icon name={aiMsg.type === 'success' ? 'check' : aiMsg.type === 'warning' ? 'alert' : 'info'} size={16} />
@@ -460,12 +494,55 @@ export default function Ingreso({ onLogout }) {
                 ))}
               </div>
             )}
+
+            {/* Panel de specs técnicas */}
+            {aiSpecs && (
+              <div style={{ marginTop: 12, background: 'var(--c-bg-2)', borderRadius: 'var(--r)', padding: 14, borderLeft: '3px solid var(--c-accent)' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-accent)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: .5 }}>
+                  Especificaciones técnicas — completado por IA
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
+                  {[
+                    ['Potencia', aiSpecs.potencia_hp ? `${aiSpecs.potencia_hp} HP` : null],
+                    ['Torque', aiSpecs.torque_nm ? `${aiSpecs.torque_nm} Nm` : null],
+                    ['Cilindros', aiSpecs.cilindros ? String(aiSpecs.cilindros) : null],
+                    ['Tanque', aiSpecs.tanque_litros ? `${aiSpecs.tanque_litros} L` : null],
+                    ['Peso', aiSpecs.peso_kg ? `${aiSpecs.peso_kg} kg` : null],
+                    ['Refrigeración', aiSpecs.refrigeracion || null],
+                    ['Combustible', aiSpecs.combustible || null],
+                    ['Transmisión', aiSpecs.transmision || null],
+                  ].filter(([, v]) => v).map(([label, value]) => (
+                    <div key={label} style={{ background: 'var(--c-bg)', borderRadius: 'var(--r)', padding: '8px 10px' }}>
+                      <div style={{ fontSize: 11, color: 'var(--c-fg-3)', marginBottom: 2 }}>{label}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+                {aiSpecs.nota && (
+                  <div className="banner info" style={{ marginTop: 10, fontSize: 12 }}>
+                    <Icon name="info" size={14} />{aiSpecs.nota}
+                  </div>
+                )}
+                {aiSpecs.destacado?.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 11, color: 'var(--c-fg-3)', marginBottom: 6 }}>★ Destacado</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {aiSpecs.destacado.map((d, i) => (
+                        <span key={i} style={{ fontSize: 12, background: 'var(--c-accent-tint, rgba(99,102,241,.1))', color: 'var(--c-accent)', borderRadius: 4, padding: '2px 8px' }}>
+                          {d}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         <div className="card" style={{ marginBottom: 20 }}>
           {step === 1
-            ? <Step1 form={form} set={setForm} />
+            ? <Step1 form={form} set={setForm} vendedores={vendedores} />
             : <Step2 files={files} setFiles={setFiles} previews={previews} setPreviews={setPreviews} />
           }
         </div>
