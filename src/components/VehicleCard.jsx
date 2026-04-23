@@ -35,6 +35,9 @@ export default function VehicleCard({ v }) {
               {v.km_hs?.toLocaleString('es-AR')} km
             </span>
           )}
+          {v.en_negociacion && (
+            <span className="badge caution" style={{ fontSize: 10 }}>⚡ En negociación</span>
+          )}
         </div>
         {v.ubicacion && (
           <div className="row" style={{ marginTop: 4 }}>

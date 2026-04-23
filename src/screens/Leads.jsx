@@ -3,7 +3,8 @@ import TopBar from '../components/TopBar'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
 import Icon from '../components/Icon'
-import { getProspectos, createProspecto, updateProspecto, getVehiculos, getVendedores, supabase } from '../lib/supabase'
+import { getProspectos, createProspecto, updateProspecto, getVehiculos, getVendedores, supabase, tomarLead } from '../lib/supabase'
+import { useUser } from '../hooks/useUser'
 
 // ─── Pipeline stages ───────────────────────────────────────────────────────
 const STAGES = ['nuevo', 'en_contacto', 'con_propuesta', 'cerrado', 'perdido']
@@ -114,6 +115,7 @@ function LeadCard({ lead, stageKey, vendedores, onEdit, onMover, onReload }) {
   const idx = stages.indexOf(stageKey)
   const canal = canalDisplay(lead)
   const nombreVendedor = vendedores.find(v => v.id === lead.vendedor_id)?.nombre
+  const user = useUser()
 
   function whatsapp() {
     const tel = (lead.telefono || '').replace(/\D/g, '')
@@ -133,6 +135,16 @@ function LeadCard({ lead, stageKey, vendedores, onEdit, onMover, onReload }) {
     const prev = stages[idx - 1]
     await moverStage(lead.id, prev)
     onReload()
+  }
+
+  async function handleTomarLead() {
+    if (!user?.id) return
+    try {
+      await tomarLead(lead.id, user.id)
+      onReload()
+    } catch (e) {
+      alert(e.message)
+    }
   }
 
   const meta = STAGE_META[stageKey]
@@ -188,6 +200,19 @@ function LeadCard({ lead, stageKey, vendedores, onEdit, onMover, onReload }) {
           📅 {new Date(lead.fecha_proximo_contacto + 'T00:00:00').toLocaleDateString('es-AR')}
         </div>
       )}
+
+      {/* Tomar lead */}
+      <div style={{ marginTop: 6 }}>
+        {!lead.tomado_por ? (
+          <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={handleTomarLead}>
+            🙋 Tomar lead
+          </button>
+        ) : lead.tomado_por === user?.id ? (
+          <span style={{ fontSize: 11, color: 'var(--c-accent)' }}>✓ Tuyo</span>
+        ) : (
+          <span style={{ fontSize: 11, color: 'var(--c-fg-3)' }}>Tomado por otro</span>
+        )}
+      </div>
 
       {/* Acciones */}
       <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>

@@ -5,7 +5,8 @@ import StateBadge, { UBICACION_META, RECON_META } from '../components/StateBadge
 import Icon from '../components/Icon'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
-import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry } from '../lib/supabase'
+import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores } from '../lib/supabase'
+import { useUser } from '../hooks/useUser'
 import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 import { useTc } from '../hooks/useTc'
 
@@ -150,8 +151,30 @@ function Galeria({ fotos }) {
 }
 
 // ── Card Precio (panel derecho) ───────────────────────────────
-function CardPrecio({ v, tc, onVenta, onSena }) {
+function CardPrecio({ v, tc, onVenta, onSena, user, vendedores, onNegociacionChange }) {
   const precioARS = v.precio_base ? (v.precio_base * tc).toLocaleString('es-AR') : '—'
+  const rol = user?.rol || 'externo'
+  const puedeNegociar = rol === 'vendedor' || rol === 'dueno'
+
+  const nombreNegociador = v.negociacion_vendedor_id
+    ? (vendedores || []).find(vend => vend.id === v.negociacion_vendedor_id)?.nombre || 'otro vendedor'
+    : null
+
+  async function handleIniciar() {
+    if (!user?.id) return
+    try {
+      await iniciarNegociacion(v.id, user.id)
+      onNegociacionChange?.()
+    } catch (e) { console.error(e) }
+  }
+
+  async function handleLiberar() {
+    try {
+      await liberarNegociacion(v.id)
+      onNegociacionChange?.()
+    } catch (e) { console.error(e) }
+  }
+
   return (
     <div className="card" style={{ padding: 16 }}>
       <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--c-fg-3)', marginBottom: 8 }}>
@@ -170,6 +193,24 @@ function CardPrecio({ v, tc, onVenta, onSena }) {
         <button className="btn secondary" style={{ width: '100%' }} onClick={onSena}>
           Marcar como señado
         </button>
+
+        {puedeNegociar && (
+          <>
+            {!v.en_negociacion ? (
+              <button className="btn ghost" style={{ width: '100%', fontSize: 13 }} onClick={handleIniciar}>
+                ⚡ Iniciar negociación
+              </button>
+            ) : v.negociacion_vendedor_id === user?.id ? (
+              <button className="btn ghost" style={{ width: '100%', fontSize: 13, color: '#F5A623' }} onClick={handleLiberar}>
+                🔓 Liberar negociación
+              </button>
+            ) : (
+              <div style={{ fontSize: 12, color: '#F5A623', textAlign: 'center', padding: '6px 0' }}>
+                ⚡ En negociación por {nombreNegociador}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   )
@@ -209,6 +250,7 @@ export default function Detalle({ onLogout }) {
   const { id }   = useParams()
   const navigate = useNavigate()
   const TC       = useTc()
+  const user     = useUser()
 
   const [data, setData]     = useState(null)
   const [tab, setTab]       = useState('info')
@@ -258,14 +300,21 @@ export default function Detalle({ onLogout }) {
   // panel derecho: modal de reserva desde botón señado
   const [showSideReservaModal, setShowSideReservaModal] = useState(false)
 
+  const [vendedores, setVendedores] = useState([])
+
+  function reloadVehiculo() {
+    getVehiculo(id).then(setData)
+  }
+
   useEffect(() => {
     Promise.all([
       getVehiculo(id),
       getGastosByVehiculo(id),
       getReservasByVehiculo(id),
       getDocumentacion(id),
-    ]).then(([d, g, r, doc]) => {
-      setData(d); setGastos(g); setReservas(r)
+      getVendedores(),
+    ]).then(([d, g, r, doc, vends]) => {
+      setData(d); setGastos(g); setReservas(r); setVendedores(vends || [])
       const docData = doc || {}
       setDocs(docData)
       setDocsForm(docData)
@@ -460,7 +509,18 @@ export default function Detalle({ onLogout }) {
 
         <div className="page-head">
           <div>
-            <h1 className="page-title">{v.marca} {v.modelo} {v.anio}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <h1 className="page-title">{v.marca} {v.modelo} {v.anio}</h1>
+              {v.en_negociacion && (
+                <span style={{
+                  background: 'rgba(245,166,35,0.15)', color: '#F5A623',
+                  border: '1px solid rgba(245,166,35,0.3)',
+                  borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 600,
+                }}>
+                  ⚡ En negociación
+                </span>
+              )}
+            </div>
             <p className="page-caption">
               {v.version && <>Versión: <strong style={{ color: 'var(--c-fg)' }}>{v.version}</strong> · </>}
               Stock <strong style={{ color: 'var(--c-fg)', fontFamily: 'var(--mono)' }}>#{v.id}</strong>
@@ -712,6 +772,9 @@ export default function Detalle({ onLogout }) {
                 tc={TC}
                 onVenta={() => { setReservaForm(EMPTY_RESERVA); setShowSideReservaModal(true) }}
                 onSena={() => { setReservaForm(EMPTY_RESERVA); setShowSideReservaModal(true) }}
+                user={user}
+                vendedores={vendedores}
+                onNegociacionChange={reloadVehiculo}
               />
               <CardSpecs v={v} />
               {reservas.length > 0 && (
