@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 const FALLBACK_TC   = 1415
-const WA_NUMBER     = '5491100000000'   // ← reemplazar con el número real de GH Cars
+const WA_NUMBER     = '5491100000000'   // TODO: reemplazar con el número real de GH Cars (ej: 5491155667788)
 
 async function fetchTc() {
   try {

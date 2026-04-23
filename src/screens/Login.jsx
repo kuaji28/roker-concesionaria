@@ -49,7 +49,7 @@ export default function Login({ onLogin }) {
               <input
                 className="input"
                 type="text"
-                placeholder="Roker, Gustavo, Juan…"
+                placeholder="Gustavo, Juan, María…"
                 value={nombre}
                 onChange={e => setNombre(e.target.value)}
                 autoFocus
