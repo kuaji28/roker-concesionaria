@@ -9,6 +9,7 @@ const NAV = [
   { to: '/ventas',    icon: 'cash',      label: 'Ventas' },
   { to: '/leads',     icon: 'users',     label: 'Leads' },
   { to: '/clientes',  icon: 'briefcase', label: 'Clientes' },
+  { to: '/agenda',    icon: 'cal',       label: 'Agenda' },
   { to: '/reportes',  icon: 'chart',     label: 'Reportes' },
 ]
 const NAV_ADMIN = [

@@ -361,6 +361,9 @@ export default function Detalle({ onLogout }) {
               <Icon name="tag" size={14} />{tasLoading ? 'Tasando…' : 'Tasación'}
             </button>
           </>}
+          <button className="btn secondary" onClick={() => navigate(`/agenda?vehiculo_id=${v.id}`)}>
+            <Icon name="cal" size={14} />Prueba de manejo
+          </button>
           <button className="btn primary" onClick={openEdit}><Icon name="edit" size={14} />Editar</button>
         </div>
 
