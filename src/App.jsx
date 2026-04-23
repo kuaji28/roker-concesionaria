@@ -59,7 +59,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />} />
         <Route
           path="*"
           element={<ProtectedRoute isAuth={auth} element={<AppShell onLogout={handleLogout} />} />}
