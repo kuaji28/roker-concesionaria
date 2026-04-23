@@ -6,10 +6,41 @@ import FormField from '../components/FormField'
 import { createVehiculo, uploadFoto } from '../lib/supabase'
 import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 
-const TIPOS  = ['auto', 'moto', 'cuatriciclo', 'moto_de_agua']
+const TIPOS   = ['auto', 'moto', 'cuatriciclo', 'moto_de_agua']
 const ESTADOS = ['disponible', 'en_revision', 'en_preparacion']
-const COMB   = ['Nafta', 'Diésel', 'GNC', 'Híbrido', 'Eléctrico']
-const TRANS  = ['Manual', 'Automática', 'CVT', 'Semi-automática']
+const COMB    = ['Nafta', 'Diésel', 'GNC', 'Híbrido', 'Eléctrico']
+const TRANS   = ['Manual', 'Automática', 'CVT', 'Semi-automática']
+
+const CARROCERIA_TIPO_MAP = {
+  sedan: 'auto', sedán: 'auto', hatchback: 'auto', suv: 'auto', pickup: 'auto',
+  'pick-up': 'auto', coupe: 'auto', coupé: 'auto', minivan: 'auto', van: 'auto',
+  rural: 'auto', cabrio: 'auto', convertible: 'auto', auto: 'auto',
+  automóvil: 'auto', automovil: 'auto', furgon: 'auto', furgón: 'auto',
+  berlina: 'auto', roadster: 'auto',
+  moto: 'moto', motocicleta: 'moto', scooter: 'moto', enduro: 'moto', trial: 'moto',
+  cuatriciclo: 'cuatriciclo', atv: 'cuatriciclo', quad: 'cuatriciclo',
+  'moto de agua': 'moto_de_agua', 'jet ski': 'moto_de_agua', jetski: 'moto_de_agua',
+  motonaútica: 'moto_de_agua', motonauta: 'moto_de_agua',
+}
+
+function carroceriaToTipo(carroceria) {
+  if (!carroceria) return null
+  return CARROCERIA_TIPO_MAP[carroceria.toLowerCase().trim()] || null
+}
+
+function validatePatente(pat) {
+  const p = (pat || '').toUpperCase().replace(/\s/g, '')
+  return /^[A-Z]{2}\d{3}[A-Z]{2}$/.test(p) || /^[A-Z]{3}\d{3}$/.test(p)
+}
+
+function parseFechaDMY(str) {
+  if (!str) return null
+  const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1])
+  const iso = str.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})$/)
+  if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3])
+  return null
+}
 
 function Step1({ form, set }) {
   const f = (k) => (e) => set(p => ({ ...p, [k]: e.target.value }))
@@ -143,12 +174,13 @@ function Step2({ files, setFiles, previews, setPreviews }) {
 
 export default function Ingreso({ onLogout }) {
   const navigate = useNavigate()
-  const [step, setStep]       = useState(1)
-  const [saving, setSaving]   = useState(false)
-  const [error, setError]     = useState('')
+  const [step, setStep]         = useState(1)
+  const [saving, setSaving]     = useState(false)
+  const [error, setError]       = useState('')
   const [aiLoading, setAiLoading] = useState('')
-  const [aiMsg, setAiMsg]     = useState(null)
-  const [files, setFiles]     = useState([])
+  const [aiMsg, setAiMsg]       = useState(null)
+  const [aiWarnings, setAiWarnings] = useState([])
+  const [files, setFiles]       = useState([])
   const [previews, setPreviews] = useState([])
   const [form, setForm] = useState({
     tipo: 'auto', marca: '', modelo: '', anio: '', version: '',
@@ -157,24 +189,105 @@ export default function Ingreso({ onLogout }) {
     nro_motor: '', nro_chasis: '', notas_internas: '', estado: 'disponible',
   })
 
+  async function _completarSpecs(marca, modelo, anio, version, nro_motor, nro_chasis) {
+    if (!marca || !modelo || !anio) return null
+    const specs = await callAI('/ai/completar-specs', {
+      marca, modelo, anio: Number(anio), version, nro_motor, nro_chasis,
+    })
+    setForm(p => ({
+      ...p,
+      combustible: specs.combustible || p.combustible,
+      transmision: specs.transmision || p.transmision,
+    }))
+    return specs
+  }
+
   async function handleCedulaFiles(e) {
     const fls = Array.from(e.target.files)
     if (!fls.length) return
-    setAiLoading('cedula'); setAiMsg(null)
+    setAiLoading('cedula'); setAiMsg(null); setAiWarnings([])
     try {
       const data = await callAIFiles('/ai/ocr-cedula', fls)
-      setForm(p => ({
-        ...p,
-        marca: data.marca || p.marca,
-        modelo: data.modelo || p.modelo,
-        anio: data.anio ? String(data.anio) : p.anio,
-        version: data.version || p.version,
-        patente: data.patente || p.patente,
-        color: data.color || p.color,
-        nro_motor: data.nro_motor || p.nro_motor,
-        nro_chasis: data.nro_chasis || p.nro_chasis,
-      }))
-      setAiMsg({ type: 'success', text: `Cédula leída${data.confianza_general === 'baja' ? ' (confianza baja — verificar)' : '. Datos autocargados.'}` })
+      const warnings = []
+
+      // Map carrocería → tipo de vehículo
+      const tipoDetectado = carroceriaToTipo(data.carroceria)
+
+      // Validate año
+      const anioNum = data.anio ? Number(data.anio) : null
+      const anioValido = anioNum && anioNum >= 1960 && anioNum <= 2030
+      if (data.anio && !anioValido) {
+        warnings.push(`Año detectado fuera de rango (${data.anio}) — verificar`)
+      }
+
+      // Validate patente
+      const patenteVal = data.patente || ''
+      if (patenteVal && !validatePatente(patenteVal)) {
+        warnings.push(`Patente con formato inusual (${patenteVal}) — verificar`)
+      }
+
+      // Check vencimiento cédula
+      if (data.vencimiento_cedula) {
+        const venc = parseFechaDMY(data.vencimiento_cedula)
+        if (venc && venc < new Date()) {
+          warnings.push(`⚠️ Cédula VENCIDA el ${data.vencimiento_cedula} — verificar documentación`)
+        }
+      }
+
+      // campos_dudosos
+      if (data.campos_dudosos?.length) {
+        warnings.push(`Campos a verificar: ${data.campos_dudosos.join(', ')}`)
+      }
+
+      // Build notas extras from titular, DNI, fechas
+      const notasExtras = []
+      if (data.titular) notasExtras.push(`Titular: ${data.titular}`)
+      if (data.dni_titular) notasExtras.push(`DNI: ${data.dni_titular}`)
+      if (data.fecha_inscripcion) notasExtras.push(`Inscripción: ${data.fecha_inscripcion}`)
+      if (data.vencimiento_cedula) notasExtras.push(`Venc. cédula: ${data.vencimiento_cedula}`)
+
+      setForm(p => {
+        const notasAdd = notasExtras.length
+          ? (p.notas_internas ? p.notas_internas + '\n' : '') + notasExtras.join(' | ')
+          : p.notas_internas
+        return {
+          ...p,
+          tipo: tipoDetectado || p.tipo,
+          marca: data.marca || p.marca,
+          modelo: data.modelo || p.modelo,
+          anio: anioValido ? String(data.anio) : p.anio,
+          version: data.version || p.version,
+          patente: patenteVal || p.patente,
+          color: data.color || p.color,
+          nro_motor: data.nro_motor || p.nro_motor,
+          nro_chasis: data.nro_chasis || p.nro_chasis,
+          notas_internas: notasAdd,
+        }
+      })
+
+      setAiWarnings(warnings)
+
+      const confBaja = data.confianza_general === 'baja'
+      if (confBaja) {
+        setAiMsg({ type: 'warning', text: 'Cédula leída con confianza baja — revisar todos los campos antes de continuar.' })
+      } else {
+        // Auto-run completar-specs after successful OCR
+        setAiLoading('specs')
+        let specsMsg = ''
+        try {
+          const specs = await _completarSpecs(
+            data.marca, data.modelo, data.anio,
+            data.version || '', data.nro_motor || '', data.nro_chasis || ''
+          )
+          if (specs) {
+            specsMsg = ` · Specs: ${specs.combustible || '—'} / ${specs.transmision || '—'}`
+          }
+        } catch { /* specs failure is non-blocking */ }
+        setAiMsg({
+          type: 'success',
+          text: `Cédula leída. Datos autocargados.${tipoDetectado ? ` Tipo: ${tipoDetectado}.` : ''}${specsMsg}`,
+        })
+      }
     } catch (err) {
       setAiMsg({ type: 'warning', text: 'Error IA: ' + err.message })
     } finally { setAiLoading(''); e.target.value = '' }
@@ -184,16 +297,12 @@ export default function Ingreso({ onLogout }) {
     if (!form.marca || !form.modelo || !form.anio) return
     setAiLoading('specs'); setAiMsg(null)
     try {
-      const specs = await callAI('/ai/completar-specs', {
-        marca: form.marca, modelo: form.modelo, anio: Number(form.anio),
-        version: form.version, nro_motor: form.nro_motor, nro_chasis: form.nro_chasis,
-      })
-      setForm(p => ({
-        ...p,
-        combustible: specs.combustible || p.combustible,
-        transmision: specs.transmision || p.transmision,
-      }))
-      setAiMsg({ type: 'success', text: `Specs completadas. Combustible: ${specs.combustible || '—'} · Trans: ${specs.transmision || '—'} · ${specs.potencia_hp || '?'} HP` })
+      const specs = await _completarSpecs(
+        form.marca, form.modelo, form.anio, form.version, form.nro_motor, form.nro_chasis
+      )
+      if (specs) {
+        setAiMsg({ type: 'success', text: `Specs completadas. Combustible: ${specs.combustible || '—'} · Trans: ${specs.transmision || '—'} · ${specs.potencia_hp || '?'} HP` })
+      }
     } catch (err) {
       setAiMsg({ type: 'warning', text: 'Error IA: ' + err.message })
     } finally { setAiLoading('') }
@@ -275,7 +384,7 @@ export default function Ingreso({ onLogout }) {
               <button className="btn secondary" disabled={!!aiLoading}
                 onClick={() => document.getElementById('cedula-scan').click()}>
                 <Icon name="image" size={14} />
-                {aiLoading === 'cedula' ? 'Escaneando…' : 'Escanear cédula verde'}
+                {aiLoading === 'cedula' ? 'Escaneando…' : aiLoading === 'specs' ? 'Completando specs…' : 'Escanear cédula verde'}
               </button>
               <button className="btn secondary" disabled={!!aiLoading || !form.marca || !form.modelo || !form.anio}
                 onClick={handleCompletarSpecs}>
@@ -291,9 +400,18 @@ export default function Ingreso({ onLogout }) {
                 onChange={handleCedulaFiles} />
             </div>
             {aiMsg && (
-              <div className={`banner ${aiMsg.type}`} style={{ marginTop: 10, marginBottom: 0 }}>
+              <div className={`banner ${aiMsg.type}`} style={{ marginTop: 10, marginBottom: aiWarnings.length ? 6 : 0 }}>
                 <Icon name={aiMsg.type === 'success' ? 'check' : aiMsg.type === 'warning' ? 'alert' : 'info'} size={16} />
                 {aiMsg.text}
+              </div>
+            )}
+            {aiWarnings.length > 0 && (
+              <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {aiWarnings.map((w, i) => (
+                  <div key={i} className="banner warning" style={{ marginBottom: 0, fontSize: 12 }}>
+                    <Icon name="alert" size={14} />{w}
+                  </div>
+                ))}
               </div>
             )}
           </div>
