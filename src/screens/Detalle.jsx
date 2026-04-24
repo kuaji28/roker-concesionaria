@@ -13,6 +13,7 @@ import { useUser } from '../hooks/useUser'
 import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 import { useTc } from '../hooks/useTc'
 import WhatsAppIcon from '../components/WhatsAppIcon'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 // ── Publicar helpers ──────────────────────────────────────────
 export function generateChipsFromSpecs(specs = {}) {
@@ -343,6 +344,7 @@ export default function Detalle({ onLogout }) {
   const navigate = useNavigate()
   const TC       = useTc()
   const user     = useUser()
+  const isMobile = useIsMobile()
 
   const [data, setData]     = useState(null)
   const [tab, setTab]       = useState('info')
@@ -745,9 +747,9 @@ export default function Detalle({ onLogout }) {
           ))}
         </div>
 
-        {/* ── LAYOUT 2 COLUMNAS — tabs info y fotos ── */}
+        {/* ── LAYOUT 2 COLUMNAS (desktop) / 1 COLUMNA (mobile) ── */}
         {(tab === 'info' || tab === 'fotos') && (
-          <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 24, alignItems: 'flex-start' }}>
 
             {/* Columna principal */}
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -977,8 +979,8 @@ export default function Detalle({ onLogout }) {
               )}
             </div>
 
-            {/* Panel derecho fijo — 340px */}
-            <div style={{ width: 340, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Panel derecho — 340px en desktop, full width en mobile */}
+            <div style={{ width: isMobile ? '100%' : 340, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <CardPrecio
                 v={v}
                 tc={TC}
