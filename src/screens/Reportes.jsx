@@ -33,7 +33,7 @@ export default function Reportes({ onLogout }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getReportes().then(d => { setData(d); setLoading(false) })
+    getReportes().then(d => { setData(d ?? null); setLoading(false) }).catch(() => setLoading(false))
   }, [])
 
   return (
@@ -50,21 +50,24 @@ export default function Reportes({ onLogout }) {
         {loading ? (
           <p style={{ color: 'var(--c-fg-2)' }}>Cargando…</p>
         ) : (
+          {!data ? (
+            <div className="banner info"><Icon name="info" size={16} />No se pudieron cargar los datos del reporte.</div>
+          ) : (
           <>
             <h2 className="section-title">Resumen del mes</h2>
             <div className="metric-grid">
-              <MetricCard label="Ventas del mes"    icon="cash"  value={data.ventasMes}   tone="g" sub="vehículos vendidos" />
-              <MetricCard label="Ingreso USD"        icon="chart" value={`USD ${data.ingresoUSD.toLocaleString('es-AR')}`} tone="g" />
-              <MetricCard label="Stock disponible"   icon="car"   value={`USD ${data.stockUSD.toLocaleString('es-AR')}`}   tone="b" sub="valor en stock" />
-              <MetricCard label="Ingresos al stock"  icon="plus"  value={data.ingresosMes} sub="este mes" />
-              <MetricCard label="Leads nuevos"       icon="users" value={data.leadsNuevos} tone="o" />
+              <MetricCard label="Ventas del mes"    icon="cash"  value={data.ventasMes ?? '—'}   tone="g" sub="vehículos vendidos" />
+              <MetricCard label="Ingreso USD"        icon="chart" value={`USD ${(data.ingresoUSD ?? 0).toLocaleString('es-AR')}`} tone="g" />
+              <MetricCard label="Stock disponible"   icon="car"   value={`USD ${(data.stockUSD ?? 0).toLocaleString('es-AR')}`}   tone="b" sub="valor en stock" />
+              <MetricCard label="Ingresos al stock"  icon="plus"  value={data.ingresosMes ?? '—'} sub="este mes" />
+              <MetricCard label="Leads nuevos"       icon="users" value={data.leadsNuevos ?? '—'} tone="o" />
             </div>
 
             <h2 className="section-title" style={{ marginTop: 28 }}>Ventas últimos 6 meses</h2>
             <div className="card">
-              <BarChart bars={data.bars} />
+              <BarChart bars={data.bars ?? []} />
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
-                {data.bars.map((b, i) => (
+                {(data.bars ?? []).map((b, i) => (
                   <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: 10, color: 'var(--c-fg-3)', fontFamily: 'var(--mono)' }}>
                     {b.total > 0 && `USD ${b.total.toLocaleString('es-AR')}`}
                   </div>
@@ -72,6 +75,7 @@ export default function Reportes({ onLogout }) {
               </div>
             </div>
           </>
+          )}
         )}
       </div>
     </div>

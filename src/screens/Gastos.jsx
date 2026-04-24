@@ -3,7 +3,7 @@ import TopBar from '../components/TopBar'
 import Icon from '../components/Icon'
 import FormField from '../components/FormField'
 import Modal from '../components/Modal'
-import { getGastosGlobal, getVehiculosConCostos, getVentas, createGasto, updateVehiculoGastos } from '../lib/supabase'
+import { getGastosGlobal, getVehiculosConCostos, getVentas, createGasto } from '../lib/supabase'
 import { useTc } from '../hooks/useTc'
 
 const TIPOS_GASTO = {
@@ -58,8 +58,8 @@ export default function Gastos({ onLogout }) {
     const costoCompra = v.costo_compra || v.precio_base || 0
     const costoTotal  = costoCompra + gastosUSD
     const vta         = ventasIdx[v.id]
-    const precioVenta = vta ? Number(vta.precio_final || 0) : (v.precio_base || 0)
-    const margenUSD   = precioVenta && costoTotal ? precioVenta - costoTotal : null
+    const precioVenta = vta ? Number(vta.precio_final || 0) : null
+    const margenUSD   = vta && precioVenta && costoTotal ? precioVenta - costoTotal : null
     const margenPct   = margenUSD !== null && costoTotal > 0 ? (margenUSD / costoTotal) * 100 : null
     return { v, gastosUSD, costoCompra, costoTotal, precioVenta, margenUSD, margenPct, tieneVenta: !!vta }
   })
@@ -180,7 +180,12 @@ export default function Gastos({ onLogout }) {
                       </div>
                       <div>
                         <div style={{ fontSize: 11, color: 'var(--c-fg-2)' }}>Precio venta</div>
-                        <div style={{ fontSize: 13 }}>{precioVenta ? `USD ${precioVenta.toLocaleString('es-AR')}` : '—'}</div>
+                        <div style={{ fontSize: 13 }}>
+                          {precioVenta
+                            ? `USD ${precioVenta.toLocaleString('es-AR')}`
+                            : <span style={{ color: 'var(--c-fg-3)', fontStyle: 'italic' }}>A la venta</span>
+                          }
+                        </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 11, color: 'var(--c-fg-2)' }}>Margen</div>

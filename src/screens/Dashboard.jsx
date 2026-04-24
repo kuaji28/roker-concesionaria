@@ -4,7 +4,8 @@ import TopBar from '../components/TopBar'
 import MetricCard from '../components/MetricCard'
 import Icon from '../components/Icon'
 import AlertasWidget from '../components/AlertasWidget'
-import { getStats, getVehiculos } from '../lib/supabase'
+import { getStats, getVehiculos, getVentas } from '../lib/supabase'
+import { useTc } from '../hooks/useTc'
 
 function QuickAction({ icon, title, desc, cta, to }) {
   const navigate = useNavigate()
@@ -20,13 +21,21 @@ function QuickAction({ icon, title, desc, cta, to }) {
 
 export default function Dashboard({ onLogout }) {
   const navigate = useNavigate()
+  const TC = useTc()
   const [stats, setStats] = useState(null)
   const [vehiculos, setVehiculos] = useState([])
+  const [ventasMes, setVentasMes] = useState(null)
   const today = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   useEffect(() => {
     getStats().then(setStats)
     getVehiculos().then(data => setVehiculos(data || []))
+    getVentas().then(ventas => {
+      const now = new Date()
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+      const count = (ventas || []).filter(v => v.fecha_venta >= firstDay).length
+      setVentasMes(count)
+    }).catch(() => setVentasMes(null))
   }, [])
 
   return (
@@ -38,7 +47,7 @@ export default function Dashboard({ onLogout }) {
             <h1 className="page-title">Dashboard</h1>
             <p className="page-caption" style={{ textTransform: 'capitalize' }}>
               {today} · Tipo de cambio{' '}
-              <strong style={{ color: 'var(--c-fg)' }}>$ 1.415</strong> ARS/USD
+              <strong style={{ color: 'var(--c-fg)' }}>$ {TC ? TC.toLocaleString('es-AR') : '…'}</strong> ARS/USD
             </p>
           </div>
         </div>
@@ -50,7 +59,7 @@ export default function Dashboard({ onLogout }) {
           <MetricCard label="Señados"                      value={stats?.seniado     ?? '—'} tone="o" sub="reservados" onClick={() => navigate('/catalogo?estado=señado')} />
           <MetricCard label="En revisión"     icon="eye"   value={stats?.en_revision ?? '—'} tone="b"              onClick={() => navigate('/catalogo?estado=en_revision')} />
           <MetricCard label="Vendidos"                     value={stats?.vendido     ?? '—'} tone="r"              onClick={() => navigate('/catalogo?estado=vendido')} />
-          <MetricCard label="Ventas del mes"  icon="cash"  value="—"                         sub="ver reportes"    onClick={() => navigate('/reportes')} />
+          <MetricCard label="Ventas del mes"  icon="cash"  value={ventasMes !== null ? ventasMes : '—'} sub="este mes"       onClick={() => navigate('/reportes')} />
         </div>
 
         <h2 className="section-title">Vencimientos</h2>

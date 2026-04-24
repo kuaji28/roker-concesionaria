@@ -56,69 +56,69 @@ export default function Gerente({ onLogout }) {
           </div>
         </div>
 
-        {ranking.length > 0 && (
-          <>
-            <h2 className="section-title" style={{ marginTop: 28 }}>Ranking vendedores</h2>
-            <table className="rank">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Vendedor</th>
-                  <th className="num">Ventas</th>
-                  <th className="num">Volumen USD</th>
-                  <th style={{ width: 140 }}>Progreso</th>
+        <h2 className="section-title" style={{ marginTop: 28 }}>Ranking vendedores</h2>
+        {ranking.length > 0 ? (
+          <table className="rank">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Vendedor</th>
+                <th className="num">Ventas</th>
+                <th className="num">Volumen USD</th>
+                <th style={{ width: 140 }}>Progreso</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranking.map((v, i) => (
+                <tr key={v.id}>
+                  <td><strong>{i + 1}</strong></td>
+                  <td><strong>{v.nombre}</strong></td>
+                  <td className="num">{v.total}</td>
+                  <td className="num">USD {v.volumen.toLocaleString('es-AR')}</td>
+                  <td>
+                    <div className="bar-wrap">
+                      <div className="bar-fill" style={{ width: `${(v.total / ranking[0].total) * 100}%` }} />
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {ranking.map((v, i) => (
-                  <tr key={v.id}>
-                    <td><strong>{i + 1}</strong></td>
-                    <td><strong>{v.nombre}</strong></td>
-                    <td className="num">{v.total}</td>
-                    <td className="num">USD {v.volumen.toLocaleString('es-AR')}</td>
-                    <td>
-                      <div className="bar-wrap">
-                        <div className="bar-fill" style={{ width: `${(v.total / ranking[0].total) * 100}%` }} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="card" style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--c-fg-2)' }}>
+            <Icon name="users" size={28} style={{ stroke: 'var(--c-fg-3)', marginBottom: 8 }} />
+            <div style={{ marginTop: 8, fontSize: 13 }}>Todavía no hay ventas registradas para mostrar el ranking.</div>
+          </div>
         )}
 
-        {recentVentas.length > 0 && (
-          <>
-            <h2 className="section-title" style={{ marginTop: 28 }}>Últimas ventas</h2>
-            <table className="rank">
-              <thead>
-                <tr>
-                  <th>Vehículo</th>
-                  <th>Comprador</th>
-                  <th>Vendedor</th>
-                  <th className="num">Precio</th>
-                  <th>Fecha</th>
+        <h2 className="section-title" style={{ marginTop: 28 }}>Últimas ventas</h2>
+        {recentVentas.length > 0 ? (
+          <table className="rank">
+            <thead>
+              <tr>
+                <th>Vehículo</th>
+                <th>Comprador</th>
+                <th>Vendedor</th>
+                <th className="num">Precio</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentVentas.map(v => (
+                <tr key={v.id}>
+                  <td><strong>{v.vehiculos?.marca} {v.vehiculos?.modelo} {v.vehiculos?.anio}</strong></td>
+                  <td>{v.comprador_nombre || '—'}</td>
+                  <td>{v.vendedores?.nombre || '—'}</td>
+                  <td className="num">{v.moneda_precio || 'USD'} {Number(v.precio_final).toLocaleString('es-AR')}</td>
+                  <td style={{ color: 'var(--c-fg-2)', fontSize: 12 }}>{v.fecha_venta}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {recentVentas.map(v => (
-                  <tr key={v.id}>
-                    <td><strong>{v.vehiculos?.marca} {v.vehiculos?.modelo} {v.vehiculos?.anio}</strong></td>
-                    <td>{v.comprador_nombre || '—'}</td>
-                    <td>{v.vendedores?.nombre || '—'}</td>
-                    <td className="num">{v.moneda_precio || 'USD'} {Number(v.precio_final).toLocaleString('es-AR')}</td>
-                    <td style={{ color: 'var(--c-fg-2)', fontSize: 12 }}>{v.fecha_venta}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
-
-        {ranking.length === 0 && recentVentas.length === 0 && (
-          <div className="banner info" style={{ marginTop: 16 }}>
-            <Icon name="info" size={16} />No hay ventas registradas todavía.
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="card" style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--c-fg-2)' }}>
+            <Icon name="cash" size={28} style={{ stroke: 'var(--c-fg-3)', marginBottom: 8 }} />
+            <div style={{ marginTop: 8, fontSize: 13 }}>Todavía no hay ventas registradas.</div>
           </div>
         )}
       </div>

@@ -194,7 +194,7 @@ export default function Mejoras({ onLogout }) {
         </div>
 
         {/* Intro */}
-        <div className="card" style={{ padding: '16px 20px', marginBottom: 24, background: 'var(--c-accent)10', borderLeft: '4px solid var(--c-accent)' }}>
+        <div className="card" style={{ padding: '16px 20px', marginBottom: 24, background: 'rgba(99, 102, 241, 0.08)', borderLeft: '4px solid var(--c-accent)' }}>
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: 'var(--c-fg-1)' }}>
             Esta lista muestra todo lo que se puede agregar al sistema. Cada función es independiente: se puede incorporar una a la vez según prioridades y presupuesto.
             Si alguna te interesa, avisanos y la incluimos en el siguiente desarrollo.

@@ -58,7 +58,7 @@ export async function getStats() {
 export async function getVehiculos({ estado, tipo, search } = {}) {
   let q = supabase
     .from('vehiculos')
-    .select('id,tipo,marca,modelo,anio,version,km_hs,precio_base,estado,patente,color,combustible,transmision,en_negociacion,negociacion_vendedor_id')
+    .select('id,tipo,marca,modelo,anio,version,km_hs,precio_base,precio_lista,estado,patente,color,combustible,transmision,en_negociacion,negociacion_vendedor_id')
     .order('created_at', { ascending: false })
 
   if (estado && estado !== 'todos') q = q.eq('estado', estado)
