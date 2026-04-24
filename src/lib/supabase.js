@@ -66,7 +66,25 @@ export async function getVehiculos({ estado, tipo, search } = {}) {
   if (search) q = q.or(`marca.ilike.%${search}%,modelo.ilike.%${search}%,patente.ilike.%${search}%`)
 
   const { data } = await q
-  return data || []
+  const vehicles = data || []
+
+  // Fetch cover photo for each vehicle in one batch query
+  if (vehicles.length > 0) {
+    const ids = vehicles.map(v => v.id)
+    const { data: covers } = await supabase
+      .from('medias')
+      .select('vehiculo_id, url')
+      .in('vehiculo_id', ids)
+      .eq('tipo', 'foto')
+      .order('orden', { ascending: true })
+    const coverMap = {}
+    for (const m of (covers || [])) {
+      if (!coverMap[m.vehiculo_id]) coverMap[m.vehiculo_id] = m.url
+    }
+    return vehicles.map(v => ({ ...v, foto_url: coverMap[v.id] || null }))
+  }
+
+  return vehicles
 }
 
 export async function getVehiculo(id) {
