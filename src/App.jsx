@@ -4,24 +4,25 @@ import Sidebar from './components/Sidebar'
 import Icon from './components/Icon'
 import { useIsMobile } from './hooks/useIsMobile'
 
+function BottomNavItem({ to, icon, label, end }) {
+  return (
+    <NavLink to={to} end={end} className={({ isActive }) => 'bn-item' + (isActive ? ' bn-on' : '')}>
+      <span className="bn-icon"><Icon name={icon} size={22} /></span>
+      <span className="bn-label">{label}</span>
+    </NavLink>
+  )
+}
+
 function BottomNav() {
   return (
     <nav className="bottom-nav">
-      <NavLink to="/" end className={({ isActive }) => isActive ? 'on' : ''}>
-        <Icon name="home" size={20} /><span>Inicio</span>
+      <BottomNavItem to="/"        icon="home"    label="Inicio"    end />
+      <BottomNavItem to="/catalogo" icon="car"    label="Catálogo" />
+      <NavLink to="/ingreso" className="bn-fab" title="Ingresar vehículo">
+        <Icon name="plus" size={26} />
       </NavLink>
-      <NavLink to="/catalogo" className={({ isActive }) => isActive ? 'on' : ''}>
-        <Icon name="car" size={20} /><span>Stock</span>
-      </NavLink>
-      <NavLink to="/leads" className={({ isActive }) => isActive ? 'on' : ''}>
-        <Icon name="users" size={20} /><span>Leads</span>
-      </NavLink>
-      <NavLink to="/agenda" className={({ isActive }) => isActive ? 'on' : ''}>
-        <Icon name="cal" size={20} /><span>Agenda</span>
-      </NavLink>
-      <NavLink to="/ventas" className={({ isActive }) => isActive ? 'on' : ''}>
-        <Icon name="cash" size={20} /><span>Ventas</span>
-      </NavLink>
+      <BottomNavItem to="/leads"   icon="users"   label="Leads" />
+      <BottomNavItem to="/reportes" icon="chart"  label="Reportes" />
     </nav>
   )
 }
@@ -61,7 +62,7 @@ function AppShell({ onLogout, user }) {
     <TcContext.Provider value={tc}>
     <div className={isMobile ? undefined : 'app'} style={isMobile ? { minHeight: '100vh' } : undefined}>
       <Sidebar tc={tc} />
-      <div style={{ minWidth: 0, flex: 1, paddingTop: isMobile ? 52 : 0 }}>
+      <div style={{ minWidth: 0, flex: 1, paddingTop: isMobile ? 52 : 0, paddingBottom: isMobile ? 72 : 0 }}>
         {isMobile && <BottomNav />}
         <Routes>
           <Route path="/"             element={<Dashboard   onLogout={onLogout} />} />
