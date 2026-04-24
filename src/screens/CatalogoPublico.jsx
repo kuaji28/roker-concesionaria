@@ -87,7 +87,13 @@ function CardPublica({ v, foto, tc, waNumber }) {
       <div style={{ aspectRatio: '4/3', background: 'var(--c-card-2)', overflow: 'hidden', flexShrink: 0 }}>
         {foto
           ? <img src={foto} alt={`${v.marca} ${v.modelo}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--c-fg-3)', fontSize: 40 }}>🚗</div>
+          : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="var(--c-border)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
+                <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
+                <path d="M5 9h14"/>
+              </svg>
+            </div>
         }
       </div>
 
@@ -114,7 +120,7 @@ function CardPublica({ v, foto, tc, waNumber }) {
             </div>
           )}
           <button
-            className="btn btn-primary"
+            className="btn primary"
             style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             onClick={abrirWhatsApp}
             title="Consultar por WhatsApp"

@@ -171,12 +171,12 @@ body { margin: 0; background: var(--c-bg); color: var(--c-fg); font-family: var(
   cursor: pointer; border: 1px solid transparent;
   white-space: nowrap; transition: background .12s, border-color .12s;
 }
-.btn.primary   { background: var(--c-accent); color: #fff; border-color: var(--c-accent); }
-.btn.primary:hover { background: var(--c-accent-hover); border-color: var(--c-accent-hover); }
+.btn.primary, .btn.btn-primary   { background: var(--c-accent); color: #fff; border-color: var(--c-accent); }
+.btn.primary:hover, .btn.btn-primary:hover { background: var(--c-accent-hover); border-color: var(--c-accent-hover); }
 .btn.secondary { background: transparent; color: var(--c-fg); border-color: var(--c-border); }
 .btn.secondary:hover { border-color: var(--c-fg-2); }
-.btn.ghost     { background: transparent; color: var(--c-fg-2); border-color: transparent; }
-.btn.ghost:hover { color: var(--c-fg); background: var(--c-card-2); }
+.btn.ghost, .btn.btn-ghost     { background: transparent; color: var(--c-fg-2); border-color: transparent; }
+.btn.ghost:hover, .btn.btn-ghost:hover { color: var(--c-fg); background: var(--c-card-2); }
 .btn svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
 .iconbtn {
