@@ -26,13 +26,13 @@ async function fetchTc() {
 }
 
 export default function DetallePublico() {
-  const { id }     = useParams()
-  const navigate   = useNavigate()
-  const isMobile   = useIsMobile()
-  const [v,    setV]    = useState(null)
-  const [fotos, setFotos] = useState([])
-  const [idx,   setIdx]  = useState(0)
-  const [tc,    setTc]   = useState(FALLBACK_TC)
+  const { id }    = useParams()
+  const navigate  = useNavigate()
+  const isMobile  = useIsMobile()
+  const [v,       setV]      = useState(null)
+  const [fotos,   setFotos]  = useState([])
+  const [idx,     setIdx]    = useState(0)
+  const [tc,      setTc]     = useState(FALLBACK_TC)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { fetchTc().then(setTc) }, [])
@@ -57,13 +57,13 @@ export default function DetallePublico() {
     window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, '_blank')
   }
 
-  const foto = fotos[idx]
+  const foto     = fotos[idx]
   const precioUSD = v?.precio_lista || v?.precio_base
   const precioARS = precioUSD && tc ? (precioUSD * tc).toLocaleString('es-AR') : null
 
   const specs = [
     { label: 'Año',         value: v?.anio },
-    { label: 'Kilometraje', value: v?.km_hs ? `${Number(v.km_hs).toLocaleString('es-AR')} km` : '0 KM' },
+    { label: 'Km',          value: v?.km_hs ? `${Number(v.km_hs).toLocaleString('es-AR')} km` : '0 KM' },
     { label: 'Transmisión', value: v?.transmision },
     { label: 'Combustible', value: v?.combustible },
     { label: 'Color',       value: v?.color },
@@ -72,6 +72,187 @@ export default function DetallePublico() {
     { label: 'Titular',     value: v?.propietario_actual ? `${v.propietario_actual}° titular` : null },
   ].filter(s => s.value)
 
+  /* ─── MOBILE LAYOUT ───────────────────────────────────────────── */
+  if (isMobile) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--c-bg)', paddingBottom: 88 }}>
+
+        {/* Header sticky */}
+        <header style={{
+          background: 'var(--c-card)', borderBottom: '1px solid var(--c-border)',
+          padding: '10px 16px', display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              onClick={() => navigate('/p/catalogo')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer',
+                       color: 'var(--c-fg-2)', fontSize: 22, padding: '4px 8px 4px 0',
+                       lineHeight: 1, display: 'flex', alignItems: 'center' }}
+            >
+              ←
+            </button>
+            <div className="brand-mark" style={{ width: 28, height: 28, fontSize: 11, borderRadius: 6 }}>GH</div>
+            <span style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</span>
+          </div>
+        </header>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', color: 'var(--c-fg-3)', padding: 80 }}>Cargando…</div>
+        ) : !v ? (
+          <div style={{ textAlign: 'center', padding: 60 }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🚗</div>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>Vehículo no encontrado</div>
+            <button className="btn btn-ghost" style={{ marginTop: 16 }} onClick={() => navigate('/p/catalogo')}>
+              Volver al catálogo
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Foto principal — 16:9 en mobile, más compacta */}
+            <div style={{
+              width: '100%', aspectRatio: '16/9',
+              background: 'var(--c-card-2)', position: 'relative', overflow: 'hidden',
+            }}>
+              {foto
+                ? <img src={foto.url} alt={`${v.marca} ${v.modelo}`}
+                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                height: '100%', color: 'var(--c-fg-3)', fontSize: 48 }}>🚗</div>
+              }
+              {fotos.length > 1 && (
+                <>
+                  <button onClick={() => setIdx(i => (i - 1 + fotos.length) % fotos.length)}
+                    style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+                             background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff',
+                             borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', fontSize: 20,
+                             display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    ‹
+                  </button>
+                  <button onClick={() => setIdx(i => (i + 1) % fotos.length)}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                             background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff',
+                             borderRadius: '50%', width: 40, height: 40, cursor: 'pointer', fontSize: 20,
+                             display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    ›
+                  </button>
+                  <div style={{ position: 'absolute', bottom: 8, right: 10,
+                                background: 'rgba(0,0,0,0.6)', color: '#fff',
+                                borderRadius: 20, padding: '2px 9px', fontSize: 12 }}>
+                    {idx + 1} / {fotos.length}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnails — scroll horizontal */}
+            {fotos.length > 1 && (
+              <div style={{
+                display: 'flex', gap: 6, padding: '8px 16px',
+                overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+                background: 'var(--c-card)', borderBottom: '1px solid var(--c-border)',
+              }}>
+                {fotos.map((f, i) => (
+                  <div key={f.id} onClick={() => setIdx(i)} style={{
+                    width: 56, height: 42, borderRadius: 5, overflow: 'hidden',
+                    flexShrink: 0, cursor: 'pointer',
+                    border: i === idx ? '2px solid var(--c-accent)' : '2px solid transparent',
+                  }}>
+                    <img src={f.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Título + subtítulo */}
+            <div style={{ padding: '14px 16px 0' }}>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, lineHeight: 1.2 }}>
+                {v.marca} {v.modelo}
+                {v.version && <span style={{ fontWeight: 400, color: 'var(--c-fg-2)', fontSize: 17 }}> {v.version}</span>}
+              </h1>
+              <div style={{ fontSize: 13, color: 'var(--c-fg-3)', marginTop: 5 }}>
+                {v.anio}
+                {v.km_hs ? ` · ${Number(v.km_hs).toLocaleString('es-AR')} km` : ' · 0 KM'}
+                {v.transmision ? ` · ${v.transmision}` : ''}
+                {v.combustible ? ` · ${v.combustible}` : ''}
+              </div>
+            </div>
+
+            {/* Precio */}
+            <div style={{ padding: '12px 16px 0' }}>
+              <div style={{ background: 'var(--c-card)', borderRadius: 12,
+                            padding: '14px 16px', border: '1px solid var(--c-border)' }}>
+                <div style={{ fontSize: 26, fontWeight: 800 }}>
+                  {precioUSD ? `USD ${precioUSD.toLocaleString('es-AR')}` : 'Precio a consultar'}
+                </div>
+                {precioARS && (
+                  <div style={{ fontSize: 12, color: 'var(--c-fg-3)', marginTop: 2 }}>
+                    ≈ ARS {precioARS} · TC ${tc.toLocaleString('es-AR')}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Especificaciones */}
+            {specs.length > 0 && (
+              <div style={{ padding: '12px 16px 0' }}>
+                <div style={{ background: 'var(--c-card)', borderRadius: 12,
+                              padding: '14px 16px', border: '1px solid var(--c-border)' }}>
+                  <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 12,
+                                color: 'var(--c-fg-2)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                    Especificaciones
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
+                    {specs.map(s => (
+                      <div key={s.label}>
+                        <div style={{ fontSize: 10, color: 'var(--c-fg-3)', textTransform: 'uppercase', letterSpacing: 0.3 }}>{s.label}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, marginTop: 1 }}>{s.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Volver */}
+            <div style={{ padding: '12px 16px 0' }}>
+              <button className="btn btn-ghost" style={{ width: '100%', fontSize: 13 }}
+                      onClick={() => navigate('/p/catalogo')}>
+                ← Volver al catálogo
+              </button>
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '16px 16px 0', textAlign: 'center',
+                          color: 'var(--c-fg-3)', fontSize: 11 }}>
+              Precios en USD · ARS al dólar blue
+            </div>
+          </>
+        )}
+
+        {/* CTA flotante fijo — siempre visible en mobile */}
+        {!loading && v && (
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0,
+            background: 'var(--c-card)', borderTop: '1px solid var(--c-border)',
+            padding: '12px 16px', zIndex: 200,
+            boxShadow: '0 -4px 16px rgba(0,0,0,0.12)',
+          }}>
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', fontSize: 16, padding: '14px 0',
+                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              onClick={abrirWhatsApp}
+            >
+              💬 Consultar por WhatsApp
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  /* ─── DESKTOP LAYOUT ──────────────────────────────────────────── */
   return (
     <div style={{ minHeight: '100vh', background: 'var(--c-bg)' }}>
 
@@ -84,29 +265,20 @@ export default function DetallePublico() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={() => navigate('/p/catalogo')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-fg-2)', fontSize: 20, padding: 4 }}
-            title="Volver al catálogo"
-          >
-            ←
-          </button>
+            style={{ background: 'none', border: 'none', cursor: 'pointer',
+                     color: 'var(--c-fg-2)', fontSize: 20, padding: 4 }}
+          >←</button>
           <div className="brand-mark" style={{ width: 32, height: 32, fontSize: 12, borderRadius: 8 }}>GH</div>
           <div style={{ fontWeight: 700, fontSize: 15 }}>GH Cars</div>
         </div>
-        <a
-          href={`https://wa.me/${WA_NUMBER}`}
-          target="_blank"
-          rel="noreferrer"
-          className="btn btn-primary"
-          style={{ fontSize: 13, textDecoration: 'none' }}
-        >
+        <a href={`https://wa.me/${WA_NUMBER}`} target="_blank" rel="noreferrer"
+           className="btn btn-primary" style={{ fontSize: 13, textDecoration: 'none' }}>
           💬 Contactar
         </a>
       </header>
 
       {loading ? (
-        <div style={{ textAlign: 'center', color: 'var(--c-fg-3)', padding: 80, fontSize: 15 }}>
-          Cargando…
-        </div>
+        <div style={{ textAlign: 'center', color: 'var(--c-fg-3)', padding: 80, fontSize: 15 }}>Cargando…</div>
       ) : !v ? (
         <div style={{ textAlign: 'center', padding: 80 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🚗</div>
@@ -116,15 +288,14 @@ export default function DetallePublico() {
           </button>
         </div>
       ) : (
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: isMobile ? '16px 16px 60px' : '24px 24px 60px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 60px' }}>
 
-          {/* Título */}
-          <div style={{ marginBottom: 16 }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? 22 : 26, fontWeight: 800 }}>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>
               {v.marca} {v.modelo}
-              {v.version && <span style={{ fontWeight: 400, color: 'var(--c-fg-2)', fontSize: isMobile ? 17 : 20 }}> {v.version}</span>}
+              {v.version && <span style={{ fontWeight: 400, color: 'var(--c-fg-2)', fontSize: 20 }}> {v.version}</span>}
             </h1>
-            <div style={{ fontSize: 13, color: 'var(--c-fg-3)', marginTop: 4 }}>
+            <div style={{ fontSize: 14, color: 'var(--c-fg-3)', marginTop: 4 }}>
               {v.anio}
               {v.km_hs ? ` · ${Number(v.km_hs).toLocaleString('es-AR')} km` : ' · 0 KM'}
               {v.transmision ? ` · ${v.transmision}` : ''}
@@ -132,20 +303,12 @@ export default function DetallePublico() {
             </div>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) 300px',
-            gap: 20,
-            alignItems: 'start',
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 300px', gap: 24, alignItems: 'start' }}>
 
             {/* Galería */}
             <div>
-              {/* Foto principal */}
-              <div style={{
-                aspectRatio: '4/3', background: 'var(--c-card-2)', borderRadius: 12,
-                overflow: 'hidden', position: 'relative', marginBottom: 10,
-              }}>
+              <div style={{ aspectRatio: '4/3', background: 'var(--c-card-2)', borderRadius: 12,
+                            overflow: 'hidden', position: 'relative', marginBottom: 10 }}>
                 {foto
                   ? <img src={foto.url} alt={`${v.marca} ${v.modelo}`}
                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -157,15 +320,11 @@ export default function DetallePublico() {
                     <button onClick={() => setIdx(i => (i - 1 + fotos.length) % fotos.length)}
                       style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
                                background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff',
-                               borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', fontSize: 18 }}>
-                      ‹
-                    </button>
+                               borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', fontSize: 18 }}>‹</button>
                     <button onClick={() => setIdx(i => (i + 1) % fotos.length)}
                       style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                                background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff',
-                               borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', fontSize: 18 }}>
-                      ›
-                    </button>
+                               borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', fontSize: 18 }}>›</button>
                     <div style={{ position: 'absolute', bottom: 10, right: 12,
                                   background: 'rgba(0,0,0,0.55)', color: '#fff',
                                   borderRadius: 20, padding: '3px 10px', fontSize: 12 }}>
@@ -174,27 +333,13 @@ export default function DetallePublico() {
                   </>
                 )}
               </div>
-
-              {/* Thumbnails — horizontally scrollable on mobile */}
               {fotos.length > 1 && (
-                <div style={{
-                  display: 'flex',
-                  gap: 6,
-                  overflowX: isMobile ? 'auto' : 'visible',
-                  flexWrap: isMobile ? 'nowrap' : 'wrap',
-                  paddingBottom: isMobile ? 4 : 0,
-                  WebkitOverflowScrolling: 'touch',
-                }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {fotos.map((f, i) => (
-                    <div
-                      key={f.id}
-                      onClick={() => setIdx(i)}
-                      style={{
-                        width: 64, height: 48, borderRadius: 6, overflow: 'hidden', cursor: 'pointer',
-                        border: i === idx ? '2px solid var(--c-accent)' : '2px solid transparent',
-                        flexShrink: 0,
-                      }}
-                    >
+                    <div key={f.id} onClick={() => setIdx(i)} style={{
+                      width: 64, height: 48, borderRadius: 6, overflow: 'hidden', cursor: 'pointer', flexShrink: 0,
+                      border: i === idx ? '2px solid var(--c-accent)' : '2px solid transparent',
+                    }}>
                       <img src={f.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   ))}
@@ -202,12 +347,10 @@ export default function DetallePublico() {
               )}
             </div>
 
-            {/* Panel — Precio + Specs + CTA */}
+            {/* Panel derecho */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-              {/* Precio */}
               <div className="card" style={{ padding: '20px 18px' }}>
-                <div style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, marginBottom: 2 }}>
+                <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 2 }}>
                   {precioUSD ? `USD ${precioUSD.toLocaleString('es-AR')}` : 'Precio a consultar'}
                 </div>
                 {precioARS && (
@@ -217,17 +360,18 @@ export default function DetallePublico() {
                 )}
                 <button
                   className="btn btn-primary"
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15, padding: '12px 0' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center',
+                           justifyContent: 'center', gap: 8, fontSize: 15, padding: '12px 0' }}
                   onClick={abrirWhatsApp}
                 >
                   💬 Consultar por WhatsApp
                 </button>
               </div>
 
-              {/* Especificaciones */}
               {specs.length > 0 && (
                 <div className="card" style={{ padding: '16px 18px' }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, color: 'var(--c-fg-2)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12,
+                                color: 'var(--c-fg-2)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
                     Especificaciones
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px' }}>
@@ -241,12 +385,8 @@ export default function DetallePublico() {
                 </div>
               )}
 
-              {/* Volver */}
-              <button
-                className="btn btn-ghost"
-                style={{ width: '100%', fontSize: 13 }}
-                onClick={() => navigate('/p/catalogo')}
-              >
+              <button className="btn btn-ghost" style={{ width: '100%', fontSize: 13 }}
+                      onClick={() => navigate('/p/catalogo')}>
                 ← Volver al catálogo
               </button>
             </div>
