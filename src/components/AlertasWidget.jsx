@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react'
 import { generarAlertas } from '../utils/alertas'
 
 const NIVEL_CONFIG = {
-  vencido: { color: '#dc2626', bg: '#fef2f2', borde: '#fecaca', icono: '🚨', label: 'VENCIDO' },
-  critico: { color: '#ef4444', bg: '#fff1f1', borde: '#fca5a5', icono: '🔴', label: 'CRÍTICO' },
-  urgente: { color: '#f97316', bg: '#fff7ed', borde: '#fdba74', icono: '🟠', label: 'URGENTE' },
-  proximo: { color: '#eab308', bg: '#fefce8', borde: '#fde047', icono: '🟡', label: 'PRÓXIMO' },
+  vencido: { color: '#f87171', bg: 'rgba(239,68,68,.08)',  borde: 'rgba(239,68,68,.25)',  dot: '#ef4444', label: 'VENCIDO' },
+  critico: { color: '#f87171', bg: 'rgba(239,68,68,.06)',  borde: 'rgba(239,68,68,.2)',   dot: '#ef4444', label: 'CRÍTICO' },
+  urgente: { color: '#fb923c', bg: 'rgba(249,115,22,.06)', borde: 'rgba(249,115,22,.2)',  dot: '#f97316', label: 'URGENTE' },
+  proximo: { color: '#fbbf24', bg: 'rgba(234,179,8,.06)',  borde: 'rgba(234,179,8,.2)',   dot: '#eab308', label: 'PRÓXIMO' },
 }
 
 const TIPO_LABEL = {
@@ -25,14 +25,14 @@ function AlertaRow({ alerta }) {
       background: cfg.bg,
       border: `1px solid ${cfg.borde}`,
     }}>
-      <span style={{ fontSize: '16px', lineHeight: 1.4 }}>{cfg.icono}</span>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.dot, flexShrink: 0, marginTop: 5 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
           <span style={{
             fontSize: '10px',
             fontWeight: 700,
             color: cfg.color,
-            background: cfg.borde,
+            background: 'rgba(255,255,255,.06)',
             padding: '1px 6px',
             borderRadius: '4px',
             textTransform: 'uppercase',
@@ -81,8 +81,8 @@ export default function AlertasWidget({ vehiculos = [] }) {
           <span style={{
             fontSize: '12px',
             fontWeight: 700,
-            color: alertas.some(a => a.nivel === 'vencido' || a.nivel === 'critico') ? '#ef4444' : '#f97316',
-            background: alertas.some(a => a.nivel === 'vencido' || a.nivel === 'critico') ? '#fef2f2' : '#fff7ed',
+            color: alertas.some(a => a.nivel === 'vencido' || a.nivel === 'critico') ? '#f87171' : '#fb923c',
+            background: alertas.some(a => a.nivel === 'vencido' || a.nivel === 'critico') ? 'rgba(239,68,68,.12)' : 'rgba(249,115,22,.12)',
             padding: '2px 8px',
             borderRadius: '999px',
           }}>
@@ -97,12 +97,12 @@ export default function AlertasWidget({ vehiculos = [] }) {
           alignItems: 'center',
           gap: '8px',
           padding: '12px',
-          background: '#f0fdf4',
+          background: 'rgba(0,196,140,.08)',
           borderRadius: '8px',
-          border: '1px solid #bbf7d0',
+          border: '1px solid rgba(0,196,140,.2)',
         }}>
-          <span style={{ fontSize: '18px' }}>✅</span>
-          <span style={{ fontSize: '14px', color: '#166534', fontWeight: 500 }}>Todo al día</span>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00C48C', flexShrink: 0 }} />
+          <span style={{ fontSize: '14px', color: '#00C48C', fontWeight: 500 }}>Todo al día</span>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
