@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
+import WhatsAppIcon from '../components/WhatsAppIcon'
 
 const FALLBACK_TC   = 1415
 const WA_NUMBER     = '5491162692000'   // GH Cars WhatsApp
@@ -117,7 +118,7 @@ function CardPublica({ v, foto, tc }) {
             onClick={abrirWhatsApp}
             title="Consultar por WhatsApp"
           >
-            💬 Consultar
+            <WhatsAppIcon size={16} variant="white" />&nbsp;Consultar
           </button>
         </div>
       </div>
@@ -182,7 +183,7 @@ export default function CatalogoPublico() {
           className="btn btn-primary"
           style={{ fontSize: 13, textDecoration: 'none' }}
         >
-          💬 Contactar
+          <WhatsAppIcon size={16} variant="white" />&nbsp;Contactar
         </a>
       </header>
 

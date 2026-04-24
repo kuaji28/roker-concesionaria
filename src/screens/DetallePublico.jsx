@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
+import WhatsAppIcon from '../components/WhatsAppIcon'
 
 const FALLBACK_TC = 1415
 const WA_NUMBER   = '5491162692000'
@@ -244,7 +245,7 @@ export default function DetallePublico() {
                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               onClick={abrirWhatsApp}
             >
-              💬 Consultar por WhatsApp
+              <WhatsAppIcon size={18} variant="white" />&nbsp;Consultar por WhatsApp
             </button>
           </div>
         )}
@@ -273,7 +274,7 @@ export default function DetallePublico() {
         </div>
         <a href={`https://wa.me/${WA_NUMBER}`} target="_blank" rel="noreferrer"
            className="btn btn-primary" style={{ fontSize: 13, textDecoration: 'none' }}>
-          💬 Contactar
+          <WhatsAppIcon size={16} variant="white" />&nbsp;Contactar
         </a>
       </header>
 
@@ -364,7 +365,7 @@ export default function DetallePublico() {
                            justifyContent: 'center', gap: 8, fontSize: 15, padding: '12px 0' }}
                   onClick={abrirWhatsApp}
                 >
-                  💬 Consultar por WhatsApp
+                  <WhatsAppIcon size={18} variant="white" />&nbsp;Consultar por WhatsApp
                 </button>
               </div>
 

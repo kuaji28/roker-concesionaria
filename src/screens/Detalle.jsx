@@ -12,6 +12,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useUser } from '../hooks/useUser'
 import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 import { useTc } from '../hooks/useTc'
+import WhatsAppIcon from '../components/WhatsAppIcon'
 
 // ── Publicar helpers ──────────────────────────────────────────
 export function generateChipsFromSpecs(specs = {}) {
@@ -1547,7 +1548,7 @@ export default function Detalle({ onLogout }) {
 
               {/* Mensaje WhatsApp */}
               <div className="card" style={{ padding: 18 }}>
-                <h4 style={{ margin: '0 0 14px', fontSize: 14 }}>💬 Mensaje WhatsApp</h4>
+                <h4 style={{ margin: '0 0 14px', fontSize: 14, display: 'flex', alignItems: 'center', gap: 7 }}><WhatsAppIcon size={16} variant="brand" /> Mensaje WhatsApp</h4>
                 <div style={{ marginBottom: 12 }}>
                   <button
                     className="btn secondary"

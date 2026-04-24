@@ -3,6 +3,7 @@ import TopBar from '../components/TopBar'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
 import Icon from '../components/Icon'
+import WhatsAppIcon from '../components/WhatsAppIcon'
 import { getProspectos, createProspecto, updateProspecto, getVehiculos, getVendedores, supabase, tomarLead } from '../lib/supabase'
 import { useUser } from '../hooks/useUser'
 
@@ -227,8 +228,8 @@ function LeadCard({ lead, stageKey, vendedores, onEdit, onMover, onReload }) {
           </button>
         )}
         {lead.telefono && (
-          <button className="btn ghost" style={{ fontSize: 10, padding: '2px 6px' }} onClick={whatsapp} title="Abrir WhatsApp">
-            💬
+          <button className="btn ghost" style={{ padding: '3px 6px', display: 'flex', alignItems: 'center' }} onClick={whatsapp} title="Abrir WhatsApp">
+            <WhatsAppIcon size={13} variant="brand" />
           </button>
         )}
         <button className="btn ghost" style={{ fontSize: 10, padding: '2px 6px' }} onClick={() => onEdit(lead)} title="Editar">

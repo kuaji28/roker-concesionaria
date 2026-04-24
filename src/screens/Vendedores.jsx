@@ -3,6 +3,7 @@ import TopBar from '../components/TopBar'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
 import Icon from '../components/Icon'
+import WhatsAppIcon from '../components/WhatsAppIcon'
 import { getVendedores, createVendedor, updateVendedor } from '../lib/supabase'
 
 const ROLES = ['vendedor', 'gerente', 'administrativo', 'otro']
@@ -101,7 +102,7 @@ export default function Vendedores({ onLogout }) {
                       {v.telefono || '—'}
                       {v.whatsapp && v.whatsapp !== v.telefono && (
                         <> · <a href={`https://wa.me/${v.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noreferrer"
-                          style={{ color: 'var(--c-accent)' }}>WA</a></>
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: '#25D366', textDecoration: 'none' }}><WhatsAppIcon size={12} variant="brand" />WA</a></>
                       )}
                     </td>
                     <td style={{ color: 'var(--c-fg-2)', fontSize: 12 }}>{v.email || '—'}</td>
