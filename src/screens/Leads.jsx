@@ -12,11 +12,11 @@ import { useIsMobile } from '../hooks/useIsMobile'
 const STAGES = ['nuevo', 'en_contacto', 'con_propuesta', 'cerrado', 'perdido']
 
 const STAGE_META = {
-  nuevo:         { label: 'Nuevo',         color: '#4D9DE0', bg: '#EBF5FB', icon: '🆕' },
-  en_contacto:   { label: 'En contacto',   color: '#F5A623', bg: '#FEF9EE', icon: '💬' },
-  con_propuesta: { label: 'Con propuesta', color: '#F97316', bg: '#FFF4ED', icon: '📋' },
-  cerrado:       { label: 'Cerrado',       color: '#00C48C', bg: '#EAFAF4', icon: '✅' },
-  perdido:       { label: 'Perdido',       color: '#6B7280', bg: '#F3F4F6', icon: '❌' },
+  nuevo:         { label: 'Nuevo',         color: '#4D9DE0', bg: 'rgba(77,157,224,.1)',    icon: '🆕' },
+  en_contacto:   { label: 'En contacto',   color: '#F5A623', bg: 'rgba(245,166,35,.1)',    icon: '💬' },
+  con_propuesta: { label: 'Con propuesta', color: '#F97316', bg: 'rgba(249,115,22,.1)',    icon: '📋' },
+  cerrado:       { label: 'Cerrado',       color: '#00C48C', bg: 'rgba(0,196,140,.1)',     icon: '✅' },
+  perdido:       { label: 'Perdido',       color: '#6B7280', bg: 'rgba(107,114,128,.08)', icon: '❌' },
 }
 
 // ─── Canales ────────────────────────────────────────────────────────────────
@@ -153,9 +153,16 @@ function LeadCard({ lead, stageKey, vendedores, onEdit, onMover, onReload, isMob
 
   return (
     <div className="card" style={{
-      padding: isMobile ? '8px 10px' : '10px 12px', marginBottom: 8, cursor: 'default',
+      padding: isMobile ? '8px 10px' : '10px 12px', marginBottom: 8, cursor: 'grab',
       borderLeft: `3px solid ${meta.color}`, fontSize: isMobile ? 11 : 12,
-    }}>
+    }}
+      draggable
+      onDragStart={e => {
+        e.dataTransfer.setData('leadId', String(lead.id))
+        e.currentTarget.style.opacity = '0.5'
+      }}
+      onDragEnd={e => { e.currentTarget.style.opacity = '1' }}
+    >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
         <Avatar nombre={lead.nombre} />
@@ -242,7 +249,7 @@ function LeadCard({ lead, stageKey, vendedores, onEdit, onMover, onReload, isMob
 }
 
 // ─── Columna Kanban ──────────────────────────────────────────────────────────
-function KanbanCol({ stageKey, leads, vendedores, onEdit, onMover, onReload, onNuevoEnStage }) {
+function KanbanCol({ stageKey, leads, vendedores, onEdit, onMover, onReload, onNuevoEnStage, totalPipelineUSD }) {
   const meta = STAGE_META[stageKey]
   const totalUSD = leads.reduce((sum, l) => sum + (Number(l.presupuesto_usd) || 0), 0)
 
@@ -267,8 +274,19 @@ function KanbanCol({ stageKey, leads, vendedores, onEdit, onMover, onReload, onN
           </span>
         </div>
         {totalUSD > 0 && (
-          <div style={{ fontSize: 10, color: 'var(--c-fg-2)', marginTop: 2 }}>
-            USD {totalUSD.toLocaleString('es-AR')}
+          <div style={{ marginTop: 4 }}>
+            <div style={{ fontSize: 10, color: 'var(--c-fg-2)' }}>
+              USD {totalUSD.toLocaleString('es-AR')}
+            </div>
+            <div style={{ marginTop: 3, height: 2, borderRadius: 1, background: 'var(--c-border)', overflow: 'hidden' }}>
+              <div style={{
+                width: `${totalPipelineUSD > 0 ? Math.min(100, Math.round(totalUSD / totalPipelineUSD * 100)) : 0}%`,
+                height: '100%',
+                background: meta.color,
+                borderRadius: 1,
+                transition: 'width .3s',
+              }} />
+            </div>
           </div>
         )}
       </div>
@@ -277,7 +295,18 @@ function KanbanCol({ stageKey, leads, vendedores, onEdit, onMover, onReload, onN
       <div style={{
         flex: 1, background: 'var(--c-bg-2)', borderRadius: '0 0 8px 8px',
         padding: '8px 8px 4px', minHeight: 80,
-      }}>
+      }}
+        onDragOver={e => { e.preventDefault(); e.currentTarget.style.outline = '2px solid rgba(99,102,241,.4)' }}
+        onDragLeave={e => { e.currentTarget.style.outline = 'none' }}
+        onDrop={async e => {
+          e.currentTarget.style.outline = 'none'
+          const id = e.dataTransfer.getData('leadId')
+          if (id) {
+            await supabase.from('prospectos').update({ stage: stageKey }).eq('id', id)
+            onReload()
+          }
+        }}
+      >
         {leads.map(lead => (
           <LeadCard
             key={lead.id}
@@ -468,18 +497,22 @@ export default function Leads({ onLogout }) {
             paddingBottom: 16, alignItems: 'flex-start',
             WebkitOverflowScrolling: 'touch',
           }}>
-            {STAGES.map(s => (
-              <div key={s} style={{ minWidth: isMobile ? 260 : 200, flex: '1 1 200px', maxWidth: 280 }}>
-                <KanbanCol
-                  stageKey={s}
-                  leads={leadsByStage(s)}
-                  vendedores={vendedores}
-                  onEdit={openEdit}
-                  onReload={reload}
-                  onNuevoEnStage={openNew}
-                />
-              </div>
-            ))}
+            {(() => {
+              const totalPipelineUSD = STAGES.reduce((sum, s) => sum + leadsByStage(s).reduce((a, l) => a + (Number(l.presupuesto_usd) || 0), 0), 0)
+              return STAGES.map(s => (
+                <div key={s} style={{ minWidth: isMobile ? 260 : 200, flex: '1 1 200px', maxWidth: 280 }}>
+                  <KanbanCol
+                    stageKey={s}
+                    leads={leadsByStage(s)}
+                    vendedores={vendedores}
+                    onEdit={openEdit}
+                    onReload={reload}
+                    onNuevoEnStage={openNew}
+                    totalPipelineUSD={totalPipelineUSD}
+                  />
+                </div>
+              ))
+            })()}
           </div>
         )}
 

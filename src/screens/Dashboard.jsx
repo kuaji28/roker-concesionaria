@@ -25,6 +25,7 @@ export default function Dashboard({ onLogout }) {
   const [stats, setStats] = useState(null)
   const [vehiculos, setVehiculos] = useState([])
   const [ventasMes, setVentasMes] = useState(null)
+  const [ventasDelta, setVentasDelta] = useState(null)
   const today = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   useEffect(() => {
@@ -35,6 +36,11 @@ export default function Dashboard({ onLogout }) {
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
       const count = (ventas || []).filter(v => v.fecha_venta >= firstDay).length
       setVentasMes(count)
+      const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0]
+      const prevEnd   = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0]
+      const prevCount = (ventas || []).filter(v => v.fecha_venta >= prevStart && v.fecha_venta <= prevEnd).length
+      const pct = prevCount > 0 ? Math.round((count - prevCount) / prevCount * 100) : null
+      setVentasDelta(pct !== null ? (pct >= 0 ? `▲ ${pct}%` : `▼ ${Math.abs(pct)}%`) : null)
     }).catch(() => setVentasMes(null))
   }, [])
 
@@ -59,7 +65,7 @@ export default function Dashboard({ onLogout }) {
           <MetricCard label="Señados"                      value={stats?.seniado     ?? '—'} tone="o" sub="reservados" onClick={() => navigate('/catalogo?estado=señado')} />
           <MetricCard label="En revisión"     icon="eye"   value={stats?.en_revision ?? '—'} tone="b"              onClick={() => navigate('/catalogo?estado=en_revision')} />
           <MetricCard label="Vendidos"                     value={stats?.vendido     ?? '—'} tone="r"              onClick={() => navigate('/catalogo?estado=vendido')} />
-          <MetricCard label="Ventas del mes"  icon="cash"  value={ventasMes !== null ? ventasMes : '—'} sub="este mes"       onClick={() => navigate('/reportes')} />
+          <MetricCard label="Ventas del mes"  icon="cash"  value={ventasMes !== null ? ventasMes : '—'} sub="este mes" delta={ventasDelta}       onClick={() => navigate('/reportes')} />
         </div>
 
         <h2 className="section-title">Vencimientos</h2>

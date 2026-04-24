@@ -1,7 +1,30 @@
 import { useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
+import Icon from './components/Icon'
 import { useIsMobile } from './hooks/useIsMobile'
+
+function BottomNav() {
+  return (
+    <nav className="bottom-nav">
+      <NavLink to="/" end className={({ isActive }) => isActive ? 'on' : ''}>
+        <Icon name="home" size={20} /><span>Inicio</span>
+      </NavLink>
+      <NavLink to="/catalogo" className={({ isActive }) => isActive ? 'on' : ''}>
+        <Icon name="car" size={20} /><span>Stock</span>
+      </NavLink>
+      <NavLink to="/leads" className={({ isActive }) => isActive ? 'on' : ''}>
+        <Icon name="users" size={20} /><span>Leads</span>
+      </NavLink>
+      <NavLink to="/agenda" className={({ isActive }) => isActive ? 'on' : ''}>
+        <Icon name="cal" size={20} /><span>Agenda</span>
+      </NavLink>
+      <NavLink to="/ventas" className={({ isActive }) => isActive ? 'on' : ''}>
+        <Icon name="cash" size={20} /><span>Ventas</span>
+      </NavLink>
+    </nav>
+  )
+}
 import Login from './screens/Login'
 import Dashboard from './screens/Dashboard'
 import Catalogo from './screens/Catalogo'
@@ -39,6 +62,7 @@ function AppShell({ onLogout, user }) {
     <div className={isMobile ? undefined : 'app'} style={isMobile ? { minHeight: '100vh' } : undefined}>
       <Sidebar tc={tc} />
       <div style={{ minWidth: 0, flex: 1, paddingTop: isMobile ? 52 : 0 }}>
+        {isMobile && <BottomNav />}
         <Routes>
           <Route path="/"             element={<Dashboard   onLogout={onLogout} />} />
           <Route path="/catalogo"     element={<Catalogo    onLogout={onLogout} />} />

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from './Icon'
 import { useUser } from '../hooks/useUser'
@@ -15,6 +15,18 @@ export default function TopBar({ placeholder = 'Buscar vehículos, clientes, pat
   const user = useUser()
   const rol = user?.rol || 'externo'
   const rolMeta = ROL_META[rol] || ROL_META.externo
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    function handler(e) {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   function handleSearch(e) {
     e.preventDefault()
@@ -33,10 +45,21 @@ export default function TopBar({ placeholder = 'Buscar vehículos, clientes, pat
       <form className="search-field" style={{ flex: 1, maxWidth: 440 }} onSubmit={handleSearch}>
         <Icon name="search" size={16} style={{ stroke: 'var(--c-fg-3)' }} />
         <input
+          ref={inputRef}
           placeholder={placeholder}
           value={q}
           onChange={e => setQ(e.target.value)}
         />
+        <kbd style={{
+          fontSize: 10, color: 'var(--c-fg-3)',
+          background: 'var(--c-card-2)',
+          padding: '1px 5px', borderRadius: 3,
+          border: '1px solid var(--c-border)',
+          lineHeight: '18px', whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+        }}>
+          /
+        </kbd>
       </form>
       <div style={{ flex: 1 }} />
       {user && (
