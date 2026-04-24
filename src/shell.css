@@ -684,3 +684,29 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   /* push page content above nav */
   .main { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* ────────────────────────────────────────────────────────────── */
+/*  DETALLE — layout responsive                                   */
+/* ────────────────────────────────────────────────────────────── */
+.detalle-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.detalle-panel {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .detalle-layout {
+    flex-direction: column;
+  }
+  .detalle-panel {
+    width: 100%;
+    order: -1; /* precio y specs ARRIBA del contenido en mobile */
+  }
+}

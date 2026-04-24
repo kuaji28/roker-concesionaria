@@ -749,7 +749,7 @@ export default function Detalle({ onLogout }) {
 
         {/* ── LAYOUT 2 COLUMNAS (desktop) / 1 COLUMNA (mobile) ── */}
         {(tab === 'info' || tab === 'fotos') && (
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 24, alignItems: 'flex-start' }}>
+          <div className="detalle-layout">
 
             {/* Columna principal */}
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -980,7 +980,7 @@ export default function Detalle({ onLogout }) {
             </div>
 
             {/* Panel derecho — 340px en desktop, full width en mobile */}
-            <div style={{ width: isMobile ? '100%' : 340, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="detalle-panel">
               <CardPrecio
                 v={v}
                 tc={TC}
