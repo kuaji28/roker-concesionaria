@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import TopBar from '../components/TopBar'
 import MetricCard from '../components/MetricCard'
 import Icon from '../components/Icon'
@@ -14,51 +14,75 @@ function fmtK(n) {
 
 function BarChart({ bars }) {
   const maxCount = Math.max(...bars.map(b => b.count), 1)
-  const CHART_H  = 160
-  const BAR_H    = 120
+  const BAR_H    = 180
+  const LABEL_H  = 32  // space for bottom labels
+  const CHART_H  = BAR_H + LABEL_H
   const yTicks   = [0, Math.round(maxCount / 3), Math.round((maxCount * 2) / 3), maxCount].filter((v, i, a) => a.indexOf(v) === i)
 
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Y-axis labels */}
-      <div style={{
-        position: 'absolute', left: 0, top: 0, bottom: 28,
-        width: 28, display: 'flex', flexDirection: 'column-reverse', justifyContent: 'space-between',
-        paddingBottom: 0,
-      }}>
-        {yTicks.map(t => (
-          <span key={t} style={{ fontSize: 9, color: 'var(--c-fg-3)', fontFamily: 'var(--mono)', lineHeight: 1 }}>{t}</span>
-        ))}
-      </div>
+    <div style={{ position: 'relative', paddingLeft: 32 }}>
+      {/* Y-axis labels + grid lines */}
+      {yTicks.map(t => {
+        const pct = t / maxCount  // 0 = bottom, 1 = top
+        const bottomPx = LABEL_H + pct * BAR_H
+        return (
+          <React.Fragment key={t}>
+            {/* grid line */}
+            <div style={{
+              position: 'absolute', left: 28, right: 0,
+              bottom: bottomPx,
+              height: 1,
+              background: t === 0 ? 'var(--c-border)' : 'var(--c-border)',
+              opacity: t === 0 ? 0.8 : 0.4,
+              borderTop: t > 0 ? '1px dashed var(--c-border)' : '1px solid var(--c-border)',
+            }} />
+            {/* y-axis label */}
+            <span style={{
+              position: 'absolute', left: 0, width: 26, textAlign: 'right',
+              bottom: bottomPx - 6,
+              fontSize: 9, color: 'var(--c-fg-3)', fontFamily: 'var(--mono)', lineHeight: 1,
+            }}>{t}</span>
+          </React.Fragment>
+        )
+      })}
 
-      {/* Bars */}
-      <div style={{ marginLeft: 32, display: 'flex', alignItems: 'flex-end', gap: 8, height: CHART_H, padding: '0 4px' }}>
+      {/* Bars area */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: CHART_H, padding: '0 4px', position: 'relative' }}>
         {bars.map((b, i) => {
-          const abbrev = MESES_ABREV[new Date(0, i).getMonth()] || b.label
-          // Try to parse month from label (e.g. "nov" "dic")
           const labelUpper = b.label.charAt(0).toUpperCase() + b.label.slice(1)
           const displayLabel = labelUpper.length <= 3 ? labelUpper : b.label.slice(0, 3)
+          const barPct = b.count / maxCount
           return (
-            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              {/* Revenue label on top */}
-              <span style={{ fontSize: 9, color: 'var(--c-fg-2)', fontFamily: 'var(--mono)', whiteSpace: 'nowrap', marginBottom: 2 }}>
-                {fmtK(b.total)}
-              </span>
-              {/* Count label */}
-              <span style={{ fontSize: 10, color: 'var(--c-fg-2)', fontFamily: 'var(--mono)' }}>{b.count}</span>
-              {/* Bar */}
-              <div style={{ width: '100%', background: 'var(--c-card-2)', borderRadius: 4, overflow: 'hidden', height: BAR_H }}>
+            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, height: CHART_H }}>
+              {/* Revenue label on top of bar area */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', width: '100%', alignItems: 'center' }}>
+                {b.count > 0 && (
+                  <span style={{ fontSize: 9, color: 'var(--c-fg-2)', fontFamily: 'var(--mono)', whiteSpace: 'nowrap', marginBottom: 2 }}>
+                    {fmtK(b.total)}
+                  </span>
+                )}
+                {b.count > 0 && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--c-fg-2)', fontFamily: 'var(--mono)', marginBottom: 2 }}>
+                    {b.count}
+                  </span>
+                )}
+                {/* Bar */}
                 <div style={{
-                  width: '100%',
-                  height: `${(b.count / maxCount) * 100}%`,
+                  width: '80%',
+                  height: `${barPct * BAR_H}px`,
+                  minHeight: b.count > 0 ? 4 : 0,
                   background: i === bars.length - 1 ? 'var(--c-success)' : 'var(--c-info)',
                   borderRadius: '4px 4px 0 0',
-                  marginTop: `${100 - (b.count / maxCount) * 100}%`,
                   transition: 'height .3s ease',
+                  opacity: b.count === 0 ? 0.3 : 1,
                 }} />
               </div>
               {/* Month label */}
-              <span style={{ fontSize: 10, color: 'var(--c-fg-3)', textTransform: 'capitalize' }}>{displayLabel}</span>
+              <div style={{ height: LABEL_H, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 11, color: 'var(--c-fg-2)', textTransform: 'capitalize', fontWeight: i === bars.length - 1 ? 700 : 400 }}>
+                  {displayLabel}
+                </span>
+              </div>
             </div>
           )
         })}

@@ -7,13 +7,18 @@ import { supabase, getAgenda, crearTurno, updateTurno, getVehiculos, getVendedor
 import { useIsMobile } from '../hooks/useIsMobile'
 
 // ── Constants ─────────────────────────────────────────────────
-const TIPOS = [
-  { value: 'prueba_manejo', label: 'Prueba de manejo' },
-  { value: 'entrega',       label: 'Entrega' },
-  { value: 'visita',        label: 'Visita' },
-  { value: 'llamada',       label: 'Llamada' },
-  { value: 'servicio',      label: 'Servicio' },
-]
+const TIPO_LABELS = {
+  prueba_manejo:   'Prueba de manejo',
+  visita_showroom: 'Visita showroom',
+  entrega:         'Entrega de vehículo',
+  verificacion:    'Verificación',
+  traslado:        'Traslado',
+  servicio:        'Servicio / Mantenimiento',
+  chaperia:        'Chapería y pintura',
+  otro:            'Otro',
+}
+
+const TIPOS = Object.entries(TIPO_LABELS).map(([value, label]) => ({ value, label }))
 
 const ESTADOS = {
   programado:  { label: 'Programado',  color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },

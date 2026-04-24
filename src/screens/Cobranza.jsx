@@ -5,6 +5,14 @@ import { getFinanciamientos, getCuotasVencidas, getCuotasProximas, pagarCuotaCon
 import { useTc } from '../hooks/useTc'
 import { useIsMobile } from '../hooks/useIsMobile'
 
+// Cuota estado badge — handles both 'pagado' (new) and 'pagada' (legacy)
+function cuotaEstadoBadge(estado) {
+  if (['pagado', 'pagada'].includes(estado)) return { cls: 'success', label: 'Pagada', color: 'var(--c-success)' }
+  if (estado === 'pendiente') return { cls: 'warning', label: 'Pendiente', color: '#ca8a04' }
+  if (['vencido', 'vencida'].includes(estado)) return { cls: 'danger', label: 'Vencida', color: '#ef4444' }
+  return { cls: 'neutral', label: estado || '—', color: 'var(--c-fg-3)' }
+}
+
 const FORMAS_COBRO = ['Efectivo', 'Transferencia', 'Efectivo + Transferencia']
 const MONEDAS = ['ARS', 'USD']
 

@@ -18,11 +18,11 @@ const NAV = [
 const NAV_ADMIN = [
   { to: '/gerente',   icon: 'home',      label: 'Dashboard Gerente',   tip: 'Vista avanzada para dueños: márgenes, performance de vendedores y KPIs' },
   { to: '/gastos',    icon: 'cash',      label: 'Gastos y Margen',     tip: 'Control de gastos por vehículo y margen de ganancia real' },
-  { to: '/rotacion',  icon: 'chart',     label: 'Rotación de Stock',   tip: 'Cuántos días tarda cada vehículo en venderse' },
+  { to: '/rotacion',  icon: 'gauge',     label: 'Rotación de Stock',   tip: 'Cuántos días tarda cada vehículo en venderse' },
   { to: '/vendedores',icon: 'users',     label: 'Vendedores',          tip: 'Gestión del equipo de ventas: altas, bajas y rendimiento' },
   { to: '/cobranza',  icon: 'card',      label: 'Cobranza',            tip: 'Seguimiento de cuotas y financiamientos pendientes de cobro' },
   { to: '/config',    icon: 'cog',       label: 'Configuración',       tip: 'Ajustes del sistema: PIN de acceso y preferencias generales' },
-  { to: '/mejoras',   icon: 'chart',     label: 'Mejoras del sistema', tip: 'Lista de funciones y mejoras disponibles para incorporar al sistema' },
+  { to: '/mejoras',   icon: 'star',      label: 'Mejoras del sistema', tip: 'Lista de funciones y mejoras disponibles para incorporar al sistema' },
 ]
 
 export default function Sidebar({ tc }) {
