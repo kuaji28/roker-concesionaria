@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
+import { useIsMobile } from './hooks/useIsMobile'
 import Login from './screens/Login'
 import Dashboard from './screens/Dashboard'
 import Catalogo from './screens/Catalogo'
@@ -31,12 +32,13 @@ function ProtectedRoute({ element, isAuth }) {
 
 function AppShell({ onLogout, user }) {
   const tc = useTc()
+  const isMobile = useIsMobile()
   return (
     <UserContext.Provider value={user}>
     <TcContext.Provider value={tc}>
-    <div className="app">
+    <div className={isMobile ? undefined : 'app'} style={isMobile ? { minHeight: '100vh' } : undefined}>
       <Sidebar tc={tc} />
-      <div style={{ minWidth: 0, flex: 1 }}>
+      <div style={{ minWidth: 0, flex: 1, paddingTop: isMobile ? 52 : 0 }}>
         <Routes>
           <Route path="/"             element={<Dashboard   onLogout={onLogout} />} />
           <Route path="/catalogo"     element={<Catalogo    onLogout={onLogout} />} />

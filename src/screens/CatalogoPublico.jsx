@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const FALLBACK_TC   = 1415
 const WA_NUMBER     = '5491162692000'   // GH Cars WhatsApp
@@ -125,6 +126,7 @@ function CardPublica({ v, foto, tc }) {
 }
 
 export default function CatalogoPublico() {
+  const isMobile = useIsMobile()
   const [vehiculos, setVehiculos] = useState([])
   const [portadas, setPortadas]   = useState({})
   const [tc, setTc]               = useState(FALLBACK_TC)
@@ -188,9 +190,14 @@ export default function CatalogoPublico() {
       <div style={{
         background: 'var(--c-card)',
         borderBottom: '1px solid var(--c-border)',
-        padding: '12px 24px',
-        display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center',
+        padding: isMobile ? '10px 16px' : '12px 24px',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        flexWrap: 'wrap',
+        gap: isMobile ? 8 : 10,
+        alignItems: isMobile ? 'stretch' : 'center',
       }}>
+        {/* Tipo buttons */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {TIPOS.map(t => (
             <button
@@ -203,14 +210,20 @@ export default function CatalogoPublico() {
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 8, marginLeft: 'auto', flexWrap: 'wrap' }}>
+        {/* Numeric filters */}
+        <div style={{
+          display: 'flex',
+          gap: 8,
+          marginLeft: isMobile ? 0 : 'auto',
+          flexWrap: 'wrap',
+        }}>
           <input
             className="input"
             type="number"
             placeholder="Año desde"
             value={anioMin}
             onChange={e => setAnioMin(e.target.value)}
-            style={{ width: 110, fontSize: 13 }}
+            style={{ width: isMobile ? '100%' : 110, fontSize: 13, flex: isMobile ? '1 1 calc(50% - 4px)' : 'none' }}
           />
           <input
             className="input"
@@ -218,10 +231,10 @@ export default function CatalogoPublico() {
             placeholder="Precio max USD"
             value={precioMax}
             onChange={e => setPrecioMax(e.target.value)}
-            style={{ width: 140, fontSize: 13 }}
+            style={{ width: isMobile ? '100%' : 140, fontSize: 13, flex: isMobile ? '1 1 calc(50% - 4px)' : 'none' }}
           />
           {(anioMin || precioMax) && (
-            <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => { setAnioMin(''); setPrecioMax('') }}>
+            <button className="btn btn-ghost" style={{ fontSize: 12, width: isMobile ? '100%' : 'auto' }} onClick={() => { setAnioMin(''); setPrecioMax('') }}>
               Limpiar
             </button>
           )}
@@ -229,7 +242,7 @@ export default function CatalogoPublico() {
       </div>
 
       {/* Grilla */}
-      <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ padding: isMobile ? '16px' : '24px', maxWidth: 1200, margin: '0 auto' }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: 'var(--c-fg-3)', padding: 60, fontSize: 15 }}>
             Cargando vehículos…

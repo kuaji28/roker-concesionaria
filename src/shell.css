@@ -507,3 +507,54 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .rank td strong { font-weight: 600; }
 .bar-wrap { background: var(--c-card-2); height: 8px; border-radius: 4px; overflow: hidden; }
 .bar-fill { background: var(--c-success); height: 100%; }
+
+/* ════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — max-width 768px
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Shell: drop sidebar grid, full-width single column */
+  .app { display: block; }
+
+  /* Main content: reduce padding */
+  .main { padding: 16px 16px 40px; }
+
+  /* Filter bar: stack vertically */
+  .filter-card { padding: 12px; }
+  .filter-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Vehicle grid: 1 column on very small, 2 on mid-mobile */
+  .veh-grid { grid-template-columns: 1fr; gap: 12px; }
+
+  /* List rows: collapse to readable layout */
+  .list-row {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+  .list-row .num,
+  .list-row .price-cell { display: none; }
+
+  /* Detail head: 2 columns instead of 4 */
+  .detail-head { grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Info grid: 1 column */
+  .info-grid { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Tabs: allow horizontal scroll */
+  .tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .tabs button { white-space: nowrap; padding: 10px 12px; font-size: 12px; }
+
+  /* Page head: stack on mobile */
+  .page-head { flex-wrap: wrap; gap: 10px; }
+  .page-head .sp { display: none; }
+
+  /* Page title: smaller */
+  .page-title { font-size: 20px; }
+}
+
+@media (min-width: 480px) and (max-width: 768px) {
+  /* Two columns on medium mobile (480-768px) */
+  .veh-grid { grid-template-columns: repeat(2, 1fr); }
+}

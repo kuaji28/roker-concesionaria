@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const FALLBACK_TC = 1415
 const WA_NUMBER   = '5491162692000'
@@ -27,6 +28,7 @@ async function fetchTc() {
 export default function DetallePublico() {
   const { id }     = useParams()
   const navigate   = useNavigate()
+  const isMobile   = useIsMobile()
   const [v,    setV]    = useState(null)
   const [fotos, setFotos] = useState([])
   const [idx,   setIdx]  = useState(0)
@@ -66,7 +68,7 @@ export default function DetallePublico() {
     { label: 'Combustible', value: v?.combustible },
     { label: 'Color',       value: v?.color },
     { label: 'Motor',       value: v?.motor },
-    { label: 'Tipo',        value: v?.tipo },
+    { label: 'Tipo',        value: v?.tipo ? v.tipo.charAt(0).toUpperCase() + v.tipo.slice(1) : null },
     { label: 'Titular',     value: v?.propietario_actual ? `${v.propietario_actual}° titular` : null },
   ].filter(s => s.value)
 
@@ -114,15 +116,15 @@ export default function DetallePublico() {
           </button>
         </div>
       ) : (
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 60px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: isMobile ? '16px 16px 60px' : '24px 24px 60px' }}>
 
           {/* Título */}
-          <div style={{ marginBottom: 20 }}>
-            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>
+          <div style={{ marginBottom: 16 }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? 22 : 26, fontWeight: 800 }}>
               {v.marca} {v.modelo}
-              {v.version && <span style={{ fontWeight: 400, color: 'var(--c-fg-2)', fontSize: 20 }}> {v.version}</span>}
+              {v.version && <span style={{ fontWeight: 400, color: 'var(--c-fg-2)', fontSize: isMobile ? 17 : 20 }}> {v.version}</span>}
             </h1>
-            <div style={{ fontSize: 14, color: 'var(--c-fg-3)', marginTop: 4 }}>
+            <div style={{ fontSize: 13, color: 'var(--c-fg-3)', marginTop: 4 }}>
               {v.anio}
               {v.km_hs ? ` · ${Number(v.km_hs).toLocaleString('es-AR')} km` : ' · 0 KM'}
               {v.transmision ? ` · ${v.transmision}` : ''}
@@ -130,7 +132,12 @@ export default function DetallePublico() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 300px', gap: 24, alignItems: 'start' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) 300px',
+            gap: 20,
+            alignItems: 'start',
+          }}>
 
             {/* Galería */}
             <div>
@@ -168,9 +175,16 @@ export default function DetallePublico() {
                 )}
               </div>
 
-              {/* Thumbnails */}
+              {/* Thumbnails — horizontally scrollable on mobile */}
               {fotos.length > 1 && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{
+                  display: 'flex',
+                  gap: 6,
+                  overflowX: isMobile ? 'auto' : 'visible',
+                  flexWrap: isMobile ? 'nowrap' : 'wrap',
+                  paddingBottom: isMobile ? 4 : 0,
+                  WebkitOverflowScrolling: 'touch',
+                }}>
                   {fotos.map((f, i) => (
                     <div
                       key={f.id}
@@ -188,12 +202,12 @@ export default function DetallePublico() {
               )}
             </div>
 
-            {/* Panel derecho — Precio + Specs + CTA */}
+            {/* Panel — Precio + Specs + CTA */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
               {/* Precio */}
               <div className="card" style={{ padding: '20px 18px' }}>
-                <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 2 }}>
+                <div style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, marginBottom: 2 }}>
                   {precioUSD ? `USD ${precioUSD.toLocaleString('es-AR')}` : 'Precio a consultar'}
                 </div>
                 {precioARS && (
