@@ -5,7 +5,7 @@ import StateBadge, { UBICACION_META, RECON_META } from '../components/StateBadge
 import Icon from '../components/Icon'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
-import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores } from '../lib/supabase'
+import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores, deleteFoto } from '../lib/supabase'
 import { useUser } from '../hooks/useUser'
 import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 import { useTc } from '../hooks/useTc'
@@ -308,6 +308,9 @@ export default function Detalle({ onLogout }) {
   const [data, setData]     = useState(null)
   const [tab, setTab]       = useState('info')
   const [foto, setFoto]     = useState(0)
+  const [selMode, setSelMode]   = useState(false)   // modo selección múltiple fotos
+  const [selIds,  setSelIds]    = useState(new Set())
+  const [deleting, setDeleting] = useState(false)
 
   const [editing, setEditing]   = useState(false)
   const [editForm, setEditForm] = useState({})
@@ -783,35 +786,116 @@ export default function Detalle({ onLogout }) {
                   ? <div className="banner info"><Icon name="info" size={16} />Sin fotos cargadas.</div>
                   : (
                     <>
-                      {aiConfigured() && (
-                        <div style={{ marginBottom: 12 }}>
+                      {/* Barra de herramientas fotos */}
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                        {aiConfigured() && !selMode && (
                           <button className="btn secondary" onClick={() => runAI('fotos')}>
                             <Icon name="image" size={14} /> Analizar estado con IA
                           </button>
-                        </div>
-                      )}
-                      <div style={{ aspectRatio: '16/9', background: 'var(--c-card-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 12, position: 'relative' }}>
-                        <img src={fotos[foto].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <span style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: 12, padding: '3px 10px', borderRadius: 999 }}>
-                          {foto + 1} / {fotos.length}
-                        </span>
-                        {foto > 0 && (
-                          <button onClick={() => setFoto(f => f - 1)} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Icon name="chev-l" size={18} />
-                          </button>
                         )}
-                        {foto < fotos.length - 1 && (
-                          <button onClick={() => setFoto(f => f + 1)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Icon name="chev-r" size={18} />
+                        {!selMode ? (
+                          <button className="btn secondary" style={{ marginLeft: 'auto' }} onClick={() => { setSelMode(true); setSelIds(new Set()) }}>
+                            ☑ Seleccionar para borrar
                           </button>
+                        ) : (
+                          <>
+                            <span style={{ fontSize: 13, color: 'var(--c-fg-2)' }}>
+                              {selIds.size} seleccionada{selIds.size !== 1 ? 's' : ''}
+                            </span>
+                            <button className="btn secondary" onClick={() => {
+                              const all = new Set(fotos.map(f => f.id))
+                              setSelIds(selIds.size === fotos.length ? new Set() : all)
+                            }}>
+                              {selIds.size === fotos.length ? 'Deseleccionar todo' : 'Seleccionar todo'}
+                            </button>
+                            <button
+                              className="btn danger"
+                              disabled={selIds.size === 0 || deleting}
+                              onClick={async () => {
+                                if (!window.confirm(`¿Borrar ${selIds.size} foto${selIds.size !== 1 ? 's' : ''}? Esta acción no se puede deshacer.`)) return
+                                setDeleting(true)
+                                await Promise.all([...selIds].map(id => {
+                                  const m = fotos.find(f => f.id === id)
+                                  return deleteFoto(id, m?.cloudinary_public_id)
+                                }))
+                                setDeleting(false)
+                                setSelMode(false)
+                                setSelIds(new Set())
+                                setFoto(0)
+                                reloadVehiculo()
+                              }}
+                            >
+                              {deleting ? 'Borrando…' : `🗑 Eliminar (${selIds.size})`}
+                            </button>
+                            <button className="btn ghost" style={{ marginLeft: 'auto' }} onClick={() => { setSelMode(false); setSelIds(new Set()) }}>
+                              Cancelar
+                            </button>
+                          </>
                         )}
                       </div>
+
+                      {/* Foto principal — oculta en modo selección */}
+                      {!selMode && (
+                        <div style={{ aspectRatio: '16/9', background: 'var(--c-card-2)', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: 12, position: 'relative' }}>
+                          <img src={fotos[foto].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <span style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: 12, padding: '3px 10px', borderRadius: 999 }}>
+                            {foto + 1} / {fotos.length}
+                          </span>
+                          {foto > 0 && (
+                            <button onClick={() => setFoto(f => f - 1)} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Icon name="chev-l" size={18} />
+                            </button>
+                          )}
+                          {foto < fotos.length - 1 && (
+                            <button onClick={() => setFoto(f => f + 1)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Icon name="chev-r" size={18} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Grid de miniaturas */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 6 }}>
-                        {fotos.map((f, i) => (
-                          <div key={i} onClick={() => setFoto(i)} style={{ aspectRatio: '4/3', borderRadius: 'var(--r-sm)', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${i === foto ? 'var(--c-success)' : 'transparent'}` }}>
-                            <img src={f.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </div>
-                        ))}
+                        {fotos.map((f, i) => {
+                          const sel = selIds.has(f.id)
+                          return (
+                            <div
+                              key={f.id || i}
+                              onClick={() => {
+                                if (selMode) {
+                                  setSelIds(prev => {
+                                    const next = new Set(prev)
+                                    sel ? next.delete(f.id) : next.add(f.id)
+                                    return next
+                                  })
+                                } else {
+                                  setFoto(i)
+                                }
+                              }}
+                              style={{
+                                aspectRatio: '4/3', borderRadius: 'var(--r-sm)', overflow: 'hidden',
+                                cursor: 'pointer', position: 'relative',
+                                border: selMode
+                                  ? `2px solid ${sel ? 'var(--c-danger)' : 'var(--c-border)'}`
+                                  : `2px solid ${i === foto ? 'var(--c-success)' : 'transparent'}`,
+                              }}
+                            >
+                              <img src={f.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              {selMode && (
+                                <div style={{
+                                  position: 'absolute', top: 4, right: 4,
+                                  width: 18, height: 18, borderRadius: 4,
+                                  background: sel ? 'var(--c-danger)' : 'rgba(0,0,0,0.5)',
+                                  border: '2px solid #fff',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: 11, color: '#fff', fontWeight: 700,
+                                }}>
+                                  {sel ? '✓' : ''}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     </>
                   )
