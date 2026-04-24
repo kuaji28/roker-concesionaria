@@ -19,7 +19,7 @@ import Gastos from './screens/Gastos'
 import Rotacion from './screens/Rotacion'
 import Buscar from './screens/Buscar'
 import Agenda from './screens/Agenda'
-import Placeholder from './screens/Placeholder'
+import Documentacion from './screens/Documentacion'
 import CatalogoPublico from './screens/CatalogoPublico'
 import DetallePublico from './screens/DetallePublico'
 import Mejoras from './screens/Mejoras'
@@ -51,7 +51,7 @@ function AppShell({ onLogout, user }) {
           <Route path="/rotacion"     element={<Rotacion    onLogout={onLogout} />} />
           <Route path="/buscar"       element={<Buscar      onLogout={onLogout} />} />
           <Route path="/agenda"       element={<Agenda      onLogout={onLogout} />} />
-          <Route path="/doc"          element={<Placeholder title="Documentación" onLogout={onLogout} />} />
+          <Route path="/doc"          element={<Documentacion />} />
           <Route path="/reportes"     element={<Reportes    onLogout={onLogout} />} />
           <Route path="/gerente"      element={<Gerente     onLogout={onLogout} />} />
           <Route path="/vendedores"   element={<Vendedores  onLogout={onLogout} />} />

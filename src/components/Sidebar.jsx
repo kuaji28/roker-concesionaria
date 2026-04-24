@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import Icon from './Icon'
+import GHLogo from './GHLogo'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 const NAV = [
@@ -45,7 +46,7 @@ export default function Sidebar({ tc }) {
           height: 52,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div className="brand-mark" style={{ width: 30, height: 30, fontSize: 11 }}>GH</div>
+            <GHLogo size={30} />
             <div style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</div>
           </div>
           <button
@@ -79,7 +80,7 @@ export default function Sidebar({ tc }) {
           transition: 'left 0.25s ease',
         }}>
           <div className="brand" style={{ marginBottom: 10 }}>
-            <div className="brand-mark">GH</div>
+            <GHLogo size={36} />
             <div className="brand-txt">GH Cars<small>Gestión Automotriz</small></div>
           </div>
           <nav className="nav" onClick={handleNavClick}>
@@ -110,7 +111,7 @@ export default function Sidebar({ tc }) {
   return (
     <aside className="side">
       <div className="brand">
-        <div className="brand-mark">GH</div>
+        <GHLogo size={36} />
         <div className="brand-txt">
           GH Cars
           <small>Gestión Automotriz</small>

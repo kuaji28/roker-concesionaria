@@ -5,6 +5,8 @@ import StateBadge from '../components/StateBadge'
 import Icon from '../components/Icon'
 import FormField from '../components/FormField'
 import { getVehiculos } from '../lib/supabase'
+
+const WA_NUMBER = '5491162692000'
 import { useTc } from '../hooks/useTc'
 import { callAI, aiConfigured } from '../lib/api'
 
@@ -255,12 +257,10 @@ export default function Buscar({ onLogout }) {
                       <button className="btn primary" onClick={copyWsp}>
                         <Icon name="clipboard" size={14} /> Copiar
                       </button>
-                      {wspVeh.whatsapp && (
-                        <a href={`https://wa.me/${wspVeh.whatsapp?.replace(/\D/g, '')}?text=${encodeURIComponent(wspTexto)}`}
-                          target="_blank" rel="noreferrer" className="btn secondary" style={{ fontSize: 13 }}>
-                          Abrir en WA
-                        </a>
-                      )}
+                      <a href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(wspTexto)}`}
+                        target="_blank" rel="noreferrer" className="btn secondary" style={{ fontSize: 13 }}>
+                        Abrir en WA
+                      </a>
                     </div>
                   </>
                 )}

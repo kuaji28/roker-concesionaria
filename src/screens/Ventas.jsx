@@ -3,7 +3,7 @@ import TopBar from '../components/TopBar'
 import StateBadge from '../components/StateBadge'
 import Icon from '../components/Icon'
 import FormField from '../components/FormField'
-import { getVehiculos, getVendedores, createVenta, createFinanciamiento, cancelarReservasVehiculo } from '../lib/supabase'
+import { getVehiculos, getVendedores, createVenta, createFinanciamiento, cancelarReservasVehiculo, getVentas } from '../lib/supabase'
 import { useTc } from '../hooks/useTc'
 
 const FORMAS = ['Efectivo', 'Transferencia', 'Efectivo + Transferencia', 'Financiación', 'Parte de pago']
@@ -19,6 +19,7 @@ const EMPTY_FIN = {
 
 export default function Ventas({ onLogout }) {
   const TC = useTc()
+  const [activeTab, setActiveTab] = useState('nuevo') // 'nuevo' | 'historial'
   const [step, setStep]         = useState(1)
   const [vehiculos, setVehiculos] = useState([])
   const [vendedores, setVendedores] = useState([])
@@ -29,6 +30,10 @@ export default function Ventas({ onLogout }) {
   const [buyer, setBuyer]       = useState(EMPTY_BUYER)
   const [fin, setFin]           = useState(EMPTY_FIN)
 
+  // Historial
+  const [historial, setHistorial]     = useState([])
+  const [histLoading, setHistLoading] = useState(false)
+
   useEffect(() => {
     Promise.all([
       getVehiculos({ estado: 'disponible' }),
@@ -36,6 +41,13 @@ export default function Ventas({ onLogout }) {
     ]).then(([disp, senados]) => setVehiculos([...disp, ...senados]))
     getVendedores().then(setVendedores)
   }, [])
+
+  useEffect(() => {
+    if (activeTab !== 'historial') return
+    setHistLoading(true)
+    getVentas().then(data => { setHistorial(data.slice(0, 50)); setHistLoading(false) })
+      .catch(() => setHistLoading(false))
+  }, [activeTab])
 
   const f  = (k) => (e) => setBuyer(p => ({ ...p, [k]: e.target.value }))
   const ff = (k) => (e) => setFin(p => ({ ...p, [k]: e.target.value }))
@@ -124,11 +136,68 @@ export default function Ventas({ onLogout }) {
       <div className="main">
         <div className="page-head">
           <div>
-            <h1 className="page-title">Registrar venta</h1>
-            <p className="page-caption">Paso {step} de 2</p>
+            <h1 className="page-title">Ventas</h1>
+            <p className="page-caption">{activeTab === 'nuevo' ? `Nueva venta — paso ${step} de 2` : 'Historial de ventas'}</p>
           </div>
           <div style={{ flex: 1 }} />
           <div className="seg">
+            <button className={activeTab === 'nuevo' ? 'on' : ''} onClick={() => setActiveTab('nuevo')}>
+              <Icon name="plus" size={13} /> Nueva venta
+            </button>
+            <button className={activeTab === 'historial' ? 'on' : ''} onClick={() => setActiveTab('historial')}>
+              <Icon name="chart" size={13} /> Historial
+            </button>
+          </div>
+        </div>
+
+        {/* Historial tab */}
+        {activeTab === 'historial' && (
+          <div>
+            {histLoading ? (
+              <p style={{ color: 'var(--c-fg-2)' }}>Cargando historial…</p>
+            ) : historial.length === 0 ? (
+              <div className="banner info">
+                <Icon name="info" size={16} />
+                Todavía no hay ventas registradas.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--c-border)' }}>
+                      {['Fecha', 'Vehículo', 'Comprador', 'Vendedor', 'Precio', 'Forma de pago'].map(h => (
+                        <th key={h} style={{ textAlign: 'left', padding: '8px 12px', color: 'var(--c-fg-3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historial.map(v => (
+                      <tr key={v.id} style={{ borderBottom: '1px solid var(--c-border)' }}>
+                        <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: 'var(--c-fg-2)' }}>
+                          {v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString('es-AR') : '—'}
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>
+                          {v.vehiculos ? `${v.vehiculos.marca} ${v.vehiculos.modelo} ${v.vehiculos.anio}` : `#${v.vehiculo_id}`}
+                          {v.vehiculos?.patente && <span style={{ color: 'var(--c-fg-3)', marginLeft: 6 }}>· {v.vehiculos.patente}</span>}
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>{v.comprador_nombre || '—'}</td>
+                        <td style={{ padding: '10px 12px', color: 'var(--c-fg-2)' }}>{v.vendedores?.nombre || '—'}</td>
+                        <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                          {v.moneda_precio || 'USD'} {Number(v.precio_final || 0).toLocaleString('es-AR')}
+                        </td>
+                        <td style={{ padding: '10px 12px', color: 'var(--c-fg-2)' }}>{v.forma_pago || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Nueva venta wizard */}
+        {activeTab === 'nuevo' && (<>
+        <div className="seg" style={{ marginBottom: 16 }}>
             <button className={step === 1 ? 'on' : ''} onClick={() => step > 1 && setStep(1)}>
               <Icon name="car" size={13} /> Vehículo
             </button>
@@ -136,7 +205,6 @@ export default function Ventas({ onLogout }) {
               <Icon name="users" size={13} /> Comprador
             </button>
           </div>
-        </div>
 
         {error && <div className="banner warning"><Icon name="alert" size={16} />{error}</div>}
 
@@ -255,6 +323,7 @@ export default function Ventas({ onLogout }) {
             </div>
           </div>
         )}
+        </>)}
       </div>
     </div>
   )

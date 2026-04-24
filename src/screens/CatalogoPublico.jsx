@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import WhatsAppIcon from '../components/WhatsAppIcon'
+import GHLogo from '../components/GHLogo'
+import { useWANumber } from '../hooks/useWANumber'
 
 const FALLBACK_TC   = 1415
-const WA_NUMBER     = '5491162692000'   // GH Cars WhatsApp
 
 async function fetchTc() {
   try {
@@ -62,7 +63,7 @@ async function getPortadas(vehiculoIds) {
 const TIPOS = ['todos', 'auto', 'moto', 'cuatriciclo', 'moto_de_agua']
 const TIPOS_LABEL = { todos: 'Todos', auto: 'Autos', moto: 'Motos', cuatriciclo: 'Cuatriciclos', moto_de_agua: 'Motos de agua' }
 
-function CardPublica({ v, foto, tc }) {
+function CardPublica({ v, foto, tc, waNumber }) {
   const navigate  = useNavigate()
   const precioUSD = v.precio_lista || v.precio_base
   const precioARS = precioUSD && tc ? (precioUSD * tc).toLocaleString('es-AR') : null
@@ -73,7 +74,7 @@ function CardPublica({ v, foto, tc }) {
       `Hola! Vi el *${v.marca} ${v.modelo} ${v.anio}* en el catálogo de GH Cars.\n` +
       `¿Podría darme más información? 🚗`
     )
-    window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, '_blank')
+    window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank')
   }
 
   return (
@@ -128,6 +129,7 @@ function CardPublica({ v, foto, tc }) {
 
 export default function CatalogoPublico() {
   const isMobile = useIsMobile()
+  const waNumber = useWANumber()
   const [vehiculos, setVehiculos] = useState([])
   const [portadas, setPortadas]   = useState({})
   const [tc, setTc]               = useState(FALLBACK_TC)
@@ -170,14 +172,14 @@ export default function CatalogoPublico() {
         position: 'sticky', top: 0, zIndex: 100,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="brand-mark" style={{ width: 36, height: 36, fontSize: 14, borderRadius: 8 }}>GH</div>
+          <GHLogo size={36} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 15 }}>GH Cars</div>
             <div style={{ fontSize: 11, color: 'var(--c-fg-3)' }}>Stock disponible</div>
           </div>
         </div>
         <a
-          href={`https://wa.me/${WA_NUMBER}`}
+          href={`https://wa.me/${waNumber}`}
           target="_blank"
           rel="noreferrer"
           className="btn btn-primary"
@@ -254,7 +256,7 @@ export default function CatalogoPublico() {
             <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>No hay vehículos disponibles</div>
             <div style={{ fontSize: 13, marginBottom: 20 }}>Consultanos por WhatsApp para próximos ingresos.</div>
             <a
-              href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola! Quería consultar sobre próximos ingresos de vehículos en GH Cars.')}`}
+              href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola! Quería consultar sobre próximos ingresos de vehículos en GH Cars.')}`}
               target="_blank"
               rel="noreferrer"
               className="btn btn-primary"
@@ -275,7 +277,7 @@ export default function CatalogoPublico() {
               gap: 20,
             }}>
               {vehiculos.map(v => (
-                <CardPublica key={v.id} v={v} foto={portadas[v.id]} tc={tc} />
+                <CardPublica key={v.id} v={v} foto={portadas[v.id]} tc={tc} waNumber={waNumber} />
               ))}
             </div>
           </>
@@ -296,7 +298,7 @@ export default function CatalogoPublico() {
           <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--c-fg-1)', marginBottom: 6 }}>GH Cars — Concesionaria de vehículos usados</div>
           <div>📱 WhatsApp:&nbsp;
             <a
-              href={`https://wa.me/${WA_NUMBER}`}
+              href={`https://wa.me/${waNumber}`}
               target="_blank"
               rel="noreferrer"
               style={{ color: 'var(--c-success)', textDecoration: 'none', fontWeight: 600 }}

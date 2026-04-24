@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import WhatsAppIcon from '../components/WhatsAppIcon'
+import GHLogo from '../components/GHLogo'
+import { useWANumber } from '../hooks/useWANumber'
 
 const FALLBACK_TC = 1415
-const WA_NUMBER   = '5491162692000'
 
 async function fetchTc() {
   try {
@@ -30,6 +31,7 @@ export default function DetallePublico() {
   const { id }    = useParams()
   const navigate  = useNavigate()
   const isMobile  = useIsMobile()
+  const waNumber  = useWANumber()
   const [v,       setV]      = useState(null)
   const [fotos,   setFotos]  = useState([])
   const [idx,     setIdx]    = useState(0)
@@ -55,7 +57,7 @@ export default function DetallePublico() {
     const msg = encodeURIComponent(
       `Hola! Vi el *${nombre}* en el catálogo de GH Cars.\n¿Podría darme más información? 🚗`
     )
-    window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, '_blank')
+    window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank')
   }
 
   const foto     = fotos[idx]
@@ -93,7 +95,7 @@ export default function DetallePublico() {
             >
               ←
             </button>
-            <div className="brand-mark" style={{ width: 28, height: 28, fontSize: 11, borderRadius: 6 }}>GH</div>
+            <GHLogo size={28} />
             <span style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</span>
           </div>
         </header>
@@ -269,10 +271,10 @@ export default function DetallePublico() {
             style={{ background: 'none', border: 'none', cursor: 'pointer',
                      color: 'var(--c-fg-2)', fontSize: 20, padding: 4 }}
           >←</button>
-          <div className="brand-mark" style={{ width: 32, height: 32, fontSize: 12, borderRadius: 8 }}>GH</div>
+          <GHLogo size={32} />
           <div style={{ fontWeight: 700, fontSize: 15 }}>GH Cars</div>
         </div>
-        <a href={`https://wa.me/${WA_NUMBER}`} target="_blank" rel="noreferrer"
+        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"
            className="btn btn-primary" style={{ fontSize: 13, textDecoration: 'none' }}>
           <WhatsAppIcon size={16} variant="white" />&nbsp;Contactar
         </a>

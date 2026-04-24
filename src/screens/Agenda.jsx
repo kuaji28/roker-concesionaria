@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import TopBar from '../components/TopBar'
 import Modal from '../components/Modal'
 import Icon from '../components/Icon'
-import { getAgenda, crearTurno, updateTurno, getVehiculos, getVendedores } from '../lib/supabase'
+import { supabase, getAgenda, crearTurno, updateTurno, getVehiculos, getVendedores } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 // ── Constants ─────────────────────────────────────────────────
 const TIPOS = [
@@ -247,6 +248,7 @@ function FormTurno({ vehiculos, vendedores, preVehiculoId, onClose, onGuardar })
 
 // ── Main screen ───────────────────────────────────────────────
 export default function Agenda({ onLogout }) {
+  const isMobile = useIsMobile()
   const [searchParams] = useSearchParams()
   const preVehiculoId = searchParams.get('vehiculo_id') || ''
 
@@ -255,6 +257,7 @@ export default function Agenda({ onLogout }) {
   const [vendedores, setVendedores] = useState([])
   const [loading, setLoading]     = useState(true)
   const [showForm, setShowForm]   = useState(false)
+  const [diaIdx, setDiaIdx]       = useState(0) // for mobile day navigation
 
   const semana = diasSemana()
   const todayIso = hoy()
@@ -294,21 +297,33 @@ export default function Agenda({ onLogout }) {
   }
 
   async function handleGuardar(payload, nombre, telefono) {
-    // Intentar crear prospecto si hay teléfono o nombre, de lo contrario usar titulo
+    // Intentar crear prospecto si hay nombre
     let prospecto_id = null
     if (nombre) {
-      try {
-        const { data: p, error } = await import('../lib/supabase').then(m =>
-          m.supabase.from('prospectos').insert([{
-            nombre, telefono: telefono || null, estado: 'nuevo',
-            vehiculo_id: payload.vehiculo_id || null,
-          }]).select().single()
-        )
-        if (!error && p) prospecto_id = p.id
-      } catch (_) {}
+      const { data: p, error: pErr } = await supabase
+        .from('prospectos')
+        .insert([{
+          nombre, telefono: telefono || null, estado: 'nuevo',
+          vehiculo_id: payload.vehiculo_id || null,
+        }])
+        .select()
+        .single()
+      if (pErr) {
+        console.error('handleGuardar: no se pudo crear prospecto', pErr)
+        // Continuar de todas formas — el turno se crea con titulo en lugar de prospecto_id
+      } else if (p) {
+        prospecto_id = p.id
+      }
     }
     const nuevo = await crearTurno({ ...payload, prospecto_id })
-    setTurnos(ts => [...ts, { ...nuevo, vehiculo: vehiculos.find(v => v.id === nuevo.vehiculo_id) || null, prospecto: prospecto_id ? { nombre, telefono } : null }])
+    setTurnos(ts => [
+      ...ts,
+      {
+        ...nuevo,
+        vehiculo: vehiculos.find(v => v.id === nuevo.vehiculo_id) || null,
+        prospecto: prospecto_id ? { nombre, telefono } : null,
+      },
+    ])
   }
 
   const turnosHoy = turnos.filter(t => t.fecha === todayIso)
@@ -368,60 +383,111 @@ export default function Agenda({ onLogout }) {
               <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, color: 'var(--c-fg)' }}>
                 Próximos 7 días
               </h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                gap: 12,
-              }}>
-                {semana.map(dia => {
-                  const dTurnos = turnosPorDia(dia.iso)
-                  const esHoy = dia.iso === todayIso
-                  return (
-                    <div key={dia.iso} style={{
-                      background: 'var(--c-surface)',
-                      border: `1px solid ${esHoy ? 'var(--c-accent)' : 'var(--c-border)'}`,
-                      borderRadius: 10, padding: '12px 12px 14px',
-                      opacity: esHoy ? 1 : 0.85,
-                    }}>
-                      <div style={{
-                        fontSize: 12, fontWeight: 700, marginBottom: 8,
-                        color: esHoy ? 'var(--c-accent)' : 'var(--c-fg-2)',
-                        textTransform: 'capitalize',
-                      }}>
-                        {dia.label}
-                        {dTurnos.length > 0 && (
-                          <span style={{
-                            marginLeft: 6, background: esHoy ? 'var(--c-accent)' : 'var(--c-fg-3)',
-                            color: '#fff', borderRadius: 10, fontSize: 10, padding: '1px 6px',
-                          }}>
-                            {dTurnos.length}
-                          </span>
-                        )}
-                      </div>
-                      {dTurnos.length === 0 ? (
-                        <div style={{ fontSize: 12, color: 'var(--c-fg-3)', textAlign: 'center', padding: '8px 0' }}>—</div>
-                      ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {dTurnos.map(t => (
-                            <div key={t.id} style={{
-                              fontSize: 12, display: 'flex', alignItems: 'flex-start', gap: 6,
-                              borderLeft: `2px solid ${ESTADOS[t.estado]?.color || '#3B82F6'}`,
-                              paddingLeft: 6,
-                            }}>
-                              <span style={{ fontFamily: 'var(--mono)', color: 'var(--c-accent)', minWidth: 34 }}>
-                                {fmtHora(t.hora)}
-                              </span>
-                              <span style={{ color: 'var(--c-fg)', lineHeight: 1.3 }}>
-                                {t.prospecto?.nombre || t.titulo || '—'}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+
+              {isMobile ? (
+                /* Mobile: single day with prev/next navigation */
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <button
+                      className="btn ghost"
+                      style={{ padding: '4px 10px' }}
+                      disabled={diaIdx === 0}
+                      onClick={() => setDiaIdx(i => Math.max(0, i - 1))}
+                    >
+                      ◀
+                    </button>
+                    <div style={{ flex: 1, textAlign: 'center', fontWeight: 700, fontSize: 14, textTransform: 'capitalize', color: semana[diaIdx].iso === todayIso ? 'var(--c-accent)' : 'var(--c-fg)' }}>
+                      {semana[diaIdx].label}
+                      {turnosPorDia(semana[diaIdx].iso).length > 0 && (
+                        <span style={{ marginLeft: 8, background: 'var(--c-accent)', color: '#fff', borderRadius: 10, fontSize: 11, padding: '1px 7px' }}>
+                          {turnosPorDia(semana[diaIdx].iso).length}
+                        </span>
                       )}
                     </div>
-                  )
-                })}
-              </div>
+                    <button
+                      className="btn ghost"
+                      style={{ padding: '4px 10px' }}
+                      disabled={diaIdx === semana.length - 1}
+                      onClick={() => setDiaIdx(i => Math.min(semana.length - 1, i + 1))}
+                    >
+                      ▶
+                    </button>
+                  </div>
+                  {(() => {
+                    const dia = semana[diaIdx]
+                    const dTurnos = turnosPorDia(dia.iso)
+                    return dTurnos.length === 0 ? (
+                      <div style={{
+                        background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+                        borderRadius: 10, padding: '20px', textAlign: 'center',
+                        color: 'var(--c-fg-3)', fontSize: 14,
+                      }}>Sin turnos este día</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {dTurnos.map(t => (
+                          <TurnoCard key={t.id} turno={t} onCambiarEstado={handleCambiarEstado} />
+                        ))}
+                      </div>
+                    )
+                  })()}
+                </div>
+              ) : (
+                /* Desktop: 7-column grid */
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                  gap: 12,
+                }}>
+                  {semana.map(dia => {
+                    const dTurnos = turnosPorDia(dia.iso)
+                    const esHoy = dia.iso === todayIso
+                    return (
+                      <div key={dia.iso} style={{
+                        background: 'var(--c-surface)',
+                        border: `1px solid ${esHoy ? 'var(--c-accent)' : 'var(--c-border)'}`,
+                        borderRadius: 10, padding: '12px 12px 14px',
+                        opacity: esHoy ? 1 : 0.85,
+                      }}>
+                        <div style={{
+                          fontSize: 12, fontWeight: 700, marginBottom: 8,
+                          color: esHoy ? 'var(--c-accent)' : 'var(--c-fg-2)',
+                          textTransform: 'capitalize',
+                        }}>
+                          {dia.label}
+                          {dTurnos.length > 0 && (
+                            <span style={{
+                              marginLeft: 6, background: esHoy ? 'var(--c-accent)' : 'var(--c-fg-3)',
+                              color: '#fff', borderRadius: 10, fontSize: 10, padding: '1px 6px',
+                            }}>
+                              {dTurnos.length}
+                            </span>
+                          )}
+                        </div>
+                        {dTurnos.length === 0 ? (
+                          <div style={{ fontSize: 12, color: 'var(--c-fg-3)', textAlign: 'center', padding: '8px 0' }}>—</div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {dTurnos.map(t => (
+                              <div key={t.id} style={{
+                                fontSize: 12, display: 'flex', alignItems: 'flex-start', gap: 6,
+                                borderLeft: `2px solid ${ESTADOS[t.estado]?.color || '#3B82F6'}`,
+                                paddingLeft: 6,
+                              }}>
+                                <span style={{ fontFamily: 'var(--mono)', color: 'var(--c-accent)', minWidth: 34 }}>
+                                  {fmtHora(t.hora)}
+                                </span>
+                                <span style={{ color: 'var(--c-fg)', lineHeight: 1.3 }}>
+                                  {t.prospecto?.nombre || t.titulo || '—'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </section>
           </>
         )}

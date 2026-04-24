@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import TopBar from '../components/TopBar'
 import Icon from '../components/Icon'
 import FormField from '../components/FormField'
-import { updatePinUsuario, getTC, updateTC } from '../lib/supabase'
+import { supabase, updatePinUsuario, getTC, updateTC } from '../lib/supabase'
 
 export default function Config({ onLogout }) {
   const currentUser = (() => {
@@ -15,8 +15,16 @@ export default function Config({ onLogout }) {
   const [tcMsg, setTcMsg]       = useState(null)
   const [savingPin, setSavingPin] = useState(false)
   const [savingTc, setSavingTc]   = useState(false)
+  const [waNumber, setWaNumber]   = useState('')
+  const [waMsg, setWaMsg]         = useState(null)
+  const [savingWa, setSavingWa]   = useState(false)
 
   useEffect(() => { getTC().then(v => setTc(String(v))) }, [])
+  useEffect(() => {
+    supabase.from('config').select('valor').eq('clave', 'wa_number').single()
+      .then(({ data }) => { if (data?.valor) setWaNumber(data.valor) })
+      .catch(() => {})
+  }, [])
 
   async function changePin() {
     setPinMsg(null)
@@ -46,6 +54,22 @@ export default function Config({ onLogout }) {
       setTcMsg({ type: 'warning', text: e.message })
     } finally {
       setSavingTc(false)
+    }
+  }
+
+  async function changeWa() {
+    const val = waNumber.trim().replace(/\D/g, '')
+    if (!val || val.length < 10) { setWaMsg({ type: 'warning', text: 'Ingresá un número válido (solo dígitos, con código de país).' }); return }
+    setSavingWa(true)
+    try {
+      const { error } = await supabase.from('config').upsert({ clave: 'wa_number', valor: val }, { onConflict: 'clave' })
+      if (error) throw error
+      setWaMsg({ type: 'success', text: 'Número de WhatsApp actualizado.' })
+      setWaNumber(val)
+    } catch (e) {
+      setWaMsg({ type: 'warning', text: e.message || 'Error al guardar.' })
+    } finally {
+      setSavingWa(false)
     }
   }
 
@@ -110,6 +134,30 @@ export default function Config({ onLogout }) {
             >
               Ver
             </a>
+          </div>
+        </div>
+
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="message" size={14} /> WhatsApp de contacto
+          </h3>
+          <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--c-fg-2)' }}>
+            Número que se usa en el catálogo público y en los presupuestos por WhatsApp. Incluí el código de país sin el +.
+          </p>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <FormField label="Número WhatsApp (ej: 5491162692000)" hint="Código de país + número, sin espacios ni guiones">
+              <input className="input" type="tel" value={waNumber} onChange={e => setWaNumber(e.target.value)} placeholder="5491162692000" />
+            </FormField>
+            {waMsg && (
+              <div className={`banner ${waMsg.type}`}>
+                <Icon name={waMsg.type === 'success' ? 'check' : 'alert'} size={16} />{waMsg.text}
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn primary" onClick={changeWa} disabled={savingWa}>
+                {savingWa ? 'Guardando…' : <><Icon name="check" size={14} /> Guardar número</>}
+              </button>
+            </div>
           </div>
         </div>
 
