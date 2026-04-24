@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 const FALLBACK_TC   = 1415
@@ -60,10 +61,12 @@ const TIPOS = ['todos', 'auto', 'moto', 'cuatriciclo', 'moto_de_agua']
 const TIPOS_LABEL = { todos: 'Todos', auto: 'Autos', moto: 'Motos', cuatriciclo: 'Cuatriciclos', moto_de_agua: 'Motos de agua' }
 
 function CardPublica({ v, foto, tc }) {
+  const navigate  = useNavigate()
   const precioUSD = v.precio_lista || v.precio_base
   const precioARS = precioUSD && tc ? (precioUSD * tc).toLocaleString('es-AR') : null
 
-  function abrirWhatsApp() {
+  function abrirWhatsApp(e) {
+    e.stopPropagation()
     const msg = encodeURIComponent(
       `Hola! Vi el *${v.marca} ${v.modelo} ${v.anio}* en el catálogo de GH Cars.\n` +
       `¿Podría darme más información? 🚗`
@@ -72,7 +75,11 @@ function CardPublica({ v, foto, tc }) {
   }
 
   return (
-    <div className="card" style={{ overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' }}>
+    <div
+      className="card"
+      style={{ overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
+      onClick={() => navigate(`/p/vehiculo/${v.id}`)}
+    >
       {/* Foto */}
       <div style={{ aspectRatio: '4/3', background: 'var(--c-card-2)', overflow: 'hidden', flexShrink: 0 }}>
         {foto
@@ -107,6 +114,7 @@ function CardPublica({ v, foto, tc }) {
             className="btn btn-primary"
             style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
             onClick={abrirWhatsApp}
+            title="Consultar por WhatsApp"
           >
             💬 Consultar
           </button>

@@ -20,6 +20,7 @@ import Buscar from './screens/Buscar'
 import Agenda from './screens/Agenda'
 import Placeholder from './screens/Placeholder'
 import CatalogoPublico from './screens/CatalogoPublico'
+import DetallePublico from './screens/DetallePublico'
 import Mejoras from './screens/Mejoras'
 import { useTc, TcContext } from './hooks/useTc'
 import { UserContext } from './hooks/useUser'
@@ -85,7 +86,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Rutas públicas — sin auth */}
-        <Route path="/p/catalogo" element={<CatalogoPublico />} />
+        <Route path="/p/catalogo"        element={<CatalogoPublico />} />
+        <Route path="/p/vehiculo/:id"    element={<DetallePublico />} />
 
         <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />} />
         <Route
