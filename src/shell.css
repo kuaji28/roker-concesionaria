@@ -552,6 +552,16 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 
   /* Page title: smaller */
   .page-title { font-size: 20px; }
+
+  /* Modal: full-width with reduced padding */
+  .modal { padding: 0 !important; margin: 8px; }
+  .modal-head { padding: 14px 16px; }
+
+  /* Metric grid: 2 columns */
+  .metric-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Rank table: horizontal scroll */
+  .rank { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 
 @media (min-width: 480px) and (max-width: 768px) {

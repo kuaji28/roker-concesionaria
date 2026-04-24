@@ -7,6 +7,7 @@ import Icon from '../components/Icon'
 import { getVehiculos, updateVehiculo } from '../lib/supabase'
 import { useTc } from '../hooks/useTc'
 import { useUser, canSeePrecioBase } from '../hooks/useUser'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const ESTADOS      = ['todos', 'disponible', 'señado', 'en_revision', 'en_preparacion', 'vendido']
 const TIPOS        = ['todos', 'auto', 'moto', 'cuatriciclo', 'moto_de_agua']
@@ -17,6 +18,7 @@ export default function Catalogo({ onLogout }) {
   const TC = useTc()
   const user = useUser()
   const rol = user?.rol || 'externo'
+  const isMobile = useIsMobile()
   const [params] = useSearchParams()
 
   const [vehiculos, setVehiculos] = useState([])

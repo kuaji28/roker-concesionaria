@@ -3,6 +3,7 @@ import TopBar from '../components/TopBar'
 import Icon from '../components/Icon'
 import { getFinanciamientos, getCuotasVencidas, getCuotasProximas, pagarCuotaConMetadata, getSeguimientos, updateSeguimiento } from '../lib/supabase'
 import { useTc } from '../hooks/useTc'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const FORMAS_COBRO = ['Efectivo', 'Transferencia', 'Efectivo + Transferencia']
 const MONEDAS = ['ARS', 'USD']
@@ -48,6 +49,7 @@ function mesesDesdeHoy(fechaProgramada) {
 
 export default function Cobranza({ onLogout }) {
   const TC = useTc()
+  const isMobile = useIsMobile()
   const [finan, setFinan]         = useState([])
   const [vencidas, setVencidas]   = useState([])
   const [proximas, setProximas]   = useState([])
@@ -151,7 +153,29 @@ export default function Cobranza({ onLogout }) {
     return s.estado === 'pendiente' && f <= hoy
   }).length
 
-  const CuotaRow = ({ c, badge }) => (
+  const CuotaRow = ({ c, badge }) => isMobile ? (
+    <div className="card" style={{ padding: '12px 14px', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 14 }}>{c.financiamientos?.deudor_nombre || '—'}</div>
+          <div style={{ fontSize: 11, color: 'var(--c-fg-3)' }}>
+            {c.financiamientos?.vehiculos?.marca} {c.financiamientos?.vehiculos?.modelo}
+            {c.numero_cuota && ` · Cuota #${c.numero_cuota}`}
+          </div>
+        </div>
+        <span className={`badge ${badge.cls}`}><span className="cdot" /> {badge.label}</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--c-fg-2)' }}>Vence: {c.fecha_vencimiento}</div>
+          <div style={{ fontWeight: 700, fontSize: 15, marginTop: 2 }}>$ {Number(c.monto || 0).toLocaleString('es-AR')}</div>
+        </div>
+        <button className="btn primary" style={{ fontSize: 12, padding: '6px 12px', whiteSpace: 'nowrap' }} onClick={() => abrirModal(c)}>
+          <Icon name="check" size={13} /> Pagar
+        </button>
+      </div>
+    </div>
+  ) : (
     <div className="list-row" style={{ cursor: 'default' }}>
       <div>
         <div className="v-title">{c.financiamientos?.deudor_nombre || '—'}</div>
@@ -250,7 +274,26 @@ export default function Cobranza({ onLogout }) {
             </div>
             {finanFil.length === 0
               ? <div className="banner info"><Icon name="info" size={16} />No hay financiamientos con ese filtro.</div>
-              : finanFil.map(fn => (
+              : finanFil.map(fn => isMobile ? (
+                <div key={fn.id} className="card" style={{ padding: '12px 14px', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{fn.deudor_nombre || '—'}</div>
+                      <div style={{ fontSize: 11, color: 'var(--c-fg-3)' }}>
+                        {fn.vehiculos?.marca} {fn.vehiculos?.modelo} {fn.vehiculos?.anio}
+                        {fn.deudor_telefono && ` · ${fn.deudor_telefono}`}
+                      </div>
+                    </div>
+                    <span className={`badge ${fn.estado === 'activo' ? 'success' : fn.estado === 'vencido' ? 'danger' : 'neutral'}`}>
+                      <span className="cdot" /> {fn.estado || 'activo'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
+                    <div><span style={{ color: 'var(--c-fg-2)', fontSize: 11 }}>Total: </span>$ {Number(fn.monto_total || 0).toLocaleString('es-AR')}</div>
+                    <div><span style={{ color: 'var(--c-fg-2)', fontSize: 11 }}>Cuotas: </span>{fn.cantidad_cuotas || '—'}</div>
+                  </div>
+                </div>
+              ) : (
                 <div key={fn.id} className="list-row" style={{ cursor: 'default' }}>
                   <div>
                     <div className="v-title">{fn.deudor_nombre || '—'}</div>

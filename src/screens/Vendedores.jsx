@@ -5,6 +5,7 @@ import FormField from '../components/FormField'
 import Icon from '../components/Icon'
 import WhatsAppIcon from '../components/WhatsAppIcon'
 import { getVendedores, createVendedor, updateVendedor } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const ROLES = ['vendedor', 'gerente', 'administrativo', 'otro']
 
@@ -14,6 +15,7 @@ const EMPTY = {
 }
 
 export default function Vendedores({ onLogout }) {
+  const isMobile = useIsMobile()
   const [vendedores, setVendedores] = useState([])
   const [modal, setModal]   = useState(null)
   const [saving, setSaving] = useState(false)
@@ -77,7 +79,41 @@ export default function Vendedores({ onLogout }) {
 
         {vendedores.length === 0
           ? <div className="banner info"><Icon name="info" size={16} />No hay vendedores registrados.</div>
-          : (
+          : isMobile ? (
+            <div>
+              {vendedores.map(v => (
+                <div key={v.id} className="card" style={{ padding: '12px 14px', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{v.nombre}</div>
+                      <div style={{ fontSize: 12, color: 'var(--c-fg-2)', textTransform: 'capitalize', marginTop: 1 }}>
+                        {v.rol || 'vendedor'}{v.comision_pct != null ? ` · ${v.comision_pct}%` : ''}
+                      </div>
+                    </div>
+                    <span className={`badge ${v.activo !== false ? 'success' : 'neutral'}`}>
+                      <span className="cdot" /> {v.activo !== false ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: 12, color: 'var(--c-fg-2)' }}>
+                      {v.telefono && (
+                        <span>{v.telefono}</span>
+                      )}
+                      {v.whatsapp && v.whatsapp !== v.telefono && (
+                        <a href={`https://wa.me/${v.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: '#25D366', textDecoration: 'none', marginLeft: 8 }}>
+                          <WhatsAppIcon size={13} variant="brand" />WA
+                        </a>
+                      )}
+                    </div>
+                    <button className="btn ghost" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => openEdit(v)}>
+                      <Icon name="edit" size={13} /> Editar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
             <table className="rank">
               <thead>
                 <tr>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import TopBar from '../components/TopBar'
 import Icon from '../components/Icon'
 import { supabase, getStats, getVentas, getVendedores } from '../lib/supabase'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 async function getKPIsMes() {
   const now = new Date()
@@ -22,6 +23,7 @@ async function getKPIsMes() {
 }
 
 export default function Gerente({ onLogout }) {
+  const isMobile = useIsMobile()
   const [stats, setStats]         = useState(null)
   const [ventas, setVentas]       = useState([])
   const [vendedores, setVendedores] = useState([])
@@ -116,8 +118,8 @@ export default function Gerente({ onLogout }) {
                 <th>#</th>
                 <th>Vendedor</th>
                 <th className="num">Ventas</th>
-                <th className="num">Volumen USD</th>
-                <th style={{ width: 140 }}>Progreso</th>
+                {!isMobile && <th className="num">Volumen USD</th>}
+                {!isMobile && <th style={{ width: 140 }}>Progreso</th>}
               </tr>
             </thead>
             <tbody>
@@ -126,12 +128,14 @@ export default function Gerente({ onLogout }) {
                   <td><strong>{i + 1}</strong></td>
                   <td><strong>{v.nombre}</strong></td>
                   <td className="num">{v.total}</td>
-                  <td className="num">USD {v.volumen.toLocaleString('es-AR')}</td>
-                  <td>
-                    <div className="bar-wrap">
-                      <div className="bar-fill" style={{ width: `${(v.total / ranking[0].total) * 100}%` }} />
-                    </div>
-                  </td>
+                  {!isMobile && <td className="num">USD {v.volumen.toLocaleString('es-AR')}</td>}
+                  {!isMobile && (
+                    <td>
+                      <div className="bar-wrap">
+                        <div className="bar-fill" style={{ width: `${(v.total / ranking[0].total) * 100}%` }} />
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -145,28 +149,45 @@ export default function Gerente({ onLogout }) {
 
         <h2 className="section-title" style={{ marginTop: 28 }}>Últimas ventas</h2>
         {recentVentas.length > 0 ? (
-          <table className="rank">
-            <thead>
-              <tr>
-                <th>Vehículo</th>
-                <th>Comprador</th>
-                <th>Vendedor</th>
-                <th className="num">Precio</th>
-                <th>Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
+          isMobile ? (
+            <div>
               {recentVentas.map(v => (
-                <tr key={v.id}>
-                  <td><strong>{v.vehiculos?.marca} {v.vehiculos?.modelo} {v.vehiculos?.anio}</strong></td>
-                  <td>{v.comprador_nombre || '—'}</td>
-                  <td>{v.vendedores?.nombre || '—'}</td>
-                  <td className="num">{v.moneda_precio || 'USD'} {Number(v.precio_final).toLocaleString('es-AR')}</td>
-                  <td style={{ color: 'var(--c-fg-2)', fontSize: 12 }}>{v.fecha_venta}</td>
-                </tr>
+                <div key={v.id} className="card" style={{ padding: '10px 14px', marginBottom: 8 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{v.vehiculos?.marca} {v.vehiculos?.modelo} {v.vehiculos?.anio}</div>
+                  <div style={{ fontSize: 12, color: 'var(--c-fg-2)', marginTop: 2 }}>
+                    {v.comprador_nombre || '—'} · {v.vendedores?.nombre || '—'}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 12 }}>
+                    <span style={{ fontWeight: 600 }}>{v.moneda_precio || 'USD'} {Number(v.precio_final).toLocaleString('es-AR')}</span>
+                    <span style={{ color: 'var(--c-fg-3)' }}>{v.fecha_venta}</span>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <table className="rank">
+              <thead>
+                <tr>
+                  <th>Vehículo</th>
+                  <th>Comprador</th>
+                  <th>Vendedor</th>
+                  <th className="num">Precio</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentVentas.map(v => (
+                  <tr key={v.id}>
+                    <td><strong>{v.vehiculos?.marca} {v.vehiculos?.modelo} {v.vehiculos?.anio}</strong></td>
+                    <td>{v.comprador_nombre || '—'}</td>
+                    <td>{v.vendedores?.nombre || '—'}</td>
+                    <td className="num">{v.moneda_precio || 'USD'} {Number(v.precio_final).toLocaleString('es-AR')}</td>
+                    <td style={{ color: 'var(--c-fg-2)', fontSize: 12 }}>{v.fecha_venta}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
         ) : (
           <div className="card" style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--c-fg-2)' }}>
             <Icon name="cash" size={28} style={{ stroke: 'var(--c-fg-3)', marginBottom: 8 }} />

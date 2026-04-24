@@ -6,6 +6,7 @@ import Icon from '../components/Icon'
 import WhatsAppIcon from '../components/WhatsAppIcon'
 import { getProspectos, createProspecto, updateProspecto, getVehiculos, getVendedores, supabase, tomarLead } from '../lib/supabase'
 import { useUser } from '../hooks/useUser'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 // ─── Pipeline stages ───────────────────────────────────────────────────────
 const STAGES = ['nuevo', 'en_contacto', 'con_propuesta', 'cerrado', 'perdido']
@@ -111,7 +112,7 @@ function Avatar({ nombre }) {
 }
 
 // ─── Lead Card (Kanban) ──────────────────────────────────────────────────────
-function LeadCard({ lead, stageKey, vendedores, onEdit, onMover, onReload }) {
+function LeadCard({ lead, stageKey, vendedores, onEdit, onMover, onReload, isMobile }) {
   const stages = STAGES
   const idx = stages.indexOf(stageKey)
   const canal = canalDisplay(lead)
@@ -152,8 +153,8 @@ function LeadCard({ lead, stageKey, vendedores, onEdit, onMover, onReload }) {
 
   return (
     <div className="card" style={{
-      padding: '10px 12px', marginBottom: 8, cursor: 'default',
-      borderLeft: `3px solid ${meta.color}`, fontSize: 12,
+      padding: isMobile ? '8px 10px' : '10px 12px', marginBottom: 8, cursor: 'default',
+      borderLeft: `3px solid ${meta.color}`, fontSize: isMobile ? 11 : 12,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
@@ -247,8 +248,7 @@ function KanbanCol({ stageKey, leads, vendedores, onEdit, onMover, onReload, onN
 
   return (
     <div style={{
-      flex: '1 1 200px', minWidth: 200, maxWidth: 280,
-      display: 'flex', flexDirection: 'column',
+      display: 'flex', flexDirection: 'column', width: '100%',
     }}>
       {/* Header columna */}
       <div style={{
@@ -287,6 +287,7 @@ function KanbanCol({ stageKey, leads, vendedores, onEdit, onMover, onReload, onN
             onEdit={onEdit}
             onMover={onMover}
             onReload={onReload}
+            isMobile={false}
           />
         ))}
 
@@ -318,6 +319,7 @@ const EMPTY_FORM = {
 
 // ─── Componente principal ────────────────────────────────────────────────────
 export default function Leads({ onLogout }) {
+  const isMobile = useIsMobile()
   const [leads, setLeads]         = useState([])
   const [vehiculos, setVehiculos] = useState([])
   const [vendedores, setVendedores] = useState([])
@@ -423,12 +425,12 @@ export default function Leads({ onLogout }) {
           <div style={{ flex: 1 }} />
 
           {/* Selector de vista */}
-          <div style={{ display: 'flex', gap: 4, marginRight: 12 }}>
-            {[['pipeline','🗂 Pipeline'],['lista','📋 Lista'],['resumen','📊 Resumen']].map(([k,l]) => (
+          <div style={{ display: 'flex', gap: 4, marginRight: isMobile ? 4 : 12 }}>
+            {[['pipeline', isMobile ? '🗂' : '🗂 Pipeline'], ['lista', isMobile ? '📋' : '📋 Lista'], ['resumen', isMobile ? '📊' : '📊 Resumen']].map(([k,l]) => (
               <button
                 key={k}
                 className={`btn ${vista === k ? 'primary' : 'secondary'}`}
-                style={{ fontSize: 12, padding: '5px 12px' }}
+                style={{ fontSize: 12, padding: isMobile ? '5px 8px' : '5px 12px' }}
                 onClick={() => setVista(k)}
               >
                 {l}
@@ -464,17 +466,19 @@ export default function Leads({ onLogout }) {
           <div style={{
             display: 'flex', gap: 10, overflowX: 'auto',
             paddingBottom: 16, alignItems: 'flex-start',
+            WebkitOverflowScrolling: 'touch',
           }}>
             {STAGES.map(s => (
-              <KanbanCol
-                key={s}
-                stageKey={s}
-                leads={leadsByStage(s)}
-                vendedores={vendedores}
-                onEdit={openEdit}
-                onReload={reload}
-                onNuevoEnStage={openNew}
-              />
+              <div key={s} style={{ minWidth: isMobile ? 260 : 200, flex: '1 1 200px', maxWidth: 280 }}>
+                <KanbanCol
+                  stageKey={s}
+                  leads={leadsByStage(s)}
+                  vendedores={vendedores}
+                  onEdit={openEdit}
+                  onReload={reload}
+                  onNuevoEnStage={openNew}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -565,7 +569,7 @@ export default function Leads({ onLogout }) {
         {vista === 'resumen' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Métricas globales */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(auto-fill,minmax(180px,1fr))', gap: 14 }}>
               <div className="card" style={{ padding: 16, textAlign: 'center' }}>
                 <div style={{ fontSize: 28, fontWeight: 700 }}>{leads.length}</div>
                 <div style={{ fontSize: 12, color: 'var(--c-fg-2)' }}>Prospectos totales</div>
@@ -613,7 +617,7 @@ export default function Leads({ onLogout }) {
             </div>
 
             {/* Por canal y por vendedor */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
               <div className="card" style={{ padding: 16 }}>
                 <h4 style={{ margin: '0 0 12px', fontSize: 13 }}>Por canal</h4>
                 <table className="rank" style={{ fontSize: 12 }}>

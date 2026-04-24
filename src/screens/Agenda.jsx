@@ -201,7 +201,7 @@ function FormTurno({ vehiculos, vendedores, preVehiculoId, onClose, onGuardar })
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
         <div>
           <label className="form-label">Fecha *</label>
           <input className="input" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} />
