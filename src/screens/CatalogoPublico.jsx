@@ -252,7 +252,16 @@ export default function CatalogoPublico() {
           <div style={{ textAlign: 'center', color: 'var(--c-fg-3)', padding: 60 }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🚗</div>
             <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>No hay vehículos disponibles</div>
-            <div style={{ fontSize: 13 }}>Consultanos por WhatsApp para próximos ingresos.</div>
+            <div style={{ fontSize: 13, marginBottom: 20 }}>Consultanos por WhatsApp para próximos ingresos.</div>
+            <a
+              href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola! Quería consultar sobre próximos ingresos de vehículos en GH Cars.')}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontSize: 14 }}
+            >
+              <WhatsAppIcon size={16} variant="white" />&nbsp;Consultar por WhatsApp
+            </a>
           </div>
         ) : (
           <>
@@ -276,21 +285,38 @@ export default function CatalogoPublico() {
       {/* Footer */}
       <footer style={{
         borderTop: '1px solid var(--c-border)',
-        padding: '20px 24px',
+        padding: '24px 24px 20px',
         textAlign: 'center',
         color: 'var(--c-fg-3)',
         fontSize: 12,
         marginTop: 40,
       }}>
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>GH Cars</div>
-        <div>Los precios están expresados en USD. Precio en ARS calculado al dólar blue.</div>
-        <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
-          <code style={{ padding: '4px 10px', background: 'var(--c-card-2)', borderRadius: 4, fontSize: 11 }}>
-            {typeof window !== 'undefined' ? window.location.origin + '/p/catalogo' : '/p/catalogo'}
-          </code>
-          <button className="btn btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={copiarLink}>
-            {copied ? '✓ Copiado' : 'Copiar link'}
-          </button>
+        {/* Contact info */}
+        <div style={{ marginBottom: 16, lineHeight: 1.9 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--c-fg-1)', marginBottom: 6 }}>GH Cars — Concesionaria de vehículos usados</div>
+          <div>📱 WhatsApp:&nbsp;
+            <a
+              href={`https://wa.me/${WA_NUMBER}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: 'var(--c-success)', textDecoration: 'none', fontWeight: 600 }}
+            >
+              +54 9 11 6269-2000
+            </a>
+          </div>
+          <div>🕐 Lunes a Sábado 9:00 - 18:00</div>
+        </div>
+
+        <div style={{ borderTop: '1px solid var(--c-border)', paddingTop: 14 }}>
+          <div>Los precios están expresados en USD. Precio en ARS calculado al dólar blue.</div>
+          <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+            <code style={{ padding: '4px 10px', background: 'var(--c-card-2)', borderRadius: 4, fontSize: 11 }}>
+              {typeof window !== 'undefined' ? window.location.origin + '/p/catalogo' : '/p/catalogo'}
+            </code>
+            <button className="btn btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={copiarLink}>
+              {copied ? '✓ Copiado' : 'Copiar link'}
+            </button>
+          </div>
         </div>
       </footer>
 
