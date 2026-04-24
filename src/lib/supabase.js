@@ -161,6 +161,16 @@ export async function deleteFoto(mediaId, cloudinaryPublicId) {
   await supabase.from('medias').delete().eq('id', mediaId)
 }
 
+// Reordena las fotos de un vehículo actualizando el campo `orden` de cada una.
+// orderedIds: array de ids en el nuevo orden deseado (posición 0 = portada)
+export async function reordenarFotos(orderedIds) {
+  await Promise.all(
+    orderedIds.map((id, i) =>
+      supabase.from('medias').update({ orden: i + 1 }).eq('id', id)
+    )
+  )
+}
+
 // ── Vendedores ───────────────────────────────────────────────────
 export async function getVendedores() {
   const { data } = await supabase

@@ -5,7 +5,10 @@ import StateBadge, { UBICACION_META, RECON_META } from '../components/StateBadge
 import Icon from '../components/Icon'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
-import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores, deleteFoto } from '../lib/supabase'
+import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores, deleteFoto, reordenarFotos } from '../lib/supabase'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useUser } from '../hooks/useUser'
 import { callAI, callAIFiles, aiConfigured } from '../lib/api'
 import { useTc } from '../hooks/useTc'
@@ -91,6 +94,41 @@ const TIPOS_GASTO = {
 
 const EMPTY_GASTO = { tipo: 'mecanica', descripcion: '', monto: '', moneda: 'ARS', proveedor: '', fecha_gasto: new Date().toISOString().split('T')[0] }
 const EMPTY_RESERVA = { cliente_nombre: '', cliente_telefono: '', monto_senia: '', moneda: 'USD', fecha_vencimiento: '', notas: '' }
+
+// ── Miniatura sortable (drag & drop) ─────────────────────────
+function SortableThumb({ foto, index, isCover, isSelected, selMode, onClick }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: foto.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    aspectRatio: '4/3',
+    borderRadius: 'var(--r-sm)',
+    overflow: 'hidden',
+    cursor: selMode ? 'pointer' : 'grab',
+    position: 'relative',
+    border: selMode
+      ? `2px solid ${isSelected ? 'var(--c-danger)' : 'var(--c-border)'}`
+      : `2px solid ${isCover ? 'var(--c-accent)' : 'transparent'}`,
+    zIndex: isDragging ? 999 : 'auto',
+  }
+  return (
+    <div ref={setNodeRef} style={style} onClick={onClick}
+      {...(!selMode ? { ...attributes, ...listeners } : {})}>
+      <img src={foto.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+      {isCover && !selMode && (
+        <div style={{ position: 'absolute', bottom: 3, left: 3, background: 'var(--c-accent)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+          Portada
+        </div>
+      )}
+      {selMode && (
+        <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: 4, background: isSelected ? 'var(--c-danger)' : 'rgba(0,0,0,0.5)', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', fontWeight: 700 }}>
+          {isSelected ? '✓' : ''}
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ── Galería con miniaturas ────────────────────────────────────
 function Galeria({ fotos }) {
@@ -311,6 +349,9 @@ export default function Detalle({ onLogout }) {
   const [selMode, setSelMode]   = useState(false)   // modo selección múltiple fotos
   const [selIds,  setSelIds]    = useState(new Set())
   const [deleting, setDeleting] = useState(false)
+  const [fotosOrden, setFotosOrden] = useState(null) // orden local para drag & drop
+  const [savingOrden, setSavingOrden] = useState(false)
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const [editing, setEditing]   = useState(false)
   const [editForm, setEditForm] = useState({})
@@ -822,6 +863,7 @@ export default function Detalle({ onLogout }) {
                                 setSelMode(false)
                                 setSelIds(new Set())
                                 setFoto(0)
+                                setFotosOrden(null)
                                 reloadVehiculo()
                               }}
                             >
@@ -854,49 +896,81 @@ export default function Detalle({ onLogout }) {
                         </div>
                       )}
 
-                      {/* Grid de miniaturas */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 6 }}>
-                        {fotos.map((f, i) => {
-                          const sel = selIds.has(f.id)
-                          return (
-                            <div
-                              key={f.id || i}
-                              onClick={() => {
-                                if (selMode) {
-                                  setSelIds(prev => {
-                                    const next = new Set(prev)
-                                    sel ? next.delete(f.id) : next.add(f.id)
-                                    return next
-                                  })
-                                } else {
-                                  setFoto(i)
-                                }
-                              }}
-                              style={{
-                                aspectRatio: '4/3', borderRadius: 'var(--r-sm)', overflow: 'hidden',
-                                cursor: 'pointer', position: 'relative',
-                                border: selMode
-                                  ? `2px solid ${sel ? 'var(--c-danger)' : 'var(--c-border)'}`
-                                  : `2px solid ${i === foto ? 'var(--c-success)' : 'transparent'}`,
+                      {/* Grid de miniaturas con drag & drop */}
+                      {(() => {
+                        const ordered = fotosOrden || fotos
+                        const hasChanges = fotosOrden !== null
+                        return (
+                          <>
+                            {!selMode && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, fontSize: 12, color: 'var(--c-fg-3)' }}>
+                                <span>↕ Arrastrá para reordenar · La primera foto es la portada</span>
+                                {hasChanges && (
+                                  <button
+                                    className="btn btn-primary"
+                                    style={{ fontSize: 12, padding: '3px 12px', marginLeft: 'auto' }}
+                                    disabled={savingOrden}
+                                    onClick={async () => {
+                                      setSavingOrden(true)
+                                      await reordenarFotos(ordered.map(f => f.id))
+                                      setSavingOrden(false)
+                                      setFotosOrden(null)
+                                      reloadVehiculo()
+                                    }}
+                                  >
+                                    {savingOrden ? 'Guardando…' : '💾 Guardar orden'}
+                                  </button>
+                                )}
+                                {hasChanges && (
+                                  <button className="btn btn-ghost" style={{ fontSize: 12, padding: '3px 10px' }}
+                                    onClick={() => setFotosOrden(null)}>
+                                    Descartar
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                            <DndContext
+                              sensors={dndSensors}
+                              collisionDetection={closestCenter}
+                              onDragEnd={({ active, over }) => {
+                                if (!over || active.id === over.id || selMode) return
+                                const items = fotosOrden || fotos
+                                const oldIdx = items.findIndex(f => f.id === active.id)
+                                const newIdx = items.findIndex(f => f.id === over.id)
+                                const newOrder = arrayMove(items, oldIdx, newIdx)
+                                setFotosOrden(newOrder)
+                                setFoto(0)
                               }}
                             >
-                              <img src={f.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              {selMode && (
-                                <div style={{
-                                  position: 'absolute', top: 4, right: 4,
-                                  width: 18, height: 18, borderRadius: 4,
-                                  background: sel ? 'var(--c-danger)' : 'rgba(0,0,0,0.5)',
-                                  border: '2px solid #fff',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  fontSize: 11, color: '#fff', fontWeight: 700,
-                                }}>
-                                  {sel ? '✓' : ''}
+                              <SortableContext items={ordered.map(f => f.id)} strategy={rectSortingStrategy}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 6 }}>
+                                  {ordered.map((f, i) => (
+                                    <SortableThumb
+                                      key={f.id}
+                                      foto={f}
+                                      index={i}
+                                      isCover={i === 0}
+                                      isSelected={selIds.has(f.id)}
+                                      selMode={selMode}
+                                      onClick={() => {
+                                        if (selMode) {
+                                          setSelIds(prev => {
+                                            const next = new Set(prev)
+                                            selIds.has(f.id) ? next.delete(f.id) : next.add(f.id)
+                                            return next
+                                          })
+                                        } else {
+                                          setFoto(i)
+                                        }
+                                      }}
+                                    />
+                                  ))}
                                 </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
+                              </SortableContext>
+                            </DndContext>
+                          </>
+                        )
+                      })()}
                     </>
                   )
               )}
