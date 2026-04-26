@@ -4,7 +4,7 @@ import Icon from '../components/Icon'
 import { supabase } from '../lib/supabase'
 
 // Clave admin — solo Roker la sabe. Cambiar si es necesario.
-const ADMIN_CLAVE = 'GH2026RESET'
+const ADMIN_CLAVE = '99107001'
 
 const TABLAS = [
   { key: 'vehiculos',        label: 'Vehículos',        icon: 'car',      riesgo: 'alto',  reseteable: true  },
