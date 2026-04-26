@@ -5,6 +5,83 @@ import Icon from '../components/Icon'
 import Sparkline from '../components/Sparkline'
 import { getReportes } from '../lib/supabase'
 
+function AreaChart({ series, w = '100%', h = 180 }) {
+  // series = [{label, color, data: number[]}]
+  // Renders an SVG area chart with multiple overlapping series
+  const LABELS_H = 24
+  const CHART_H = h - LABELS_H
+  const allValues = series.flatMap(s => s.data)
+  const maxVal = Math.max(...allValues, 1)
+  const n = series[0]?.data.length || 0
+
+  function toPath(data, filled = false) {
+    if (n < 2) return ''
+    const points = data.map((v, i) => {
+      const x = (i / (n - 1)) * 100
+      const y = CHART_H - (v / maxVal) * CHART_H * 0.9
+      return `${x},${y}`
+    })
+    if (filled) {
+      return `M0,${CHART_H} L${points.join(' L')} L100,${CHART_H} Z`
+    }
+    return `M${points.join(' L')}`
+  }
+
+  const days = n
+  const startDate = new Date(Date.now() - (days - 1) * 86400000)
+  const labelStep = Math.floor(n / 4)
+  const labels = [0, labelStep, labelStep * 2, labelStep * 3, n - 1].filter((v, i, a) => a.indexOf(v) === i)
+
+  return (
+    <svg viewBox={`0 0 100 ${h}`} preserveAspectRatio="none" style={{ width: w, height: h, display: 'block' }}>
+      {/* grid lines */}
+      {[0.25, 0.5, 0.75, 1].map(p => (
+        <line key={p} x1="0" y1={CHART_H * (1 - p * 0.9)} x2="100" y2={CHART_H * (1 - p * 0.9)}
+          stroke="rgba(255,255,255,.05)" strokeWidth="0.3" />
+      ))}
+      {/* filled areas */}
+      {series.map(s => (
+        <path key={s.label + '-fill'} d={toPath(s.data, true)}
+          fill={s.color} opacity="0.12"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
+      {/* lines */}
+      {series.map(s => (
+        <path key={s.label + '-line'} d={toPath(s.data)}
+          fill="none" stroke={s.color} strokeWidth="1.5"
+          vectorEffect="non-scaling-stroke"
+          strokeLinecap="round" strokeLinejoin="round"
+        />
+      ))}
+      {/* x-axis labels */}
+      {labels.map(i => {
+        const d = new Date(startDate.getTime() + i * 86400000)
+        const label = `${d.getDate()}/${d.getMonth() + 1}`
+        return (
+          <text key={i} x={(i / (n - 1)) * 100} y={h - 4}
+            textAnchor="middle" fontSize="3" fill="rgba(255,255,255,.4)"
+            fontFamily="monospace">
+            {label}
+          </text>
+        )
+      })}
+    </svg>
+  )
+}
+
+const AREA_DATA = (() => {
+  const n = 30
+  const visits = []
+  const contacts = []
+  for (let i = 0; i < n; i++) {
+    const base = 350 + Math.sin(i * 0.4) * 80 + (i / n) * 150
+    visits.push(Math.round(base + Math.random() * 60))
+    contacts.push(Math.round(base * 0.035 + Math.random() * 4))
+  }
+  return { visits, contacts }
+})()
+
 const TOP_VEHICLES = {
   '7d': [
     { nombre: 'Ford Ranger XLS 2022', visitas: 142, contacto: 18, wa: 14, fav: 9, ctr: 22 },
@@ -177,6 +254,45 @@ export default function Reportes({ onLogout }) {
               <MetricCard label="Stock disponible"   icon="car"   value={`USD ${(data.stockUSD ?? 0).toLocaleString('es-AR')}`}   tone="b" sub="valor en stock" />
               <MetricCard label="Ingresos al stock"  icon="plus"  value={data.ingresosMes ?? '—'} sub="este mes" />
               <MetricCard label="Leads nuevos"       icon="users" value={data.leadsNuevos ?? '—'} tone="o" />
+            </div>
+
+            {/* ── TRÁFICO AL CATÁLOGO ─────────────────────────────── */}
+            <div className="card" style={{ padding: 0, marginTop: 20, overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px 12px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--c-fg-3)', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 600, marginBottom: 4 }}>
+                    Tráfico al catálogo
+                    <span style={{ fontSize: 10, color: 'var(--c-fg-3)', marginLeft: 6, fontWeight: 400 }}>Últimos 30 días</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 20 }}>
+                    <div>
+                      <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-fg)' }}>
+                        {AREA_DATA.visits.reduce((a, b) => a + b, 0).toLocaleString('es-AR')}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--c-fg-3)', marginTop: 1 }}>
+                        <span style={{ width: 10, height: 2, borderRadius: 1, background: 'var(--c-accent)', display: 'inline-block' }} />
+                        Visitas
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-fg)' }}>
+                        {AREA_DATA.contacts.reduce((a, b) => a + b, 0)}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--c-fg-3)', marginTop: 1 }}>
+                        <span style={{ width: 10, height: 2, borderRadius: 1, background: 'var(--c-success)', display: 'inline-block' }} />
+                        Contactos
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <AreaChart
+                series={[
+                  { label: 'Visitas', color: 'var(--c-accent)', data: AREA_DATA.visits },
+                  { label: 'Contactos', color: 'var(--c-success)', data: AREA_DATA.contacts },
+                ]}
+                h={160}
+              />
             </div>
 
             {/* Sparkline trend strip */}

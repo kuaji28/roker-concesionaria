@@ -81,13 +81,19 @@ export default function Cobranza({ onLogout }) {
   const [segErr, setSegErr]       = useState('')
 
   async function load() {
-    const [f, v, p, s] = await Promise.all([
-      getFinanciamientos(),
-      getCuotasVencidas(),
-      getCuotasProximas(dias),
-      getSeguimientos(),
-    ])
-    setFinan(f); setVencidas(v); setProximas(p); setSeguimientos(s); setLoading(false)
+    try {
+      const [f, v, p, s] = await Promise.all([
+        getFinanciamientos().catch(() => []),
+        getCuotasVencidas().catch(() => []),
+        getCuotasProximas(dias).catch(() => []),
+        getSeguimientos().catch(() => []),
+      ])
+      setFinan(f); setVencidas(v); setProximas(p); setSeguimientos(s)
+    } catch (e) {
+      console.error('Cobranza load error:', e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { load() }, [dias])

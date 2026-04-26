@@ -39,7 +39,7 @@ export default function TopBar({ placeholder = 'Buscar vehículos, clientes, pat
       display: 'flex', alignItems: 'center', gap: 14,
       padding: '14px 28px',
       borderBottom: '1px solid var(--c-border)',
-      background: 'rgba(18,23,34,0.5)',
+      background: 'var(--c-topbar-bg)',
       backdropFilter: 'blur(8px)',
       position: 'sticky', top: 0, zIndex: 10,
     }}>

@@ -230,6 +230,17 @@ export default function Catalogo({ onLogout }) {
               ) : (
                 /* ── Fila normal ── */
                 <div key={v.id} className="list-row" onClick={() => navigate(`/vehiculo/${v.id}`)}>
+                  {v.foto_url ? (
+                    <img
+                      src={v.foto_url}
+                      alt={`${v.marca} ${v.modelo}`}
+                      style={{ width: 88, height: 62, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div style={{ width: 88, height: 62, background: 'var(--c-card-2)', borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--c-fg-3)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+                    </div>
+                  )}
                   <div>
                     <div className="v-title">{v.marca} {v.modelo} {v.anio}{v.version ? ` · ${v.version}` : ''}</div>
                     <div className="v-meta">{v.patente || '—'} · #{v.id} · {v.color || '—'}</div>
