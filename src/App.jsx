@@ -47,6 +47,7 @@ import Documentacion from './screens/Documentacion'
 import CatalogoPublico from './screens/CatalogoPublico'
 import DetallePublico from './screens/DetallePublico'
 import HomePublica from './screens/HomePublica'
+import ContactoPublico from './screens/ContactoPublico'
 import Mejoras from './screens/Mejoras'
 import Historial from './screens/Historial'
 import { useTc, TcContext } from './hooks/useTc'
@@ -155,6 +156,7 @@ export default function App() {
         <Route path="/p/home"            element={<HomePublica />} />
         <Route path="/p/catalogo"        element={<CatalogoPublico />} />
         <Route path="/p/vehiculo/:id"    element={<DetallePublico />} />
+        <Route path="/p/contacto"        element={<ContactoPublico />} />
 
         <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />} />
         <Route
