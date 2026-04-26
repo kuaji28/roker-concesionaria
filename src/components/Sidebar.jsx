@@ -10,6 +10,7 @@ const NAV = [
   { to: '/',          icon: 'home',      label: 'Dashboard',           tip: 'Resumen general: vehículos disponibles, ventas recientes y métricas clave' },
   { to: '/catalogo',  icon: 'car',       label: 'Catálogo',            tip: 'Ver todos los vehículos disponibles para la venta' },
   { to: '/buscar',    icon: 'search',    label: 'Buscar para cliente', tip: 'Buscar un vehículo según lo que pide un cliente (marca, precio, año...)' },
+  { to: '/vendedor',  icon: 'car',       label: 'App vendedor',        tip: 'App mobile para vendedores: catálogo rápido, compartir y crear leads' },
   { to: '/ingreso',   icon: 'plus',      label: 'Ingresar vehículo',   tip: 'Registrar un nuevo vehículo que entra al stock de la concesionaria' },
   { to: '/ventas',    icon: 'cash',      label: 'Ventas',              tip: 'Registrar una venta y marcar un vehículo como vendido' },
   { to: '/leads',     icon: 'users',     label: 'Prospectos',          tip: 'Personas interesadas en comprar un vehículo — seguimiento y pipeline de ventas' },

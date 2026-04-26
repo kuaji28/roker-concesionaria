@@ -50,6 +50,9 @@ import HomePublica from './screens/HomePublica'
 import ContactoPublico from './screens/ContactoPublico'
 import Mejoras from './screens/Mejoras'
 import Historial from './screens/Historial'
+import VendedorCatalogo from './screens/VendedorCatalogo'
+import VendedorDetalle from './screens/VendedorDetalle'
+import VendedorLead from './screens/VendedorLead'
 import { useTc, TcContext } from './hooks/useTc'
 import { UserContext } from './hooks/useUser'
 import { ThemeProvider } from './context/ThemeContext'
@@ -157,6 +160,11 @@ export default function App() {
         <Route path="/p/catalogo"        element={<CatalogoPublico />} />
         <Route path="/p/vehiculo/:id"    element={<DetallePublico />} />
         <Route path="/p/contacto"        element={<ContactoPublico />} />
+
+        {/* App vendedor mobile — auth requerida */}
+        <Route path="/vendedor"           element={auth ? <VendedorCatalogo /> : <Navigate to="/login" replace />} />
+        <Route path="/vendedor/v/:id"     element={auth ? <VendedorDetalle /> : <Navigate to="/login" replace />} />
+        <Route path="/vendedor/lead/nuevo" element={auth ? <VendedorLead /> : <Navigate to="/login" replace />} />
 
         <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />} />
         <Route

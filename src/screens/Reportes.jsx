@@ -423,6 +423,27 @@ export default function Reportes({ onLogout }) {
               </table>
             </div>
 
+            {/* ── CANAL DE CONTACTO ────────────────────────────────── */}
+            <h2 className="section-title" style={{ marginTop: 32, marginBottom: 8 }}>Canal de contacto</h2>
+            <div className="card" style={{ padding: '20px 22px' }}>
+              {[
+                { label: 'WhatsApp',  pct: 48, color: '#25D366', icon: '💬' },
+                { label: 'Llamada',   pct: 22, color: 'var(--c-info)',    icon: '📞' },
+                { label: 'Instagram', pct: 18, color: '#E4405F', icon: '📷' },
+                { label: 'Email',     pct:  8, color: 'var(--c-warning)', icon: '✉️' },
+                { label: 'Formulario',pct:  4, color: 'var(--c-accent)',  icon: '📋' },
+              ].map((c, i) => (
+                <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: i < 4 ? 12 : 0 }}>
+                  <span style={{ fontSize: 16, width: 24, textAlign: 'center', flexShrink: 0 }}>{c.icon}</span>
+                  <span style={{ fontSize: 13, color: 'var(--c-fg-2)', width: 90, flexShrink: 0 }}>{c.label}</span>
+                  <div style={{ flex: 1, height: 8, borderRadius: 999, background: 'var(--c-card-2)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${c.pct}%`, background: c.color, borderRadius: 999, transition: 'width .4s ease' }} />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 700, width: 36, textAlign: 'right', flexShrink: 0 }}>{c.pct}%</span>
+                </div>
+              ))}
+            </div>
+
             {/* ── CLICKS POR BOTÓN + DISPOSITIVOS ──────────────────── */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16, marginTop: 28 }}>
               {/* Clicks */}
