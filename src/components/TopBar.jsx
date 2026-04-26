@@ -5,9 +5,10 @@ import ThemeToggle from './ThemeToggle'
 import { useUser } from '../hooks/useUser'
 
 const ROL_META = {
-  dueno:    { label: 'Dueño',    color: '#f59e0b' },
-  vendedor: { label: 'Vendedor', color: '#ff2d55' },
-  externo:  { label: 'Externo',  color: 'var(--c-fg-3)' },
+  dueno:     { label: 'Dueño',     color: '#f59e0b' },
+  vendedor:  { label: 'Vendedor',  color: '#ff2d55' },
+  externo:   { label: 'Externo',   color: 'var(--c-fg-3)' },
+  developer: { label: 'Developer', color: '#8b5cf6' },
 }
 
 export default function TopBar({ placeholder = 'Buscar vehículos, clientes, patente…', onLogout }) {
