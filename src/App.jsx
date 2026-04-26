@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Icon from './components/Icon'
@@ -48,12 +48,28 @@ import CatalogoPublico from './screens/CatalogoPublico'
 import DetallePublico from './screens/DetallePublico'
 import HomePublica from './screens/HomePublica'
 import Mejoras from './screens/Mejoras'
+import Historial from './screens/Historial'
 import { useTc, TcContext } from './hooks/useTc'
 import { UserContext } from './hooks/useUser'
 import { ThemeProvider } from './context/ThemeContext'
+import { supabase } from './lib/supabase'
 
 function ProtectedRoute({ element, isAuth }) {
   return isAuth ? element : <Navigate to="/login" replace />
+}
+
+function RoleRoute({ element, user, allowedRoles }) {
+  if (!user) return <Navigate to="/login" replace />
+  if (!allowedRoles.includes(user.rol)) {
+    return (
+      <div className="main" style={{ paddingTop: 80, textAlign: 'center' }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+        <h2 style={{ color: 'var(--c-fg-2)', marginBottom: 8 }}>Acceso restringido</h2>
+        <p style={{ color: 'var(--c-fg-3)', fontSize: 14 }}>No tenés permisos para ver esta sección.</p>
+      </div>
+    )
+  }
+  return element
 }
 
 function AppShell({ onLogout, user }) {
@@ -70,21 +86,22 @@ function AppShell({ onLogout, user }) {
           <Route path="/"             element={<Dashboard   onLogout={onLogout} />} />
           <Route path="/catalogo"     element={<Catalogo    onLogout={onLogout} />} />
           <Route path="/vehiculo/:id" element={<Detalle     onLogout={onLogout} />} />
-          <Route path="/ingreso"      element={<Ingreso     onLogout={onLogout} />} />
-          <Route path="/ventas"       element={<Ventas      onLogout={onLogout} />} />
-          <Route path="/leads"        element={<Leads       onLogout={onLogout} />} />
-          <Route path="/clientes"     element={<Clientes    onLogout={onLogout} />} />
-          <Route path="/gastos"       element={<Gastos      onLogout={onLogout} />} />
-          <Route path="/rotacion"     element={<Rotacion    onLogout={onLogout} />} />
+          <Route path="/ingreso"      element={<RoleRoute element={<Ingreso     onLogout={onLogout} />} user={user} allowedRoles={['dueno', 'vendedor']} />} />
+          <Route path="/ventas"       element={<RoleRoute element={<Ventas      onLogout={onLogout} />} user={user} allowedRoles={['dueno', 'vendedor']} />} />
+          <Route path="/leads"        element={<RoleRoute element={<Leads       onLogout={onLogout} />} user={user} allowedRoles={['dueno', 'vendedor']} />} />
+          <Route path="/clientes"     element={<RoleRoute element={<Clientes    onLogout={onLogout} />} user={user} allowedRoles={['dueno', 'vendedor']} />} />
+          <Route path="/gastos"       element={<RoleRoute element={<Gastos      onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
+          <Route path="/rotacion"     element={<RoleRoute element={<Rotacion    onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
           <Route path="/buscar"       element={<Buscar      onLogout={onLogout} />} />
-          <Route path="/agenda"       element={<Agenda      onLogout={onLogout} />} />
+          <Route path="/agenda"       element={<RoleRoute element={<Agenda      onLogout={onLogout} />} user={user} allowedRoles={['dueno', 'vendedor']} />} />
           <Route path="/doc"          element={<Documentacion />} />
           <Route path="/reportes"     element={<Reportes    onLogout={onLogout} />} />
-          <Route path="/gerente"      element={<Gerente     onLogout={onLogout} />} />
-          <Route path="/vendedores"   element={<Vendedores  onLogout={onLogout} />} />
-          <Route path="/cobranza"     element={<Cobranza    onLogout={onLogout} />} />
-          <Route path="/config"       element={<Config      onLogout={onLogout} />} />
-          <Route path="/mejoras"      element={<Mejoras     onLogout={onLogout} />} />
+          <Route path="/gerente"      element={<RoleRoute element={<Gerente     onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
+          <Route path="/vendedores"   element={<RoleRoute element={<Vendedores  onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
+          <Route path="/cobranza"     element={<RoleRoute element={<Cobranza    onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
+          <Route path="/config"       element={<RoleRoute element={<Config      onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
+          <Route path="/mejoras"      element={<RoleRoute element={<Mejoras     onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
+          <Route path="/historial"    element={<RoleRoute element={<Historial   onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
           <Route path="*"             element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -110,6 +127,25 @@ export default function App() {
     setAuth(false)
     setUser(null)
   }
+
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('perfiles')
+      .select('id, nombre, email, rol, activo')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (!data) return
+        if (!data.activo) { handleLogout(); return }
+        if (data.rol !== user.rol || data.nombre !== user.nombre) {
+          sessionStorage.setItem('gh_auth_user', JSON.stringify(data))
+          setUser(data)
+        }
+      })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <ThemeProvider>

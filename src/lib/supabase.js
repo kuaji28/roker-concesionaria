@@ -777,3 +777,106 @@ export async function liberarNegociacion(vehiculoId) {
   if (error) throw error
 }
 
+// ── Tracking de vistas y acciones públicas ────────────────────
+
+function getSessionId() {
+  let sid = sessionStorage.getItem('gh_track_sid')
+  if (!sid) {
+    sid = Math.random().toString(36).slice(2) + Date.now().toString(36)
+    sessionStorage.setItem('gh_track_sid', sid)
+  }
+  return sid
+}
+
+function _isStaff() {
+  try {
+    const u = JSON.parse(sessionStorage.getItem('gh_auth_user') || 'null')
+    if (!u) return false
+    return ['dueno', 'vendedor', 'externo'].includes(u.rol)
+  } catch { return false }
+}
+
+function _isBot() {
+  const ua = (navigator.userAgent || '').toLowerCase()
+  return /bot|crawl|spider|slurp|bingpreview|whatsapp|facebookexternalhit|telegrambot|preview/i.test(ua)
+}
+
+export async function trackVehiculoView(vehiculoId, opts = {}) {
+  if (!vehiculoId) return
+  const { isPublic = false, force = false } = opts
+  if (!force) {
+    if (_isBot()) return
+    if (_isStaff() && !isPublic) return
+    const key = `gh_view_${vehiculoId}`
+    const last = Number(sessionStorage.getItem(key) || 0)
+    if (Date.now() - last < 30 * 60 * 1000) return
+    sessionStorage.setItem(key, String(Date.now()))
+  }
+  let perfil_id = null
+  try {
+    const u = JSON.parse(sessionStorage.getItem('gh_auth_user') || 'null')
+    if (u) perfil_id = u.id
+  } catch {}
+  try {
+    await supabase.from('vehiculo_views').insert([{
+      vehiculo_id: vehiculoId,
+      session_id: getSessionId(),
+      user_agent: navigator.userAgent.slice(0, 200),
+      referrer: document.referrer.slice(0, 200) || null,
+      is_public: isPublic,
+      perfil_id,
+    }])
+  } catch (e) { console.warn('trackView fallo (no crítico):', e) }
+}
+
+export async function trackVehiculoAction(vehiculoId, action, detalle = null, opts = {}) {
+  if (!vehiculoId || !action) return
+  const { isPublic = false } = opts
+  let perfil_id = null
+  let staff = false
+  try {
+    const u = JSON.parse(sessionStorage.getItem('gh_auth_user') || 'null')
+    if (u) { perfil_id = u.id; staff = ['dueno','vendedor'].includes(u.rol) }
+  } catch {}
+  if (staff && !isPublic) return
+  if (_isBot()) return
+  try {
+    await supabase.from('vehiculo_actions').insert([{
+      vehiculo_id: vehiculoId,
+      action,
+      detalle: detalle?.slice(0, 200) || null,
+      session_id: getSessionId(),
+      is_public: isPublic,
+      perfil_id,
+    }])
+  } catch (e) { console.warn('trackAction fallo (no crítico):', e) }
+}
+
+// ── Audit log ──────────────────────────────────────────────────
+
+export async function logAudit({ tabla, registro_id, accion, descripcion, cambios }) {
+  try {
+    let perfil_id = null
+    let perfil_nombre = null
+    try {
+      const u = JSON.parse(sessionStorage.getItem('gh_auth_user') || 'null')
+      if (u) { perfil_id = u.id || null; perfil_nombre = u.nombre || u.email || null }
+    } catch {}
+    await supabase.from('audit_log').insert([{
+      tabla, registro_id: String(registro_id),
+      accion, descripcion: descripcion || null, cambios: cambios || null,
+      perfil_id, perfil_nombre,
+    }])
+  } catch (e) {
+    console.warn('logAudit fallo (no crítico):', e)
+  }
+}
+
+export async function getAuditLog({ tabla, registro_id, limit = 50 } = {}) {
+  let q = supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(limit)
+  if (tabla)       q = q.eq('tabla', tabla)
+  if (registro_id) q = q.eq('registro_id', String(registro_id))
+  const { data } = await q
+  return data || []
+}
+

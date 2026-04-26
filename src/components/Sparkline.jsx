@@ -1,3 +1,5 @@
+import React from 'react'
+
 export default function Sparkline({ data, color, w = 100, h = 32 }) {
   if (!data || data.length < 2) return null
   const max = Math.max(...data)

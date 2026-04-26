@@ -4,6 +4,7 @@ import Icon from './Icon'
 import GHLogo from './GHLogo'
 import ThemeToggle from './ThemeToggle'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useUser } from '../hooks/useUser'
 
 const NAV = [
   { to: '/',          icon: 'home',      label: 'Dashboard',           tip: 'Resumen general: vehículos disponibles, ventas recientes y métricas clave' },
@@ -23,6 +24,7 @@ const NAV_ADMIN = [
   { to: '/vendedores', icon: 'users',   label: 'Vendedores',          tip: 'Gestión del equipo de ventas: altas, bajas y rendimiento' },
   { to: '/cobranza',   icon: 'card',    label: 'Cobranza',            tip: 'Seguimiento de cuotas y financiamientos pendientes de cobro' },
   { to: '/config',     icon: 'cog',     label: 'Configuración',       tip: 'Ajustes del sistema: PIN de acceso y preferencias generales' },
+  { to: '/historial',  icon: 'clock',   label: 'Historial',           tip: 'Registro completo de todos los movimientos del sistema (auditoría)' },
   { to: '/mejoras',    icon: 'star',    label: 'Mejoras del sistema', tip: 'Lista de funciones y mejoras disponibles para incorporar al sistema' },
 ]
 
@@ -39,6 +41,7 @@ export default function Sidebar({ tc }) {
   const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const user = useUser()
 
   function handleNavClick() {
     if (isMobile) setOpen(false)
@@ -103,12 +106,16 @@ export default function Sidebar({ tc }) {
                 <Icon name={n.icon} size={18} />{n.label}
               </NavLink>
             ))}
-            <div className="sep">Admin</div>
-            {NAV_ADMIN.map(n => (
-              <NavLink key={n.to} to={n.to} className={({ isActive }) => isActive ? 'on' : ''} title={n.tip}>
-                <Icon name={n.icon} size={18} />{n.label}
-              </NavLink>
-            ))}
+            {user?.rol === 'dueno' && (
+              <>
+                <div className="sep">Admin</div>
+                {NAV_ADMIN.map(n => (
+                  <NavLink key={n.to} to={n.to} className={({ isActive }) => isActive ? 'on' : ''} title={n.tip}>
+                    <Icon name={n.icon} size={18} />{n.label}
+                  </NavLink>
+                ))}
+              </>
+            )}
           </nav>
           <div className="side-block" style={{ marginTop: 'auto' }}>
             <h6>Cotización USD</h6>
@@ -156,19 +163,23 @@ export default function Sidebar({ tc }) {
             {!collapsed && <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.label}</span>}
           </NavLink>
         ))}
-        {!collapsed && <div className="sep">Admin</div>}
-        {collapsed && <div style={{ height: 1, background: 'var(--c-border)', margin: '6px 12px' }} />}
-        {NAV_ADMIN.map(n => (
-          <NavLink
-            key={n.to} to={n.to}
-            className={({ isActive }) => isActive ? 'on' : ''}
-            title={collapsed ? n.label : n.tip}
-            style={collapsed ? { justifyContent: 'center', padding: '0 10px' } : undefined}
-          >
-            <Icon name={n.icon} size={18} style={{ flexShrink: 0 }} />
-            {!collapsed && <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.label}</span>}
-          </NavLink>
-        ))}
+        {user?.rol === 'dueno' && (
+          <>
+            {!collapsed && <div className="sep">Admin</div>}
+            {collapsed && <div style={{ height: 1, background: 'var(--c-border)', margin: '6px 12px' }} />}
+            {NAV_ADMIN.map(n => (
+              <NavLink
+                key={n.to} to={n.to}
+                className={({ isActive }) => isActive ? 'on' : ''}
+                title={collapsed ? n.label : n.tip}
+                style={collapsed ? { justifyContent: 'center', padding: '0 10px' } : undefined}
+              >
+                <Icon name={n.icon} size={18} style={{ flexShrink: 0 }} />
+                {!collapsed && <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.label}</span>}
+              </NavLink>
+            ))}
+          </>
+        )}
       </nav>
 
       {/* Bottom: TC + ThemeToggle + collapse toggle */}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useWANumber } from '../hooks/useWANumber'
@@ -29,16 +29,17 @@ async function fetchTc() {
 }
 
 /* ─── Datos ─────────────────────────────────────────────────── */
-async function getVehiculosPublicos({ tipo, anioMin, precioMax }) {
+async function getVehiculosPublicos({ tipo, anioMin, precioMax, kmMax }) {
   let q = supabase
     .from('vehiculos')
-    .select('id,tipo,marca,modelo,anio,version,km_hs,precio_lista,precio_base,transmision,color,combustible')
+    .select('id,tipo,carroceria,marca,modelo,anio,version,km_hs,precio_lista,precio_base,transmision,color,combustible')
     .eq('estado', 'disponible')
     .order('created_at', { ascending: false })
 
   if (tipo && tipo !== 'todos') q = q.eq('tipo', tipo)
   if (anioMin) q = q.gte('anio', Number(anioMin))
   if (precioMax) q = q.lte('precio_lista', Number(precioMax))
+  if (kmMax) q = q.lte('km_hs', Number(kmMax))
 
   const { data } = await q
   return data || []
@@ -63,6 +64,8 @@ async function getPortadas(vehiculoIds) {
 /* ─── Config ────────────────────────────────────────────────── */
 const TIPOS       = ['todos', 'auto', 'moto', 'cuatriciclo', 'moto_de_agua']
 const TIPOS_LABEL = { todos: 'Todos', auto: 'Autos', moto: 'Motos', cuatriciclo: 'Cuatriciclos', moto_de_agua: 'Motos de agua' }
+
+const CARROCERIAS = ['todos', 'SUV', 'Pickup', 'Sedán', 'Hatchback', 'Familiar', 'Coupé', 'Minivan', 'Utilitario']
 
 /* ─── Íconos inline ─────────────────────────────────────────── */
 const IcoKm = () => (
@@ -227,9 +230,12 @@ export default function CatalogoPublico() {
   const [tc,        setTc]        = useState(FALLBACK_TC)
   const [loading,   setLoading]   = useState(true)
 
-  const [tipo,      setTipo]      = useState('todos')
-  const [anioMin,   setAnioMin]   = useState('')
-  const [precioMax, setPrecioMax] = useState('')
+  const [tipo,       setTipo]      = useState('todos')
+  const [carroceria, setCarroceria]= useState('todos')
+  const [buscar,     setBuscar]    = useState('')
+  const [anioMin,    setAnioMin]   = useState('')
+  const [precioMax,  setPrecioMax] = useState('')
+  const [kmMax,      setKmMax]     = useState('')
 
   const [cols, setCols] = useState(1)
   useEffect(() => {
@@ -243,16 +249,26 @@ export default function CatalogoPublico() {
 
   useEffect(() => {
     setLoading(true)
-    getVehiculosPublicos({ tipo, anioMin, precioMax }).then(async data => {
+    getVehiculosPublicos({ tipo, anioMin, precioMax, kmMax }).then(async data => {
       setVehiculos(data)
       const fotos = await getPortadas(data.map(v => v.id))
       setPortadas(fotos)
       setLoading(false)
     })
-  }, [tipo, anioMin, precioMax])
+  }, [tipo, anioMin, precioMax, kmMax])
 
-  function limpiarFiltros() { setAnioMin(''); setPrecioMax('') }
-  const hasFiltros = anioMin || precioMax
+  function limpiarFiltros() { setBuscar(''); setAnioMin(''); setPrecioMax(''); setKmMax(''); setCarroceria('todos') }
+  const hasFiltros = buscar || anioMin || precioMax || kmMax || carroceria !== 'todos'
+
+  // client-side text + carroceria filter
+  const vehiculosFiltrados = vehiculos.filter(v => {
+    if (carroceria !== 'todos' && v.carroceria?.toLowerCase() !== carroceria.toLowerCase()) return false
+    if (buscar) {
+      const q = buscar.toLowerCase()
+      if (!`${v.marca} ${v.modelo} ${v.version || ''}`.toLowerCase().includes(q)) return false
+    }
+    return true
+  })
 
   const bgGlass = c.resolved === 'dark'
     ? 'rgba(10,10,12,0.88)'
@@ -346,7 +362,53 @@ export default function CatalogoPublico() {
         borderBottom: `1px solid ${c.border}`,
         padding: '8px 16px 6px',
       }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+
+        {/* Carrocería chips (solo cuando tipo=auto o todos) */}
+        {(tipo === 'todos' || tipo === 'auto') && (
+          <nav style={{
+            overflowX: 'auto', display: 'flex', gap: 6, marginBottom: 8,
+            scrollbarWidth: 'none', msOverflowStyle: 'none',
+          }}>
+            {CARROCERIAS.map(car => (
+              <button
+                key={car}
+                style={{
+                  whiteSpace: 'nowrap', padding: '0 12px', height: 28,
+                  borderRadius: 999, fontWeight: 600, fontSize: 11, cursor: 'pointer',
+                  flexShrink: 0, transition: 'all .15s',
+                  ...(carroceria === car
+                    ? { background: c.accent, color: '#fff', border: 'none' }
+                    : { background: 'transparent', color: c.fg2, border: `1px solid ${c.border}` }
+                  ),
+                }}
+                onClick={() => setCarroceria(car)}
+              >{car === 'todos' ? 'Todos' : car}</button>
+            ))}
+          </nav>
+        )}
+
+        {/* Search + filtros row */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+          {/* Search */}
+          <div style={{ flex: 2, position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c.fg3}
+                 strokeWidth="2" strokeLinecap="round"
+                 style={{ position: 'absolute', left: 10, pointerEvents: 'none' }}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              style={{
+                width: '100%', height: 38,
+                background: c.bg2, border: `1px solid ${c.border}`,
+                borderRadius: 10, color: c.fg, fontSize: 12,
+                paddingLeft: 32, paddingRight: 10, outline: 'none', boxSizing: 'border-box',
+              }}
+              placeholder="Buscar marca, modelo..."
+              value={buscar}
+              onChange={e => setBuscar(e.target.value)}
+            />
+          </div>
+
           {/* Año desde */}
           <div style={{ flex: 1, position: 'relative' }}>
             <span style={{
@@ -392,27 +454,49 @@ export default function CatalogoPublico() {
             />
           </div>
 
+          {/* Km máximos */}
+          <div style={{ flex: 1, position: 'relative' }}>
+            <span style={{
+              position: 'absolute', top: -7, left: 9,
+              padding: '0 4px', fontSize: 10, color: c.fg2,
+              background: c.bg, borderRadius: 3, zIndex: 1, pointerEvents: 'none',
+            }}>Km máximos</span>
+            <input
+              style={{
+                width: '100%', height: 38,
+                background: c.bg2, border: `1px solid ${c.border}`,
+                borderRadius: 10, color: c.fg, fontSize: 12,
+                padding: '0 10px', outline: 'none', boxSizing: 'border-box',
+              }}
+              inputMode="numeric"
+              placeholder="—"
+              value={kmMax}
+              onChange={e => setKmMax(e.target.value.replace(/\D/g, ''))}
+            />
+          </div>
+
           {hasFiltros && (
             <button
               style={{
                 width: 38, height: 38, flexShrink: 0,
                 display: 'grid', placeItems: 'center',
                 background: c.bg2, border: `1px solid ${c.border}`,
-                borderRadius: 10, color: c.fg2, cursor: 'pointer',
+                borderRadius: 10, color: c.accent, cursor: 'pointer',
               }}
               onClick={limpiarFiltros}
               aria-label="Limpiar filtros"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
             </button>
           )}
         </div>
-        <div style={{ fontSize: 11, color: c.fg3, marginTop: 5, letterSpacing: '0.02em' }}>
+
+        <div style={{ fontSize: 11, color: c.fg3, letterSpacing: '0.02em' }}>
           {loading
             ? 'Cargando…'
-            : `${vehiculos.length} vehículo${vehiculos.length !== 1 ? 's' : ''} · TC USD/ARS: ${tc.toLocaleString('es-AR')}`
+            : `${vehiculosFiltrados.length} vehículo${vehiculosFiltrados.length !== 1 ? 's' : ''} · TC USD/ARS: ${tc.toLocaleString('es-AR')}`
           }
         </div>
       </div>
@@ -453,8 +537,13 @@ export default function CatalogoPublico() {
               Consultar por WhatsApp
             </a>
           </div>
+        ) : vehiculosFiltrados.length === 0 ? (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: c.fg3, padding: '40px 20px' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: c.fg2, marginBottom: 6 }}>Sin resultados</div>
+            <div style={{ fontSize: 13 }}>Probá con otros filtros.</div>
+          </div>
         ) : (
-          vehiculos.map(v => (
+          vehiculosFiltrados.map(v => (
             <VehicleCard key={v.id} v={v} foto={portadas[v.id]} tc={tc} waNumber={waNumber} c={c} />
           ))
         )}
@@ -476,8 +565,33 @@ export default function CatalogoPublico() {
             +54 9 11 6269-2000
           </a>
         </div>
-        <div>Lunes a Sábado · 9:00 - 18:00</div>
-        <div style={{ marginTop: 12, fontSize: 11 }}>
+        <div style={{ marginBottom: 12 }}>Lunes a Sábado · 9:00 - 18:00</div>
+
+        {/* Redes sociales */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
+          {/* Instagram */}
+          <a href="https://www.instagram.com/ghcars.ok/" target="_blank" rel="noreferrer"
+             style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.fg2,
+                      textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+            </svg>
+            @ghcars.ok
+          </a>
+          {/* TikTok */}
+          <a href="https://www.tiktok.com/@ghcars.ok" target="_blank" rel="noreferrer"
+             style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.fg2,
+                      textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.28 6.28 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.94a8.18 8.18 0 0 0 4.78 1.52V7.01a4.85 4.85 0 0 1-1.01-.32z"/>
+            </svg>
+            @ghcars.ok
+          </a>
+        </div>
+
+        <div style={{ fontSize: 11 }}>
           Precios en USD · ARS calculado al dólar blue
         </div>
       </footer>

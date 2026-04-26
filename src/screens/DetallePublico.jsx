@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, trackVehiculoView, trackVehiculoAction } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import WhatsAppIcon from '../components/WhatsAppIcon'
 import GHLogo from '../components/GHLogo'
 import { useWANumber } from '../hooks/useWANumber'
-import ThemeToggle from '../components/ThemeToggle'
 
 const FALLBACK_TC = 1415
 
@@ -38,6 +37,9 @@ export default function DetallePublico() {
   const [idx,     setIdx]    = useState(0)
   const [tc,      setTc]     = useState(FALLBACK_TC)
   const [loading, setLoading] = useState(true)
+  const [shared,  setShared]  = useState(false)
+  const touchStartX = useRef(null)
+  const touchStartY = useRef(null)
 
   useEffect(() => { fetchTc().then(setTc) }, [])
 
@@ -51,6 +53,7 @@ export default function DetallePublico() {
       setFotos(medias || [])
       setLoading(false)
     })
+    trackVehiculoView(id, { isPublic: true })
   }, [id])
 
   function abrirWhatsApp() {
@@ -58,7 +61,37 @@ export default function DetallePublico() {
     const msg = encodeURIComponent(
       `Hola! Vi el *${nombre}* en el catálogo de GH Cars.\n¿Podría darme más información? 🚗`
     )
+    trackVehiculoAction(id, 'contacto_wsp', null, { isPublic: true })
     window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank')
+  }
+
+  async function compartir() {
+    const url = window.location.href
+    const nombre = v ? `${v.marca} ${v.modelo} ${v.anio}` : 'Vehículo'
+    const precio = v?.precio_lista ? ` — USD ${v.precio_lista.toLocaleString('es-AR')}` : ''
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${nombre}${precio}`, text: `Mirá este vehículo en GH Cars`, url })
+      } catch { /* cancelado */ }
+    } else {
+      await navigator.clipboard.writeText(url).catch(() => {})
+      setShared(true)
+      setTimeout(() => setShared(false), 2000)
+    }
+  }
+
+  function onTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  function onTouchEnd(e) {
+    if (touchStartX.current === null || fotos.length < 2) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = e.changedTouches[0].clientY - touchStartY.current
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.2) return
+    setIdx(i => dx < 0 ? (i + 1) % fotos.length : (i - 1 + fotos.length) % fotos.length)
+    touchStartX.current = null
   }
 
   const foto     = fotos[idx]
@@ -99,7 +132,21 @@ export default function DetallePublico() {
             <GHLogo size={28} />
             <span style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</span>
           </div>
-          <ThemeToggle />
+          {v && (
+            <button
+              onClick={compartir}
+              style={{ background: 'none', border: '1px solid var(--c-border)', cursor: 'pointer',
+                       color: shared ? 'var(--c-success, #22c55e)' : 'var(--c-fg-2)', borderRadius: 8,
+                       padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12,
+                       fontWeight: 500, transition: 'color .2s' }}
+            >
+              {shared ? (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg> ¡Copiado!</>
+              ) : (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Compartir</>
+              )}
+            </button>
+          )}
         </header>
 
         {loading ? (
@@ -114,14 +161,15 @@ export default function DetallePublico() {
           </div>
         ) : (
           <>
-            {/* Foto principal — 16:9 en mobile, más compacta */}
-            <div style={{
-              width: '100%', aspectRatio: '16/9',
-              background: 'var(--c-card-2)', position: 'relative', overflow: 'hidden',
-            }}>
+            {/* Foto principal — swipe activado */}
+            <div
+              style={{ width: '100%', aspectRatio: '16/9', background: 'var(--c-card-2)', position: 'relative', overflow: 'hidden', userSelect: 'none' }}
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
+            >
               {foto
                 ? <img src={foto.url} alt={`${v.marca} ${v.modelo}`}
-                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                       style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                 : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                     <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--c-border)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
@@ -151,6 +199,18 @@ export default function DetallePublico() {
                                 borderRadius: 20, padding: '2px 9px', fontSize: 12 }}>
                     {idx + 1} / {fotos.length}
                   </div>
+                  {/* Dots indicadores */}
+                  <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)',
+                                display: 'flex', gap: 5, pointerEvents: 'none' }}>
+                    {fotos.slice(0, 8).map((_, i) => (
+                      <div key={i} style={{
+                        width: i === idx ? 16 : 6, height: 6, borderRadius: 3,
+                        background: i === idx ? '#fff' : 'rgba(255,255,255,.45)',
+                        transition: 'all .2s',
+                      }} />
+                    ))}
+                    {fotos.length > 8 && <div style={{ width: 6, height: 6, borderRadius: 3, background: 'rgba(255,255,255,.3)' }} />}
+                  </div>
                 </>
               )}
             </div>
@@ -174,7 +234,7 @@ export default function DetallePublico() {
               </div>
             )}
 
-            {/* Título + subtítulo */}
+            {/* Título */}
             <div style={{ padding: '14px 16px 0' }}>
               <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, lineHeight: 1.2 }}>
                 {v.marca} {v.modelo}
@@ -232,15 +292,13 @@ export default function DetallePublico() {
               </button>
             </div>
 
-            {/* Footer */}
-            <div style={{ padding: '16px 16px 0', textAlign: 'center',
-                          color: 'var(--c-fg-3)', fontSize: 11 }}>
+            <div style={{ padding: '16px 16px 0', textAlign: 'center', color: 'var(--c-fg-3)', fontSize: 11 }}>
               Precios en USD · ARS al dólar blue
             </div>
           </>
         )}
 
-        {/* CTA flotante fijo — siempre visible en mobile */}
+        {/* CTA flotante */}
         {!loading && v && (
           <div style={{
             position: 'fixed', bottom: 0, left: 0, right: 0,
@@ -266,7 +324,6 @@ export default function DetallePublico() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--c-bg)' }}>
 
-      {/* Header */}
       <header style={{
         background: 'var(--c-card)', borderBottom: '1px solid var(--c-border)',
         padding: '12px 24px', display: 'flex', alignItems: 'center',
@@ -281,8 +338,21 @@ export default function DetallePublico() {
           <GHLogo size={32} />
           <div style={{ fontWeight: 700, fontSize: 15 }}>GH Cars</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <ThemeToggle />
+        <div style={{ display: 'flex', gap: 8 }}>
+          {v && (
+            <button
+              onClick={compartir}
+              className="btn btn-ghost"
+              style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
+                       color: shared ? 'var(--c-success, #22c55e)' : undefined, transition: 'color .2s' }}
+            >
+              {shared ? (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg> ¡Copiado!</>
+              ) : (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Compartir</>
+              )}
+            </button>
+          )}
           <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"
              className="btn btn-primary" style={{ fontSize: 13, textDecoration: 'none' }}>
             <WhatsAppIcon size={16} variant="white" />&nbsp;Contactar
