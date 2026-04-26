@@ -50,6 +50,7 @@ import HomePublica from './screens/HomePublica'
 import ContactoPublico from './screens/ContactoPublico'
 import Mejoras from './screens/Mejoras'
 import Historial from './screens/Historial'
+import Sistema from './screens/Sistema'
 import VendedorCatalogo from './screens/VendedorCatalogo'
 import VendedorDetalle from './screens/VendedorDetalle'
 import VendedorLead from './screens/VendedorLead'
@@ -106,6 +107,7 @@ function AppShell({ onLogout, user }) {
           <Route path="/config"       element={<RoleRoute element={<Config      onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
           <Route path="/mejoras"      element={<RoleRoute element={<Mejoras     onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
           <Route path="/historial"    element={<RoleRoute element={<Historial   onLogout={onLogout} />} user={user} allowedRoles={['dueno']} />} />
+          <Route path="/sistema"      element={<RoleRoute element={<Sistema     onLogout={onLogout} />} user={user} allowedRoles={['developer']} />} />
           <Route path="*"             element={<Navigate to="/" replace />} />
         </Routes>
       </div>

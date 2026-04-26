@@ -18,6 +18,10 @@ const NAV = [
   { to: '/agenda',    icon: 'cal',       label: 'Agenda',              tip: 'Turnos y visitas agendadas al showroom' },
   { to: '/reportes',  icon: 'chart',     label: 'Reportes',            tip: 'Métricas del mes: ventas, ingresos, rotación de stock y más' },
 ]
+const NAV_DEV = [
+  { to: '/sistema', icon: 'cog', label: 'Sistema / Backup', tip: 'Backup, reset y restauración — solo developer' },
+]
+
 const NAV_ADMIN = [
   { to: '/gerente',    icon: 'home',    label: 'Dashboard Gerente',   tip: 'Vista avanzada para dueños: márgenes, performance de vendedores y KPIs' },
   { to: '/gastos',     icon: 'cash',    label: 'Gastos y Margen',     tip: 'Control de gastos por vehículo y margen de ganancia real' },
@@ -117,6 +121,21 @@ export default function Sidebar({ tc }) {
                 ))}
               </>
             )}
+            {user?.rol === 'developer' && (
+              <>
+                <div className="sep">Dev</div>
+                {NAV_ADMIN.map(n => (
+                  <NavLink key={n.to} to={n.to} className={({ isActive }) => isActive ? 'on' : ''} title={n.tip}>
+                    <Icon name={n.icon} size={18} />{n.label}
+                  </NavLink>
+                ))}
+                {NAV_DEV.map(n => (
+                  <NavLink key={n.to} to={n.to} className={({ isActive }) => isActive ? 'on' : ''} title={n.tip}>
+                    <Icon name={n.icon} size={18} />{n.label}
+                  </NavLink>
+                ))}
+              </>
+            )}
           </nav>
           <div className="side-block" style={{ marginTop: 'auto' }}>
             <h6>Cotización USD</h6>
@@ -169,6 +188,35 @@ export default function Sidebar({ tc }) {
             {!collapsed && <div className="sep">Admin</div>}
             {collapsed && <div style={{ height: 1, background: 'var(--c-border)', margin: '6px 12px' }} />}
             {NAV_ADMIN.map(n => (
+              <NavLink
+                key={n.to} to={n.to}
+                className={({ isActive }) => isActive ? 'on' : ''}
+                title={collapsed ? n.label : n.tip}
+                style={collapsed ? { justifyContent: 'center', padding: '0 10px' } : undefined}
+              >
+                <Icon name={n.icon} size={18} style={{ flexShrink: 0 }} />
+                {!collapsed && <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.label}</span>}
+              </NavLink>
+            ))}
+          </>
+        )}
+        {user?.rol === 'developer' && (
+          <>
+            {!collapsed && <div className="sep">Admin</div>}
+            {collapsed && <div style={{ height: 1, background: 'var(--c-border)', margin: '6px 12px' }} />}
+            {NAV_ADMIN.map(n => (
+              <NavLink
+                key={n.to} to={n.to}
+                className={({ isActive }) => isActive ? 'on' : ''}
+                title={collapsed ? n.label : n.tip}
+                style={collapsed ? { justifyContent: 'center', padding: '0 10px' } : undefined}
+              >
+                <Icon name={n.icon} size={18} style={{ flexShrink: 0 }} />
+                {!collapsed && <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.label}</span>}
+              </NavLink>
+            ))}
+            {!collapsed && <div className="sep">Dev</div>}
+            {NAV_DEV.map(n => (
               <NavLink
                 key={n.to} to={n.to}
                 className={({ isActive }) => isActive ? 'on' : ''}
