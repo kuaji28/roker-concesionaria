@@ -171,7 +171,7 @@ export default function Sidebar({ tc }) {
       </div>
 
       {/* Nav */}
-      <nav className="nav" style={{ flex: 1, overflow: 'hidden' }}>
+      <nav className="nav" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         {NAV.map(n => (
           <NavLink
             key={n.to} to={n.to} end={n.to === '/'}

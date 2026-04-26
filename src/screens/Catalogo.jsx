@@ -4,7 +4,7 @@ import TopBar from '../components/TopBar'
 import VehicleCard from '../components/VehicleCard'
 import StateBadge from '../components/StateBadge'
 import Icon from '../components/Icon'
-import { getVehiculos, updateVehiculo } from '../lib/supabase'
+import { supabase, getVehiculos, updateVehiculo } from '../lib/supabase'
 import { useTc } from '../hooks/useTc'
 import { useUser, canSeePrecioBase } from '../hooks/useUser'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -40,6 +40,23 @@ export default function Catalogo({ onLogout }) {
   const [precioMin,  setPrecioMin]  = useState('')
   const [precioMax,  setPrecioMax]  = useState('')
   const [filtrosExp, setFiltrosExp] = useState(false)
+
+  // TC editable
+  const [tcEditing, setTcEditing] = useState(false)
+  const [tcInput,   setTcInput]   = useState('')
+  const [tcSaving,  setTcSaving]  = useState(false)
+  const [tcOk,      setTcOk]      = useState(false)
+
+  async function saveTc() {
+    if (!tcInput || isNaN(Number(tcInput))) return
+    setTcSaving(true)
+    try {
+      await supabase.from('config').upsert({ clave: 'tipo_cambio', valor: String(tcInput) }, { onConflict: 'clave' })
+      setTcEditing(false)
+      setTcOk(true)
+      setTimeout(() => setTcOk(false), 2000)
+    } finally { setTcSaving(false) }
+  }
 
   // Edición inline
   const [editId,    setEditId]    = useState(null)
@@ -104,6 +121,64 @@ export default function Catalogo({ onLogout }) {
           <button className="btn primary" onClick={() => navigate('/ingreso')}>
             <Icon name="plus" size={14} /> Ingresar vehículo
           </button>
+        </div>
+
+        {/* ── Cards de acceso rápido ── */}
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+
+          {/* Link catálogo público */}
+          <div className="card" style={{ flex: 2, minWidth: 260, padding: '14px 16px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--c-fg-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              🔗 Link del catálogo público
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <code style={{ flex: 1, fontSize: 11, background: 'var(--c-bg)', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--c-border)', color: 'var(--c-fg-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                https://gh-cars-web.vercel.app/p/catalogo
+              </code>
+              <button className="btn ghost" style={{ fontSize: 12 }}
+                onClick={() => navigator.clipboard.writeText('https://gh-cars-web.vercel.app/p/catalogo')}>
+                Copiar
+              </button>
+              <a href="https://gh-cars-web.vercel.app/p/catalogo" target="_blank" rel="noreferrer"
+                className="btn ghost" style={{ fontSize: 12 }}>
+                Ver
+              </a>
+            </div>
+            <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--c-fg-3)' }}>
+              Compartí este link con vendedores externos y clientes. No requiere login.
+            </p>
+          </div>
+
+          {/* Cotización USD editable */}
+          <div className="card" style={{ padding: '14px 16px', minWidth: 200 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--c-fg-3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
+              Cotización USD
+            </div>
+            {tcEditing ? (
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input className="input" type="number" value={tcInput}
+                  onChange={e => setTcInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && saveTc()}
+                  style={{ width: 110 }} autoFocus />
+                <button className="btn primary" style={{ fontSize: 12 }} onClick={saveTc} disabled={tcSaving}>
+                  {tcSaving ? '…' : 'Guardar'}
+                </button>
+                <button className="btn ghost" style={{ fontSize: 12 }} onClick={() => setTcEditing(false)}>✕</button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>
+                  $ {(TC || 0).toLocaleString('es-AR')}
+                </span>
+                <span style={{ fontSize: 12, color: 'var(--c-fg-3)' }}>ARS</span>
+                {tcOk && <span style={{ fontSize: 11, color: 'var(--c-success)' }}>✓ Guardado</span>}
+                <button className="btn ghost" style={{ marginLeft: 'auto', fontSize: 12 }}
+                  onClick={() => { setTcInput(String(TC || '')); setTcEditing(true) }}>
+                  Editar
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Barra de filtros ── */}
