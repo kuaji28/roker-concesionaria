@@ -471,24 +471,55 @@ export default function Reportes({ onLogout }) {
                 </div>
               </div>
 
-              {/* Dispositivos */}
+              {/* Dispositivos — donut */}
               <div>
                 <h2 className="section-title" style={{ marginBottom: 8 }}>Dispositivos</h2>
-                <div className="card" style={{ padding: '20px 22px' }}>
-                  {DEVICE_DATA.map((d, i) => (
-                    <div key={d.label} style={{ marginBottom: i < DEVICE_DATA.length - 1 ? 14 : 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 13, color: 'var(--c-fg-2)' }}>{d.label}</span>
+                <div className="card" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+                  {/* SVG Donut */}
+                  {(() => {
+                    const R = 52, stroke = 14, cx = 70, cy = 70
+                    const circ = 2 * Math.PI * R
+                    const total = DEVICE_DATA.reduce((s, d) => s + d.pct, 0)
+                    let offset = 0
+                    return (
+                      <div style={{ position: 'relative', width: 140, height: 140 }}>
+                        <svg width="140" height="140" viewBox="0 0 140 140">
+                          {DEVICE_DATA.map(d => {
+                            const dash = (d.pct / total) * circ
+                            const gap = circ - dash
+                            const el = (
+                              <circle
+                                key={d.label}
+                                cx={cx} cy={cy} r={R}
+                                fill="none"
+                                stroke={d.color}
+                                strokeWidth={stroke}
+                                strokeDasharray={`${dash - 2} ${gap + 2}`}
+                                strokeDashoffset={-(offset * circ / total) + circ / 4}
+                                strokeLinecap="round"
+                              />
+                            )
+                            offset += d.pct
+                            return el
+                          })}
+                        </svg>
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>1.240</span>
+                          <span style={{ fontSize: 10, color: 'var(--c-fg-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em' }}>sesiones</span>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                  {/* Legend */}
+                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {DEVICE_DATA.map(d => (
+                      <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: 999, background: d.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: 13, color: 'var(--c-fg-2)', flex: 1 }}>{d.label}</span>
                         <span style={{ fontSize: 13, fontWeight: 700 }}>{d.pct}%</span>
+                        <span style={{ fontSize: 11, color: 'var(--c-fg-3)', width: 60, textAlign: 'right' }}>{d.count.toLocaleString('es-AR')} ses.</span>
                       </div>
-                      <div style={{ height: 8, borderRadius: 999, background: 'var(--c-card-2)', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${d.pct}%`, background: d.color, borderRadius: 999, transition: 'width .4s ease' }} />
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--c-fg-3)', marginTop: 2 }}>{d.count.toLocaleString('es-AR')} sesiones</div>
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 16, padding: '12px 0 0', borderTop: '1px solid var(--c-border)', fontSize: 11, color: 'var(--c-fg-3)' }}>
-                    1.240 sesiones totales · últimos 30 días
+                    ))}
                   </div>
                 </div>
               </div>
