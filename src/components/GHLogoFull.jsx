@@ -1,77 +1,104 @@
 /**
- * GHLogoFull — logo vectorial completo de GH Cars
- * Usa currentColor para adaptarse a dark/light mode.
- * Usar en Login, HomePublica, CatalogoPublico (headers grandes).
- * Para sidebar/topbar usar GHLogo.jsx (icono cuadrado compacto).
+ * GHLogoFull — logo vectorial GH Cars (silueta + texto integrado)
+ * Usa currentColor → se adapta a dark/light mode automáticamente.
  */
-export default function GHLogoFull({ width = 220, style }) {
+export default function GHLogoFull({ width = 240, style }) {
   return (
     <svg
       width={width}
-      viewBox="0 0 260 110"
+      viewBox="0 0 400 270"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: 'block', ...style }}
     >
-      {/* ── Silueta del auto ─────────────────────────────────── */}
-      {/* Perfil exterior — carrocería */}
-      <path
-        d="
-          M 4 72
-          L 14 62
-          L 28 55
-          C 44 45 62 38 82 33
-          L 108 28
-          C 124 26 138 25 158 25
-          C 174 25 186 26 198 30
-          C 210 34 218 41 224 50
-          L 234 65
-          L 240 72
-        "
-        stroke="currentColor"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-      {/* Ventanilla lateral */}
-      <path
-        d="
-          M 48 54
-          L 62 40
-          C 74 33 92 30 112 29
-          L 152 28
-          C 168 28 178 30 188 36
-          L 200 46
-        "
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.55"
-        fill="none"
-      />
-      {/* ── Texto GH ─────────────────────────────────────────── */}
+      {/* ── Texto GH (grande, itálica) y CARS — se pinta primero ─ */}
       <text
-        x="4"
-        y="100"
-        fontFamily="'Arial Black', 'Arial Bold', 'Helvetica Neue', sans-serif"
+        x="5" y="230"
+        fontFamily="'Arial Black','Impact','Arial Bold',sans-serif"
         fontWeight="900"
-        fontSize="40"
-        fill="currentColor"
-        letterSpacing="-1"
         fontStyle="italic"
-      >GH</text>
-      {/* ── Texto CARS ───────────────────────────────────────── */}
-      <text
-        x="96"
-        y="100"
-        fontFamily="'Arial', 'Helvetica Neue', sans-serif"
-        fontWeight="700"
-        fontSize="32"
+        fontSize="100"
         fill="currentColor"
-        letterSpacing="3"
+        letterSpacing="-5"
+      >GH</text>
+      <text
+        x="200" y="228"
+        fontFamily="'Arial','Helvetica Neue',sans-serif"
+        fontWeight="700"
+        fontSize="72"
+        fill="currentColor"
+        letterSpacing="4"
       >CARS</text>
+
+      {/* ── Silueta del auto — pintada ENCIMA del texto ─────────── */}
+
+      {/* Perfil superior (capot → parabrisas → techo → luneta → baúl) */}
+      <path
+        d="
+          M 2 175
+          C 8 168 16 160 26 152
+          L 42 142
+          L 62 134
+          L 80 128
+          C 90 110 105 95 120 86
+          C 132 79 146 76 162 75
+          L 218 74
+          C 232 74 244 77 254 83
+          C 264 89 272 98 278 110
+          L 292 132
+          C 302 148 312 163 320 175
+        "
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+
+      {/* Línea inferior del cuerpo (umbral de puertas) */}
+      <path
+        d="M 2 175 L 320 175"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        fill="none"
+      />
+
+      {/* Ventanilla lateral / interior de techo */}
+      <path
+        d="
+          M 82 128
+          L 100 105
+          C 112 94 128 88 148 87
+          L 210 86
+          C 224 86 236 89 246 96
+          L 274 115
+        "
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        opacity="0.9"
+      />
+
+      {/* Arco rueda delantera */}
+      <path
+        d="M 36 175 C 36 155 72 155 72 175"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
+
+      {/* Arco rueda trasera */}
+      <path
+        d="M 254 175 C 254 155 290 155 290 175"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
     </svg>
   )
 }
