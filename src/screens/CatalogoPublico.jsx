@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useWANumber } from '../hooks/useWANumber'
-import GHLogo from '../components/GHLogo'
-import WhatsAppIcon from '../components/WhatsAppIcon'
+import { useTheme } from '../context/ThemeContext'
+import ThemeToggle from '../components/ThemeToggle'
+import TiltCard from '../components/TiltCard'
 
 /* ─── Tipo de cambio ────────────────────────────────────────── */
 const FALLBACK_TC = 1415
@@ -65,368 +66,34 @@ const TIPOS_LABEL = { todos: 'Todos', auto: 'Autos', moto: 'Motos', cuatriciclo:
 
 /* ─── Íconos inline ─────────────────────────────────────────── */
 const IcoKm = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/>
     <path d="M12 12l3-2"/><path d="M12 8v4"/>
   </svg>
 )
 const IcoTrans = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="6" width="20" height="12" rx="2"/>
     <circle cx="6" cy="12" r="2"/><path d="M10 12h4"/><circle cx="18" cy="12" r="2"/>
   </svg>
 )
 const IcoCombustible = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 22V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/>
     <path d="M17 8h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/><path d="M3 12h14"/>
   </svg>
 )
-const IcoWa = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-  </svg>
-)
-
-/* ─── Styles inline (no depende del design system interno) ──── */
-const S = {
-  page: {
-    minHeight: '100vh',
-    background: '#0B0F14',
-    color: '#fff',
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-    WebkitFontSmoothing: 'antialiased',
-  },
-  header: {
-    position: 'sticky',
-    top: 0,
-    zIndex: 40,
-    background: 'rgba(11,15,20,0.85)',
-    backdropFilter: 'saturate(180%) blur(20px)',
-    WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
-    padding: '12px 16px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  logo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-  },
-  logoAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #6C5CFF, #8b7fff)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: 700,
-    fontSize: 14,
-    letterSpacing: '0.05em',
-    boxShadow: '0 6px 20px rgba(108,92,255,0.35)',
-    flexShrink: 0,
-  },
-  logoName: {
-    fontWeight: 600,
-    fontSize: 16,
-    lineHeight: 1.1,
-  },
-  logoSub: {
-    fontSize: 11,
-    color: '#8A94A6',
-    marginTop: 2,
-    lineHeight: 1.1,
-  },
-  btnContactar: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    height: 38,
-    padding: '0 16px',
-    borderRadius: 999,
-    background: '#6C5CFF',
-    border: 'none',
-    color: '#fff',
-    fontWeight: 500,
-    fontSize: 13,
-    cursor: 'pointer',
-    boxShadow: '0 8px 20px rgba(108,92,255,0.25)',
-    textDecoration: 'none',
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-  },
-  /* Tabs */
-  tabsWrap: {
-    padding: '12px 16px 8px',
-    overflowX: 'auto',
-    display: 'flex',
-    gap: 8,
-    scrollbarWidth: 'none',
-    msOverflowStyle: 'none',
-  },
-  tabActive: {
-    whiteSpace: 'nowrap',
-    padding: '0 16px',
-    height: 34,
-    borderRadius: 999,
-    border: 'none',
-    background: '#6C5CFF',
-    color: '#fff',
-    fontWeight: 500,
-    fontSize: 13,
-    cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(108,92,255,0.25)',
-    flexShrink: 0,
-  },
-  tabInactive: {
-    whiteSpace: 'nowrap',
-    padding: '0 16px',
-    height: 34,
-    borderRadius: 999,
-    border: '1px solid rgba(255,255,255,0.08)',
-    background: 'rgba(255,255,255,0.04)',
-    color: '#B9C2D0',
-    fontWeight: 500,
-    fontSize: 13,
-    cursor: 'pointer',
-    flexShrink: 0,
-  },
-  /* Filtros sticky */
-  filtersBar: {
-    position: 'sticky',
-    top: 64,
-    zIndex: 30,
-    background: 'rgba(11,15,20,0.85)',
-    backdropFilter: 'saturate(180%) blur(20px)',
-    WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
-    padding: '10px 16px 8px',
-  },
-  filtersRow: {
-    display: 'flex',
-    gap: 8,
-    alignItems: 'center',
-  },
-  filterBox: {
-    flex: 1,
-    position: 'relative',
-  },
-  filterLabel: {
-    position: 'absolute',
-    top: -8,
-    left: 10,
-    padding: '0 4px',
-    fontSize: 10,
-    color: '#8A94A6',
-    background: '#0B0F14',
-    borderRadius: 4,
-    zIndex: 1,
-    pointerEvents: 'none',
-  },
-  filterInput: {
-    width: '100%',
-    height: 42,
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 14,
-    color: '#fff',
-    fontSize: 13,
-    padding: '0 12px',
-    outline: 'none',
-    boxSizing: 'border-box',
-  },
-  filterSelect: {
-    width: '100%',
-    height: 42,
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 14,
-    color: '#fff',
-    fontSize: 13,
-    padding: '0 12px',
-    outline: 'none',
-    appearance: 'none',
-    cursor: 'pointer',
-  },
-  clearBtn: {
-    width: 42,
-    height: 42,
-    flexShrink: 0,
-    display: 'grid',
-    placeItems: 'center',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 14,
-    color: '#8A94A6',
-    cursor: 'pointer',
-  },
-  infoBar: {
-    fontSize: 11,
-    color: '#8A94A6',
-    marginTop: 8,
-    letterSpacing: '0.03em',
-  },
-  /* Grid */
-  grid: {
-    padding: '16px',
-    maxWidth: 900,
-    margin: '0 auto',
-    display: 'grid',
-    gap: 20,
-  },
-  /* Card */
-  card: {
-    background: '#141B22',
-    borderRadius: 24,
-    border: '1px solid rgba(255,255,255,0.07)',
-    overflow: 'hidden',
-    cursor: 'pointer',
-    transition: 'border-color 0.2s, transform 0.15s',
-  },
-  cardImgWrap: {
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  cardImg: {
-    width: '100%',
-    aspectRatio: '16/10',
-    objectFit: 'cover',
-    display: 'block',
-  },
-  cardImgFallback: {
-    width: '100%',
-    aspectRatio: '16/10',
-    background: '#0B0F14',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardGradient: {
-    position: 'absolute',
-    inset: 0,
-    background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.05) 50%, transparent 100%)',
-    pointerEvents: 'none',
-  },
-  badgeYear: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    padding: '3px 10px',
-    borderRadius: 8,
-    fontSize: 11,
-    fontWeight: 500,
-    background: 'rgba(11,15,20,0.85)',
-    backdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255,255,255,0.1)',
-  },
-  badgeDisponible: {
-    position: 'absolute',
-    bottom: 12,
-    left: 12,
-    padding: '3px 10px',
-    borderRadius: 8,
-    fontSize: 11,
-    fontWeight: 500,
-    background: '#6C5CFF',
-    color: '#fff',
-    boxShadow: '0 4px 12px rgba(108,92,255,0.3)',
-  },
-  cardBody: {
-    padding: '16px 16px 14px',
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 600,
-    lineHeight: 1.25,
-    letterSpacing: '-0.01em',
-    margin: 0,
-  },
-  cardVersion: {
-    fontSize: 13,
-    color: '#8A94A6',
-    marginTop: 3,
-    marginBottom: 0,
-  },
-  tagsRow: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 6,
-    margin: '10px 0 14px',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 5,
-    padding: '4px 10px',
-    borderRadius: 999,
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.06)',
-    fontSize: 11,
-    color: '#C7CFDB',
-  },
-  priceBlock: {
-    marginBottom: 14,
-  },
-  priceUSD: {
-    fontSize: 26,
-    fontWeight: 700,
-    letterSpacing: '-0.02em',
-    lineHeight: 1,
-    margin: 0,
-  },
-  priceARS: {
-    fontSize: 12,
-    color: '#8A94A6',
-    marginTop: 4,
-  },
-  btnConsultar: {
-    width: '100%',
-    height: 46,
-    borderRadius: 14,
-    border: '1.5px solid rgba(108,92,255,0.6)',
-    background: 'transparent',
-    color: '#fff',
-    fontWeight: 500,
-    fontSize: 14,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    transition: 'background 0.15s, border-color 0.15s',
-  },
-  /* Empty */
-  empty: {
-    textAlign: 'center',
-    color: '#6b7280',
-    padding: '60px 20px',
-  },
-  /* Footer */
-  footer: {
-    borderTop: '1px solid rgba(255,255,255,0.06)',
-    padding: '24px 16px 32px',
-    textAlign: 'center',
-    color: '#6b7280',
-    fontSize: 12,
-    marginTop: 20,
-  },
-}
 
 /* ─── Card ──────────────────────────────────────────────────── */
-function CardPublica({ v, foto, tc, waNumber }) {
+function VehicleCard({ v, foto, tc, waNumber, c }) {
   const navigate  = useNavigate()
-  const [hover, setHover] = useState(false)
   const precioUSD = v.precio_lista || v.precio_base
   const precioARS = precioUSD && tc ? Math.round(precioUSD * tc).toLocaleString('es-AR') : null
 
   function consultarWA(e) {
     e.stopPropagation()
     const msg = encodeURIComponent(
-      `Hola! Vi el *${v.marca} ${v.modelo} ${v.anio}*${v.version ? ` (${v.version})` : ''} en el catálogo de GH Cars.\n` +
-      `¿Sigue disponible? 🚗`
+      `Hola! Vi el *${v.marca} ${v.modelo} ${v.anio}*${v.version ? ` (${v.version})` : ''} en el catálogo de GH Cars.\n¿Sigue disponible? 🚗`
     )
     window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank')
   }
@@ -434,69 +101,126 @@ function CardPublica({ v, foto, tc, waNumber }) {
   const km = v.km_hs ? `${Number(v.km_hs).toLocaleString('es-AR')} km` : '0 km'
 
   return (
-    <article
-      style={{
-        ...S.card,
-        borderColor: hover ? 'rgba(108,92,255,0.35)' : 'rgba(255,255,255,0.07)',
-        transform: hover ? 'translateY(-2px)' : 'none',
-      }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+    <TiltCard
+      intensity={0.6}
+      style={{ borderRadius: 16, background: c.card, border: `1px solid ${c.border}`, overflow: 'hidden', cursor: 'pointer' }}
       onClick={() => navigate(`/p/vehiculo/${v.id}`)}
     >
       {/* Imagen */}
-      <div style={S.cardImgWrap}>
+      <div style={{ position: 'relative', overflow: 'hidden' }}>
         {foto
-          ? <img src={foto} alt={`${v.marca} ${v.modelo}`} style={S.cardImg} loading="lazy" />
+          ? <img src={foto} alt={`${v.marca} ${v.modelo}`}
+                 style={{ width: '100%', aspectRatio: '16/10', objectFit: 'cover', display: 'block' }}
+                 loading="lazy" />
           : (
-            <div style={S.cardImgFallback}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" strokeLinecap="round">
+            <div style={{ width: '100%', aspectRatio: '16/10', background: c.bg2,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
+                   stroke={c.border} strokeWidth="1" strokeLinecap="round">
                 <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
                 <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
               </svg>
             </div>
           )
         }
-        <div style={S.cardGradient} />
-        <span style={S.badgeYear}>{v.anio}</span>
-        <span style={S.badgeDisponible}>Disponible</span>
+        {/* Gradient overlay */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 55%)',
+          pointerEvents: 'none',
+        }} />
+        {/* Badges */}
+        <span style={{
+          position: 'absolute', top: 10, right: 10,
+          padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+          border: `1px solid ${c.border}`, color: c.fg,
+        }}>{v.anio}</span>
+        <span style={{
+          position: 'absolute', bottom: 10, left: 10,
+          padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600,
+          background: c.accent, color: '#fff',
+        }}>Disponible</span>
       </div>
 
       {/* Body */}
-      <div style={S.cardBody}>
-        <h2 style={S.cardTitle}>{v.marca} {v.modelo}</h2>
-        {v.version && <p style={S.cardVersion}>{v.version}</p>}
+      <div style={{ padding: '14px 16px 12px' }}>
+        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, lineHeight: 1.25,
+                     letterSpacing: '-0.01em', color: c.fg }}>
+          {v.marca} {v.modelo}
+        </h2>
+        {v.version && (
+          <p style={{ margin: '3px 0 0', fontSize: 12, color: c.fg2 }}>{v.version}</p>
+        )}
 
         {/* Tags */}
-        <div style={S.tagsRow}>
-          <span style={S.tag}><IcoKm />{km}</span>
-          {v.transmision && <span style={S.tag}><IcoTrans />{v.transmision}</span>}
-          {v.combustible  && <span style={S.tag}><IcoCombustible />{v.combustible}</span>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '10px 0 12px' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4,
+                         padding: '3px 9px', borderRadius: 999, fontSize: 11, color: c.fg2,
+                         background: c.bg2, border: `1px solid ${c.border}` }}>
+            <IcoKm />{km}
+          </span>
+          {v.transmision && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4,
+                           padding: '3px 9px', borderRadius: 999, fontSize: 11, color: c.fg2,
+                           background: c.bg2, border: `1px solid ${c.border}` }}>
+              <IcoTrans />{v.transmision}
+            </span>
+          )}
+          {v.combustible && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4,
+                           padding: '3px 9px', borderRadius: 999, fontSize: 11, color: c.fg2,
+                           background: c.bg2, border: `1px solid ${c.border}` }}>
+              <IcoCombustible />{v.combustible}
+            </span>
+          )}
         </div>
 
         {/* Precio */}
-        <div style={S.priceBlock}>
-          <p style={S.priceUSD}>{precioUSD ? `USD ${precioUSD.toLocaleString('es-AR')}` : 'Consultar'}</p>
-          {precioARS && <p style={S.priceARS}>≈ ARS {precioARS}</p>}
+        <div style={{ marginBottom: 12 }}>
+          <p style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: c.fg }}>
+            {precioUSD ? `USD ${precioUSD.toLocaleString('es-AR')}` : 'Consultar'}
+          </p>
+          {precioARS && (
+            <p style={{ margin: '3px 0 0', fontSize: 11, color: c.fg3 }}>
+              ≈ ARS {precioARS}
+            </p>
+          )}
         </div>
 
         {/* CTA */}
         <button
-          style={S.btnConsultar}
-          onMouseEnter={e => { e.currentTarget.style.background = '#6C5CFF'; e.currentTarget.style.borderColor = '#6C5CFF' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(108,92,255,0.6)' }}
+          style={{
+            width: '100%', height: 42, borderRadius: 10,
+            border: `1.5px solid ${c.accent}`,
+            background: 'transparent', color: c.accent,
+            fontWeight: 600, fontSize: 13, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            transition: 'background .15s, color .15s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = c.accent
+            e.currentTarget.style.color = '#fff'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = c.accent
+          }}
           onClick={consultarWA}
         >
-          <IcoWa />
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+          </svg>
           Consultar
         </button>
       </div>
-    </article>
+    </TiltCard>
   )
 }
 
 /* ─── Pantalla principal ────────────────────────────────────── */
 export default function CatalogoPublico() {
+  const { colors: c } = useTheme()
   const waNumber = useWANumber()
   const [vehiculos, setVehiculos] = useState([])
   const [portadas,  setPortadas]  = useState({})
@@ -507,10 +231,9 @@ export default function CatalogoPublico() {
   const [anioMin,   setAnioMin]   = useState('')
   const [precioMax, setPrecioMax] = useState('')
 
-  // Determinar columnas según ancho de ventana
   const [cols, setCols] = useState(1)
   useEffect(() => {
-    const update = () => setCols(window.innerWidth >= 700 ? (window.innerWidth >= 1000 ? 3 : 2) : 1)
+    const update = () => setCols(window.innerWidth >= 700 ? (window.innerWidth >= 1050 ? 3 : 2) : 1)
     update()
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
@@ -529,52 +252,115 @@ export default function CatalogoPublico() {
   }, [tipo, anioMin, precioMax])
 
   function limpiarFiltros() { setAnioMin(''); setPrecioMax('') }
-
   const hasFiltros = anioMin || precioMax
 
-  return (
-    <div style={S.page}>
+  const bgGlass = c.resolved === 'dark'
+    ? 'rgba(10,10,12,0.88)'
+    : 'rgba(250,250,247,0.9)'
 
-      {/* ── Header ── */}
-      <header style={S.header}>
-        <div style={S.logo}>
-          <div style={S.logoAvatar}>GH</div>
+  return (
+    <div style={{
+      minHeight: '100vh', background: c.bg, color: c.fg,
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      WebkitFontSmoothing: 'antialiased',
+    }}>
+
+      {/* ── Header ─────────────────────────────────────────── */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        background: bgGlass,
+        backdropFilter: 'saturate(180%) blur(20px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+        borderBottom: `1px solid ${c.border}`,
+        padding: '0 20px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        height: 56,
+      }}>
+        {/* Logo */}
+        <Link to="/p/home" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: '50%',
+            background: c.accent,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 800, fontSize: 12, letterSpacing: '0.03em',
+            color: '#fff', flexShrink: 0,
+          }}>GH</div>
           <div>
-            <div style={S.logoName}>GH Cars</div>
-            <div style={S.logoSub}>Stock disponible</div>
+            <div style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.1 }}>GH Cars</div>
+            <div style={{ fontSize: 10, color: c.fg2, lineHeight: 1.1 }}>Stock disponible</div>
           </div>
+        </Link>
+
+        {/* Nav + actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <ThemeToggle />
+          <a
+            href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola GH Cars, quiero información sobre el stock disponible.')}`}
+            target="_blank" rel="noreferrer"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              height: 34, padding: '0 14px', borderRadius: 999,
+              background: c.accent, color: '#fff',
+              fontWeight: 600, fontSize: 12, textDecoration: 'none',
+              whiteSpace: 'nowrap', flexShrink: 0,
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+            </svg>
+            Contactar
+          </a>
         </div>
-        <a
-          href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola GH Cars, quiero información sobre el stock disponible.')}`}
-          target="_blank"
-          rel="noreferrer"
-          style={S.btnContactar}
-        >
-          <IcoWa />
-          Contactar
-        </a>
       </header>
 
-      {/* ── Tabs tipo ── */}
-      <nav style={S.tabsWrap}>
+      {/* ── Tabs tipo ──────────────────────────────────────── */}
+      <nav style={{
+        padding: '10px 16px 6px',
+        overflowX: 'auto', display: 'flex', gap: 6,
+        scrollbarWidth: 'none', msOverflowStyle: 'none',
+      }}>
         {TIPOS.map(t => (
           <button
             key={t}
-            style={tipo === t ? S.tabActive : S.tabInactive}
+            style={{
+              whiteSpace: 'nowrap', padding: '0 14px', height: 32,
+              borderRadius: 999, fontWeight: 600, fontSize: 12, cursor: 'pointer',
+              flexShrink: 0, transition: 'all .15s',
+              ...(tipo === t
+                ? { background: c.accent, color: '#fff', border: 'none' }
+                : { background: 'transparent', color: c.fg2,
+                    border: `1px solid ${c.border}` }
+              ),
+            }}
             onClick={() => setTipo(t)}
-          >
-            {TIPOS_LABEL[t]}
-          </button>
+          >{TIPOS_LABEL[t]}</button>
         ))}
       </nav>
 
-      {/* ── Filtros sticky ── */}
-      <div style={S.filtersBar}>
-        <div style={S.filtersRow}>
-          <div style={S.filterBox}>
-            <span style={S.filterLabel}>Año desde</span>
+      {/* ── Filtros sticky ─────────────────────────────────── */}
+      <div style={{
+        position: 'sticky', top: 56, zIndex: 30,
+        background: bgGlass,
+        backdropFilter: 'saturate(180%) blur(20px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+        borderBottom: `1px solid ${c.border}`,
+        padding: '8px 16px 6px',
+      }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Año desde */}
+          <div style={{ flex: 1, position: 'relative' }}>
+            <span style={{
+              position: 'absolute', top: -7, left: 9,
+              padding: '0 4px', fontSize: 10, color: c.fg2,
+              background: c.bg, borderRadius: 3, zIndex: 1, pointerEvents: 'none',
+            }}>Año desde</span>
             <select
-              style={S.filterSelect}
+              style={{
+                width: '100%', height: 38,
+                background: c.bg2, border: `1px solid ${c.border}`,
+                borderRadius: 10, color: c.fg, fontSize: 12,
+                padding: '0 10px', outline: 'none', appearance: 'none', cursor: 'pointer',
+              }}
               value={anioMin}
               onChange={e => setAnioMin(e.target.value)}
             >
@@ -584,42 +370,71 @@ export default function CatalogoPublico() {
               ))}
             </select>
           </div>
-          <div style={S.filterBox}>
-            <span style={S.filterLabel}>Precio máx USD</span>
+
+          {/* Precio máx */}
+          <div style={{ flex: 1, position: 'relative' }}>
+            <span style={{
+              position: 'absolute', top: -7, left: 9,
+              padding: '0 4px', fontSize: 10, color: c.fg2,
+              background: c.bg, borderRadius: 3, zIndex: 1, pointerEvents: 'none',
+            }}>Precio máx USD</span>
             <input
-              style={S.filterInput}
+              style={{
+                width: '100%', height: 38,
+                background: c.bg2, border: `1px solid ${c.border}`,
+                borderRadius: 10, color: c.fg, fontSize: 12,
+                padding: '0 10px', outline: 'none', boxSizing: 'border-box',
+              }}
               inputMode="numeric"
               placeholder="—"
               value={precioMax}
               onChange={e => setPrecioMax(e.target.value.replace(/\D/g, ''))}
             />
           </div>
+
           {hasFiltros && (
-            <button style={S.clearBtn} onClick={limpiarFiltros} aria-label="Limpiar filtros">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <button
+              style={{
+                width: 38, height: 38, flexShrink: 0,
+                display: 'grid', placeItems: 'center',
+                background: c.bg2, border: `1px solid ${c.border}`,
+                borderRadius: 10, color: c.fg2, cursor: 'pointer',
+              }}
+              onClick={limpiarFiltros}
+              aria-label="Limpiar filtros"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
               </svg>
             </button>
           )}
         </div>
-        <div style={S.infoBar}>
-          {loading ? 'Cargando…' : `${vehiculos.length} vehículo${vehiculos.length !== 1 ? 's' : ''} · TC USD/ARS: ${tc.toLocaleString('es-AR')}`}
+        <div style={{ fontSize: 11, color: c.fg3, marginTop: 5, letterSpacing: '0.02em' }}>
+          {loading
+            ? 'Cargando…'
+            : `${vehiculos.length} vehículo${vehiculos.length !== 1 ? 's' : ''} · TC USD/ARS: ${tc.toLocaleString('es-AR')}`
+          }
         </div>
       </div>
 
-      {/* ── Grid ── */}
-      <div style={{ ...S.grid, gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+      {/* ── Grid ───────────────────────────────────────────── */}
+      <div style={{
+        padding: '16px', maxWidth: 1100, margin: '0 auto',
+        display: 'grid', gap: 20,
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+      }}>
         {loading ? (
-          <div style={{ ...S.empty, gridColumn: `1 / -1` }}>Cargando vehículos…</div>
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: c.fg3, padding: '60px 20px' }}>
+            Cargando vehículos…
+          </div>
         ) : vehiculos.length === 0 ? (
-          <div style={{ ...S.empty, gridColumn: `1 / -1` }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1" strokeLinecap="round">
-                <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
-                <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
-              </svg>
-            </div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: '#B9C2D0', marginBottom: 6 }}>
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: c.fg3, padding: '60px 20px' }}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={c.fg3}
+                 strokeWidth="1" strokeLinecap="round" style={{ marginBottom: 16 }}>
+              <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
+              <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
+            </svg>
+            <div style={{ fontSize: 16, fontWeight: 600, color: c.fg2, marginBottom: 6 }}>
               No hay vehículos disponibles
             </div>
             <div style={{ fontSize: 13, marginBottom: 20 }}>
@@ -627,29 +442,37 @@ export default function CatalogoPublico() {
             </div>
             <a
               href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola! Quería consultar sobre próximos ingresos de vehículos en GH Cars.')}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{ ...S.btnContactar, display: 'inline-flex', textDecoration: 'none' }}
+              target="_blank" rel="noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                height: 40, padding: '0 20px', borderRadius: 999,
+                background: c.accent, color: '#fff',
+                fontWeight: 600, fontSize: 13, textDecoration: 'none',
+              }}
             >
-              <IcoWa /> Consultar por WhatsApp
+              Consultar por WhatsApp
             </a>
           </div>
         ) : (
           vehiculos.map(v => (
-            <CardPublica key={v.id} v={v} foto={portadas[v.id]} tc={tc} waNumber={waNumber} />
+            <VehicleCard key={v.id} v={v} foto={portadas[v.id]} tc={tc} waNumber={waNumber} c={c} />
           ))
         )}
       </div>
 
-      {/* ── Footer ── */}
-      <footer style={S.footer}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: '#B9C2D0', marginBottom: 8 }}>
+      {/* ── Footer ─────────────────────────────────────────── */}
+      <footer style={{
+        borderTop: `1px solid ${c.border}`,
+        padding: '24px 16px 32px',
+        textAlign: 'center', color: c.fg3, fontSize: 12, marginTop: 20,
+      }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: c.fg2, marginBottom: 8 }}>
           GH Cars — Concesionaria de vehículos usados
         </div>
         <div style={{ marginBottom: 4 }}>
           WhatsApp:&nbsp;
           <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"
-            style={{ color: '#6C5CFF', textDecoration: 'none', fontWeight: 600 }}>
+             style={{ color: c.accent, textDecoration: 'none', fontWeight: 600 }}>
             +54 9 11 6269-2000
           </a>
         </div>
@@ -658,7 +481,6 @@ export default function CatalogoPublico() {
           Precios en USD · ARS calculado al dólar blue
         </div>
       </footer>
-
     </div>
   )
 }

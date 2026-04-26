@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from './Icon'
+import ThemeToggle from './ThemeToggle'
 import { useUser } from '../hooks/useUser'
 
 const ROL_META = {
   dueno:    { label: 'Dueño',    color: '#f59e0b' },
-  vendedor: { label: 'Vendedor', color: '#6366f1' },
+  vendedor: { label: 'Vendedor', color: '#ff2d55' },
   externo:  { label: 'Externo',  color: 'var(--c-fg-3)' },
 }
 
@@ -62,6 +63,7 @@ export default function TopBar({ placeholder = 'Buscar vehículos, clientes, pat
         </kbd>
       </form>
       <div style={{ flex: 1 }} />
+      <ThemeToggle />
       {user && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ textAlign: 'right' }}>

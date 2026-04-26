@@ -46,9 +46,11 @@ import Agenda from './screens/Agenda'
 import Documentacion from './screens/Documentacion'
 import CatalogoPublico from './screens/CatalogoPublico'
 import DetallePublico from './screens/DetallePublico'
+import HomePublica from './screens/HomePublica'
 import Mejoras from './screens/Mejoras'
 import { useTc, TcContext } from './hooks/useTc'
 import { UserContext } from './hooks/useUser'
+import { ThemeProvider } from './context/ThemeContext'
 
 function ProtectedRoute({ element, isAuth }) {
   return isAuth ? element : <Navigate to="/login" replace />
@@ -110,9 +112,11 @@ export default function App() {
   }
 
   return (
+    <ThemeProvider>
     <BrowserRouter>
       <Routes>
         {/* Rutas públicas — sin auth */}
+        <Route path="/p/home"            element={<HomePublica />} />
         <Route path="/p/catalogo"        element={<CatalogoPublico />} />
         <Route path="/p/vehiculo/:id"    element={<DetallePublico />} />
 
@@ -123,5 +127,6 @@ export default function App() {
         />
       </Routes>
     </BrowserRouter>
+    </ThemeProvider>
   )
 }

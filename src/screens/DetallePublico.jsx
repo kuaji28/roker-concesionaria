@@ -5,6 +5,7 @@ import { useIsMobile } from '../hooks/useIsMobile'
 import WhatsAppIcon from '../components/WhatsAppIcon'
 import GHLogo from '../components/GHLogo'
 import { useWANumber } from '../hooks/useWANumber'
+import ThemeToggle from '../components/ThemeToggle'
 
 const FALLBACK_TC = 1415
 
@@ -98,6 +99,7 @@ export default function DetallePublico() {
             <GHLogo size={28} />
             <span style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</span>
           </div>
+          <ThemeToggle />
         </header>
 
         {loading ? (
@@ -279,10 +281,13 @@ export default function DetallePublico() {
           <GHLogo size={32} />
           <div style={{ fontWeight: 700, fontSize: 15 }}>GH Cars</div>
         </div>
-        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"
-           className="btn btn-primary" style={{ fontSize: 13, textDecoration: 'none' }}>
-          <WhatsAppIcon size={16} variant="white" />&nbsp;Contactar
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ThemeToggle />
+          <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"
+             className="btn btn-primary" style={{ fontSize: 13, textDecoration: 'none' }}>
+            <WhatsAppIcon size={16} variant="white" />&nbsp;Contactar
+          </a>
+        </div>
       </header>
 
       {loading ? (

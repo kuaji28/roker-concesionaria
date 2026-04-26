@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import TopBar from '../components/TopBar'
 import MetricCard from '../components/MetricCard'
 import Icon from '../components/Icon'
+import Sparkline from '../components/Sparkline'
 import { getReportes } from '../lib/supabase'
 
 const MESES_ABREV = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -71,10 +72,10 @@ function BarChart({ bars }) {
                   width: '80%',
                   height: `${barPct * BAR_H}px`,
                   minHeight: b.count > 0 ? 4 : 0,
-                  background: i === bars.length - 1 ? 'var(--c-success)' : 'var(--c-info)',
+                  background: i === bars.length - 1 ? 'var(--c-accent)' : 'var(--c-info)',
                   borderRadius: '4px 4px 0 0',
                   transition: 'height .3s ease',
-                  opacity: b.count === 0 ? 0.3 : 1,
+                  opacity: b.count === 0 ? 0.25 : 1,
                 }} />
               </div>
               {/* Month label */}
@@ -136,6 +137,30 @@ export default function Reportes({ onLogout }) {
               <MetricCard label="Ingresos al stock"  icon="plus"  value={data.ingresosMes ?? '—'} sub="este mes" />
               <MetricCard label="Leads nuevos"       icon="users" value={data.leadsNuevos ?? '—'} tone="o" />
             </div>
+
+            {/* Sparkline trend strip */}
+            {(data.bars ?? []).some(b => b.count > 0) && (
+              <div className="card" style={{ padding: '14px 20px', marginTop: 20, marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--c-fg-2)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 2 }}>
+                      Tendencia · últimos 6 meses
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>
+                      {(data.bars ?? []).reduce((s, b) => s + b.count, 0)} ventas
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--c-fg-3)', marginTop: 2 }}>
+                      USD {(data.bars ?? []).reduce((s, b) => s + b.total, 0).toLocaleString('es-AR')} ingresado
+                    </div>
+                  </div>
+                  <Sparkline
+                    data={(data.bars ?? []).map(b => b.count)}
+                    color="var(--c-accent)"
+                    w={160} h={48}
+                  />
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 28, marginBottom: 8 }}>
               <h2 className="section-title" style={{ margin: 0 }}>Ventas últimos 6 meses</h2>
