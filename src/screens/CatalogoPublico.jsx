@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useWANumber } from '../hooks/useWANumber'
 import { useTheme } from '../context/ThemeContext'
 import ThemeToggle from '../components/ThemeToggle'
 import TiltCard from '../components/TiltCard'
+import GHLogoFull from '../components/GHLogoFull'
 
 /* ─── Tipo de cambio ────────────────────────────────────────── */
 const FALLBACK_TC = 1415
@@ -236,8 +237,16 @@ export default function CatalogoPublico() {
   const [anioMin,    setAnioMin]   = useState('')
   const [precioMax,  setPrecioMax] = useState('')
   const [kmMax,      setKmMax]     = useState('')
+  const [sortBy,     setSortBy]    = useState('reciente')
+  const [viewMode,   setViewMode]  = useState('grid')
 
   const [cols, setCols] = useState(1)
+  const [searchParams] = useSearchParams()
+  useEffect(() => {
+    const carroceriaParam = searchParams.get('carroceria')
+    if (carroceriaParam) setCarroceria(carroceriaParam)
+  }, [searchParams])
+
   useEffect(() => {
     const update = () => setCols(window.innerWidth >= 700 ? (window.innerWidth >= 1050 ? 3 : 2) : 1)
     update()
@@ -270,6 +279,14 @@ export default function CatalogoPublico() {
     return true
   })
 
+  const vehiculosOrdenados = [...vehiculosFiltrados].sort((a, b) => {
+    if (sortBy === 'precio_asc')  return (a.precio_lista || a.precio_base || 0) - (b.precio_lista || b.precio_base || 0)
+    if (sortBy === 'precio_desc') return (b.precio_lista || b.precio_base || 0) - (a.precio_lista || a.precio_base || 0)
+    if (sortBy === 'anio_desc')   return (b.anio || 0) - (a.anio || 0)
+    if (sortBy === 'km_asc')      return (a.km_hs || 0) - (b.km_hs || 0)
+    return 0 // 'reciente' = orden original de la query
+  })
+
   const bgGlass = c.resolved === 'dark'
     ? 'rgba(10,10,12,0.88)'
     : 'rgba(250,250,247,0.9)'
@@ -293,18 +310,8 @@ export default function CatalogoPublico() {
         height: 56,
       }}>
         {/* Logo */}
-        <Link to="/p/home" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: '50%',
-            background: c.accent,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 800, fontSize: 12, letterSpacing: '0.03em',
-            color: '#fff', flexShrink: 0,
-          }}>GH</div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.1 }}>GH Cars</div>
-            <div style={{ fontSize: 10, color: c.fg2, lineHeight: 1.1 }}>Stock disponible</div>
-          </div>
+        <Link to="/p/home" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <GHLogoFull width={110} style={{ color: c.fg }} />
         </Link>
 
         {/* Nav + actions */}
@@ -475,6 +482,23 @@ export default function CatalogoPublico() {
             />
           </div>
 
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+            style={{
+              height: 38, background: c.bg2, border: `1px solid ${c.border}`,
+              borderRadius: 10, color: c.fg, fontSize: 12,
+              padding: '0 10px', outline: 'none', cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            <option value="reciente">Más reciente</option>
+            <option value="precio_asc">Precio ↑</option>
+            <option value="precio_desc">Precio ↓</option>
+            <option value="anio_desc">Año ↓</option>
+            <option value="km_asc">Km ↑</option>
+          </select>
+
           {hasFiltros && (
             <button
               style={{
@@ -493,19 +517,37 @@ export default function CatalogoPublico() {
           )}
         </div>
 
-        <div style={{ fontSize: 11, color: c.fg3, letterSpacing: '0.02em' }}>
-          {loading
-            ? 'Cargando…'
-            : `${vehiculosFiltrados.length} vehículo${vehiculosFiltrados.length !== 1 ? 's' : ''} · TC USD/ARS: ${tc.toLocaleString('es-AR')}`
-          }
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ fontSize: 11, color: c.fg3, letterSpacing: '0.02em' }}>
+            {loading ? 'Cargando…' : `${vehiculosFiltrados.length} vehículo${vehiculosFiltrados.length !== 1 ? 's' : ''} · TC USD/ARS: ${tc.toLocaleString('es-AR')}`}
+          </div>
+          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            {[
+              { mode: 'grid', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
+              { mode: 'list', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> },
+            ].map(({ mode, icon }) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                style={{
+                  width: 30, height: 30, borderRadius: 8, cursor: 'pointer',
+                  display: 'grid', placeItems: 'center',
+                  background: viewMode === mode ? c.accent : c.bg2,
+                  color: viewMode === mode ? '#fff' : c.fg3,
+                  border: `1px solid ${viewMode === mode ? c.accent : c.border}`,
+                  transition: 'all .15s',
+                }}
+              >{icon}</button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ── Grid ───────────────────────────────────────────── */}
       <div style={{
         padding: '16px', maxWidth: 1100, margin: '0 auto',
-        display: 'grid', gap: 20,
-        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        display: 'grid', gap: viewMode === 'list' ? 10 : 20,
+        gridTemplateColumns: viewMode === 'list' ? '1fr' : `repeat(${cols}, 1fr)`,
       }}>
         {loading ? (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: c.fg3, padding: '60px 20px' }}>
@@ -543,7 +585,7 @@ export default function CatalogoPublico() {
             <div style={{ fontSize: 13 }}>Probá con otros filtros.</div>
           </div>
         ) : (
-          vehiculosFiltrados.map(v => (
+          vehiculosOrdenados.map(v => (
             <VehicleCard key={v.id} v={v} foto={portadas[v.id]} tc={tc} waNumber={waNumber} c={c} />
           ))
         )}

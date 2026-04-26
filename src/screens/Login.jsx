@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { loginUsuario } from '../lib/supabase'
 import Icon from '../components/Icon'
 import GHLogo from '../components/GHLogo'
+import GHLogoFull from '../components/GHLogoFull'
 import ThemeToggle from '../components/ThemeToggle'
 
 const ADDRESS = 'Av. Juan Domingo Perón 2440, Benavidez'
@@ -65,9 +66,9 @@ export default function Login({ onLogin }) {
           pointerEvents: 'none',
         }} />
 
-        {/* Logo */}
+        {/* Logo full */}
         <div style={{ position: 'relative' }}>
-          <GHLogo size={52} />
+          <GHLogoFull width={200} style={{ color: 'var(--c-fg)' }} />
         </div>
 
         {/* Headline */}
@@ -79,7 +80,7 @@ export default function Login({ onLogin }) {
             Sistema interno
           </p>
           <h1 style={{
-            fontSize: 'clamp(36px, 4vw, 56px)', fontWeight: 800,
+            fontSize: 'clamp(28px, 3.5vw, 48px)', fontWeight: 800,
             margin: '12px 0 0', letterSpacing: '-0.03em', lineHeight: 1,
             color: 'var(--c-fg)',
           }}>

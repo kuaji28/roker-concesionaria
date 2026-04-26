@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import TiltCard from '../components/TiltCard'
 import ThemeToggle from '../components/ThemeToggle'
 import { useWANumber } from '../hooks/useWANumber'
+import GHLogoFull from '../components/GHLogoFull'
 
 const FALLBACK_TC = 1415
 const ADDRESS    = 'Ruta 9 km 1750, Benavidez, Bs As'
@@ -49,6 +50,29 @@ const IgIcon = ({ size = 16 }) => (
 )
 
 const fmt = n => Number(n).toLocaleString('es-AR')
+
+function AnimatedCounter({ target, suffix = '', active }) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (!active || target === 0) return
+    const duration = 1200
+    const steps = 40
+    const increment = target / steps
+    let current = 0
+    const timer = setInterval(() => {
+      current = Math.min(current + increment, target)
+      setCount(Math.round(current))
+      if (current >= target) clearInterval(timer)
+    }, duration / steps)
+    return () => clearInterval(timer)
+  }, [active, target])
+  const display = active ? count : 0
+  return (
+    <p style={{ fontSize: 'clamp(24px,3vw,34px)', fontWeight: 800, margin: 0, letterSpacing: '-0.03em', color: 'var(--c-fg,#fafafa)' }}>
+      {display}{suffix}
+    </p>
+  )
+}
 
 function VehicleCard({ v, foto, tc, waNumber, c, navigate }) {
   const precioUSD = v.precio_lista || v.precio_base
@@ -127,6 +151,16 @@ export default function HomePublica() {
   const [featFoto,  setFeatFoto]  = useState(null)
   const [loading,   setLoading]   = useState(true)
 
+  // Counter animation refs
+  const statsRef = useRef(null)
+  const [statsVisible, setStatsVisible] = useState(false)
+  useEffect(() => {
+    if (!statsRef.current) return
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setStatsVisible(true); obs.disconnect() } }, { threshold: 0.3 })
+    obs.observe(statsRef.current)
+    return () => obs.disconnect()
+  }, [])
+
   const waMsg  = encodeURIComponent('Hola! Vi su catálogo en GH Cars. ¿Me podría dar más información?')
   const phone   = waNumber || '5491162692000'
 
@@ -176,12 +210,8 @@ export default function HomePublica() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/p/home')}>
-            <div style={{ width: 36, height: 36, borderRadius: 8, background: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, color: '#fff', letterSpacing: '-0.01em', flexShrink: 0 }}>GH</div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em', color: c.fg }}>GH Cars</div>
-              <div style={{ fontSize: 10, color: c.fg3 }}>Benavidez</div>
-            </div>
+          <div style={{ cursor: 'pointer' }} onClick={() => navigate('/p/home')}>
+            <GHLogoFull width={120} style={{ color: c.fg }} />
           </div>
           <nav style={{ display: 'flex', gap: 2 }}>
             {[['Stock', '/p/catalogo'], ['Contacto', '/p/contacto']].map(([label, path]) => (
@@ -243,14 +273,14 @@ export default function HomePublica() {
             </a>
           </div>
           {/* Stats strip */}
-          <div style={{ display: 'flex', gap: 28, marginTop: 44, paddingTop: 28, borderTop: `1px solid ${c.border}`, flexWrap: 'wrap' }}>
+          <div ref={statsRef} style={{ display: 'flex', gap: 28, marginTop: 44, paddingTop: 28, borderTop: `1px solid ${c.border}`, flexWrap: 'wrap' }}>
             {[
-              { val: loading ? '–' : totalStock, label: 'Unidades' },
-              { val: '14yr', label: 'Trayectoria' },
-              { val: '1.4k+', label: 'Operaciones' },
+              { num: loading ? 0 : totalStock, suffix: '+', label: 'Unidades' },
+              { num: 14,    suffix: 'yr', label: 'Trayectoria' },
+              { num: 1400,  suffix: '+', label: 'Operaciones' },
             ].map(s => (
               <div key={s.label}>
-                <p style={{ fontSize: 'clamp(24px,3vw,34px)', fontWeight: 800, margin: 0, letterSpacing: '-0.03em', color: c.fg }}>{s.val}</p>
+                <AnimatedCounter target={s.num} suffix={s.suffix} active={statsVisible} />
                 <p style={{ fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: c.fg2, margin: 0 }}>{s.label}</p>
               </div>
             ))}
@@ -286,6 +316,46 @@ export default function HomePublica() {
             </div>
           </TiltCard>
         )}
+      </section>
+
+      {/* ── CATEGORÍAS ───────────────────────────────────────────── */}
+      <section style={{ padding: '0 clamp(20px,5vw,56px) clamp(24px,3vw,40px)' }}>
+        <p style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: c.fg3, margin: '0 0 14px', fontWeight: 600 }}>Navegá por categoría</p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {[
+            { label: 'Pickups',    carroceria: 'Pickup',   emoji: '🛻' },
+            { label: 'SUVs',       carroceria: 'SUV',       emoji: '🚙' },
+            { label: 'Sedanes',    carroceria: 'Sedán',     emoji: '🚗' },
+            { label: 'Hatchbacks', carroceria: 'Hatchback', emoji: '🚘' },
+          ].map(cat => (
+            <button
+              key={cat.label}
+              onClick={() => navigate(`/p/catalogo?carroceria=${encodeURIComponent(cat.carroceria)}`)}
+              style={{
+                padding: '10px 22px', borderRadius: 999, cursor: 'pointer',
+                border: `1.5px solid ${c.border}`, background: c.card,
+                color: c.fg, fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                transition: 'all .15s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = c.accent
+                e.currentTarget.style.color = '#fff'
+                e.currentTarget.style.borderColor = c.accent
+                e.currentTarget.style.boxShadow = `0 4px 16px ${c.accent}44`
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = c.card
+                e.currentTarget.style.color = c.fg
+                e.currentTarget.style.borderColor = c.border
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
+              <span style={{ fontSize: 16 }}>{cat.emoji}</span>
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </section>
 
       {/* ── STOCK GRID ────────────────────────────────────────────── */}
