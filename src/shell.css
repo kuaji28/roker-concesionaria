@@ -755,6 +755,23 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   }
   .detalle-panel {
     width: 100%;
-    order: -1; /* precio y specs ARRIBA del contenido en mobile */
+    order: -1;
+  }
+}
+
+/* Login split layout */
+.login-grid {
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 768px) {
+  .login-grid {
+    grid-template-columns: 1fr;
+  }
+  .login-grid > div:first-child {
+    display: none;
+  }
+  .login-grid > div:last-child {
+    min-height: 100vh;
+    padding: 32px 24px;
   }
 }
