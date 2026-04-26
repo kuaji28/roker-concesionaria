@@ -67,7 +67,7 @@ export default function Login({ onLogin }) {
 
         {/* Logo */}
         <div style={{ position: 'relative' }}>
-          <GHLogo height={52} />
+          <GHLogo size={52} />
         </div>
 
         {/* Headline */}
