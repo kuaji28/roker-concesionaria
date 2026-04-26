@@ -9,9 +9,11 @@ import { useTc } from '../hooks/useTc'
 import { useUser, canSeePrecioBase } from '../hooks/useUser'
 import { useIsMobile } from '../hooks/useIsMobile'
 
-const ESTADOS      = ['todos', 'disponible', 'señado', 'en_revision', 'en_preparacion', 'vendido']
-const TIPOS        = ['todos', 'auto', 'moto', 'cuatriciclo', 'moto_de_agua']
-const ESTADOS_EDIT = ['disponible', 'señado', 'en_revision', 'en_preparacion', 'vendido']
+const ESTADOS       = ['todos', 'disponible', 'señado', 'en_revision', 'en_preparacion', 'vendido']
+const TIPOS         = ['todos', 'auto', 'moto', 'cuatriciclo', 'moto_de_agua']
+const TIPOS_LABEL   = { todos: 'Todos', auto: 'Autos', moto: 'Motos', cuatriciclo: 'Cuatriciclos', moto_de_agua: 'Motos de agua' }
+const CARROCERIAS   = ['todos', 'SUV', 'Pickup', 'Sedán', 'Hatchback', 'Familiar', 'Coupé', 'Convertible', 'Minivan', 'Sport', 'Utilitario']
+const ESTADOS_EDIT  = ['disponible', 'señado', 'en_revision', 'en_preparacion', 'vendido']
 
 export default function Catalogo({ onLogout }) {
   const navigate = useNavigate()
@@ -30,7 +32,8 @@ export default function Catalogo({ onLogout }) {
   const [estado, setEstado] = useState(params.get('estado') || 'todos')
   const [tipo, setTipo]     = useState('todos')
 
-  // Filtros numéricos
+  // Filtros carrocería + numéricos
+  const [carroceria, setCarroceria] = useState('todos')
   const [anioMin,    setAnioMin]    = useState('')
   const [anioMax,    setAnioMax]    = useState('')
   const [kmMax,      setKmMax]      = useState('')
@@ -53,14 +56,14 @@ export default function Catalogo({ onLogout }) {
 
   useEffect(() => { reload() }, [estado, tipo, search])
 
-  // Filtrado numérico client-side + filtro por rol
+  // Filtrado client-side (carrocería + numérico + rol)
   const shown = vehiculos.filter(v => {
+    if (carroceria !== 'todos' && v.carroceria?.toLowerCase() !== carroceria.toLowerCase()) return false
     if (anioMin  && v.anio       <  Number(anioMin))  return false
     if (anioMax  && v.anio       >  Number(anioMax))  return false
     if (kmMax    && v.km_hs      >  Number(kmMax))    return false
     if (precioMin && (v.precio_base || 0) < Number(precioMin)) return false
     if (precioMax && (v.precio_base || 0) > Number(precioMax)) return false
-    // externos solo ven vehículos disponibles
     if (rol === 'externo' && v.estado !== 'disponible') return false
     return true
   })
@@ -105,8 +108,32 @@ export default function Catalogo({ onLogout }) {
 
         {/* ── Barra de filtros ── */}
         <div className="filter-card">
+
+          {/* Tipo pills */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+            {TIPOS.map(t => (
+              <button key={t}
+                className={tipo === t ? 'pill-on' : 'pill'}
+                onClick={() => { setTipo(t); setCarroceria('todos') }}
+              >{TIPOS_LABEL[t]}</button>
+            ))}
+          </div>
+
+          {/* Carrocería pills (solo cuando tipo=todos o auto) */}
+          {(tipo === 'todos' || tipo === 'auto') && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+              {CARROCERIAS.map(car => (
+                <button key={car}
+                  className={carroceria === car ? 'pill-on' : 'pill'}
+                  onClick={() => setCarroceria(car)}
+                >{car === 'todos' ? 'Todas' : car}</button>
+              ))}
+            </div>
+          )}
+
+          {/* Search + Estado + Vista */}
           <div className="filter-row">
-            <div>
+            <div style={{ flex: 2 }}>
               <label>Buscar</label>
               <div className="search-field" style={{ background: 'var(--c-bg)' }}>
                 <Icon name="search" size={16} style={{ stroke: 'var(--c-fg-3)' }} />
@@ -121,12 +148,6 @@ export default function Catalogo({ onLogout }) {
               </select>
             </div>
             <div>
-              <label>Tipo</label>
-              <select className="input" value={tipo} onChange={e => setTipo(e.target.value)}>
-                {TIPOS.map(t => <option key={t} value={t}>{t === 'todos' ? 'Todos' : t.replace(/_/g, ' ')}</option>)}
-              </select>
-            </div>
-            <div>
               <label>Vista</label>
               <div className="seg" style={{ marginTop: 0 }}>
                 <button className={view === 'cards' ? 'on' : ''} onClick={() => setView('cards')}>
@@ -137,49 +158,43 @@ export default function Catalogo({ onLogout }) {
                 </button>
               </div>
             </div>
-            <div style={{ alignSelf: 'flex-end' }}>
-              <button className={`btn ${numFiltrosActivos > 0 ? 'primary' : 'ghost'}`}
-                onClick={() => setFiltrosExp(x => !x)}>
-                <Icon name="search" size={13} />
-                Filtros{numFiltrosActivos > 0 ? ` (${numFiltrosActivos})` : ''}
-              </button>
-            </div>
           </div>
 
-          {filtrosExp && (
-            <div className="filter-row" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--c-border)' }}>
-              <div>
-                <label>Año desde</label>
-                <input className="input" type="number" placeholder="2015" value={anioMin}
-                  onChange={e => setAnioMin(e.target.value)} style={{ width: 90 }} />
-              </div>
-              <div>
-                <label>Año hasta</label>
-                <input className="input" type="number" placeholder="2024" value={anioMax}
-                  onChange={e => setAnioMax(e.target.value)} style={{ width: 90 }} />
-              </div>
-              <div>
-                <label>Km máx</label>
-                <input className="input" type="number" placeholder="100000" value={kmMax}
-                  onChange={e => setKmMax(e.target.value)} style={{ width: 110 }} />
-              </div>
-              <div>
-                <label>Precio USD mín</label>
-                <input className="input" type="number" placeholder="5000" value={precioMin}
-                  onChange={e => setPrecioMin(e.target.value)} style={{ width: 110 }} />
-              </div>
-              <div>
-                <label>Precio USD máx</label>
-                <input className="input" type="number" placeholder="50000" value={precioMax}
-                  onChange={e => setPrecioMax(e.target.value)} style={{ width: 110 }} />
-              </div>
+          {/* Filtros numéricos — siempre visibles */}
+          <div className="filter-row" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--c-border)' }}>
+            <div>
+              <label>Año desde</label>
+              <input className="input" type="number" placeholder="2015" value={anioMin}
+                onChange={e => setAnioMin(e.target.value)} style={{ width: 90 }} />
+            </div>
+            <div>
+              <label>Año hasta</label>
+              <input className="input" type="number" placeholder="2026" value={anioMax}
+                onChange={e => setAnioMax(e.target.value)} style={{ width: 90 }} />
+            </div>
+            <div>
+              <label>Km máx</label>
+              <input className="input" type="number" placeholder="—" value={kmMax}
+                onChange={e => setKmMax(e.target.value)} style={{ width: 110 }} />
+            </div>
+            <div>
+              <label>Precio mín USD</label>
+              <input className="input" type="number" placeholder="—" value={precioMin}
+                onChange={e => setPrecioMin(e.target.value)} style={{ width: 110 }} />
+            </div>
+            <div>
+              <label>Precio máx USD</label>
+              <input className="input" type="number" placeholder="—" value={precioMax}
+                onChange={e => setPrecioMax(e.target.value)} style={{ width: 110 }} />
+            </div>
+            {numFiltrosActivos > 0 && (
               <div style={{ alignSelf: 'flex-end' }}>
                 <button className="btn ghost" onClick={() => {
                   setAnioMin(''); setAnioMax(''); setKmMax(''); setPrecioMin(''); setPrecioMax('')
                 }}>Limpiar</button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* ── Listado ── */}

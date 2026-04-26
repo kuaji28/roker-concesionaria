@@ -439,6 +439,18 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   text-transform: uppercase; letter-spacing: 0.05em;
   margin-bottom: 6px;
 }
+/* Category / body-type pill buttons */
+.pill, .pill-on {
+  white-space: nowrap;
+  padding: 0 12px; height: 28px;
+  border-radius: 999px;
+  font: 600 11px/1 var(--font);
+  cursor: pointer; transition: all .15s;
+  flex-shrink: 0;
+}
+.pill      { background: transparent; color: var(--c-fg-2); border: 1px solid var(--c-border); }
+.pill-on   { background: var(--c-accent); color: #fff; border: 1px solid transparent; }
+.pill:hover { border-color: var(--c-fg-3); color: var(--c-fg); }
 
 /* ── Segmented / view toggle ──────────────────────── */
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; }
