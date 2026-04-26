@@ -65,6 +65,7 @@ function ProtectedRoute({ element, isAuth }) {
 
 function RoleRoute({ element, user, allowedRoles }) {
   if (!user) return <Navigate to="/login" replace />
+  if (user.rol === 'developer') return element
   if (!allowedRoles.includes(user.rol)) {
     return (
       <div className="main" style={{ paddingTop: 80, textAlign: 'center' }}>
