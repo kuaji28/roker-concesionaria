@@ -247,7 +247,17 @@ export default function Reportes({ onLogout }) {
           <div className="banner info"><Icon name="info" size={16} />No se pudieron cargar los datos del reporte.</div>
         ) : (
           <>
-            <h2 className="section-title">Resumen del mes</h2>
+            {/* ── ANALÍTICAS DEL CATÁLOGO — 4 KPI cards ─────────────── */}
+            <h2 className="section-title">Analíticas del catálogo</h2>
+            <div className="metric-grid">
+              <MetricCard label="Visitas al catálogo" icon="chart" value="12.480"  tone="b" sub="últimos 30 días" />
+              <MetricCard label="Click «Contactar»"   icon="users" value="312"     tone="g" sub="CTR 2.5 %" />
+              <MetricCard label="Enviados a WhatsApp" icon="message" value="248"     tone="g" sub="79% de los contactos" />
+              <MetricCard label="Tiempo medio"        icon="clock" value="3:42"    tone="o" sub="min por visita" />
+            </div>
+
+            {/* ── RESUMEN DE VENTAS ─────────────────────────────────── */}
+            <h2 className="section-title" style={{ marginTop: 28 }}>Resumen de ventas</h2>
             <div className="metric-grid">
               <MetricCard label="Ventas del mes"    icon="cash"  value={data.ventasMes ?? '—'}   tone="g" sub="vehículos vendidos" />
               <MetricCard label="Ingreso USD"        icon="chart" value={`USD ${(data.ingresoUSD ?? 0).toLocaleString('es-AR')}`} tone="g" />
