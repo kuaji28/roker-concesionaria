@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /p/
+Disallow: /login
+Disallow: /vendedor
+Disallow: /gerente
+Disallow: /config
+Disallow: /sistema
+
+Sitemap: https://gh-cars-web.vercel.app/sitemap.xml
