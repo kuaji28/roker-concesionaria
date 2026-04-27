@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar'
 import Icon from '../components/Icon'
@@ -75,8 +75,9 @@ function parseFechaDMY(str) {
   return null
 }
 
-function Step1({ form, set, vendedores }) {
+function Step1({ form, set, vendedores, moneda, setMoneda }) {
   const f = (k) => (e) => set(p => ({ ...p, [k]: e.target.value }))
+  const cur = moneda || 'USD'
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
       <FormField label="Tipo" required>
@@ -120,15 +121,35 @@ function Step1({ form, set, vendedores }) {
       <FormField label="Km / Hs">
         <input className="input" type="number" placeholder="45000" value={form.km_hs} onChange={f('km_hs')} min={0} />
       </FormField>
-      <FormField label="Precio base (USD)" required>
-        <input className="input" type="number" placeholder="18000" value={form.precio_base} onChange={f('precio_base')} min={0} />
+      <div style={{ gridColumn: '1 / -1' }}>
+        <FormField label="Moneda de precios">
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[{ v: 'USD', l: 'USD — Dólares' }, { v: 'ARS', l: 'ARS — Pesos' }].map(op => (
+              <button key={op.v} type="button"
+                onClick={() => setMoneda(op.v)}
+                style={{
+                  padding: '6px 16px', fontSize: 13, borderRadius: 'var(--r)',
+                  border: '1px solid var(--c-border)', cursor: 'pointer',
+                  background: cur === op.v ? 'var(--c-accent)' : 'var(--c-card)',
+                  color: cur === op.v ? '#fff' : 'var(--c-fg)',
+                  fontWeight: cur === op.v ? 600 : 400,
+                  transition: 'background .15s, color .15s',
+                }}>
+                {op.l}
+              </button>
+            ))}
+          </div>
+        </FormField>
+      </div>
+      <FormField label={`Precio base (${cur})`} required>
+        <input className="input" type="number" placeholder={cur === 'USD' ? '18000' : '20000000'} value={form.precio_base} onChange={f('precio_base')} min={0} />
       </FormField>
-      <FormField label="Precio lista (USD)" hint="Precio visible para clientes">
-        <input className="input" type="number" placeholder={form.precio_base || "20000"}
+      <FormField label={`Precio lista (${cur})`} hint="Precio visible para clientes">
+        <input className="input" type="number" placeholder={form.precio_base || (cur === 'USD' ? '20000' : '22000000')}
           value={form.precio_lista || ''} onChange={f('precio_lista')} min={0} />
       </FormField>
-      <FormField label="Costo compra (USD)">
-        <input className="input" type="number" placeholder="15000" value={form.costo_compra} onChange={f('costo_compra')} min={0} />
+      <FormField label={`Costo compra (${cur})`}>
+        <input className="input" type="number" placeholder={cur === 'USD' ? '15000' : '16000000'} value={form.costo_compra} onChange={f('costo_compra')} min={0} />
       </FormField>
       <FormField label="Combustible">
         <select className="input" value={form.combustible} onChange={f('combustible')}>
@@ -374,6 +395,7 @@ const SHOT_LIST = [
 ]
 
 function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFiles, setExtraFiles, extraPreviews, setExtraPreviews }) {
+  const dragIdx = useRef(null)
   const requiredCount = SHOT_LIST.filter(s => s.required).length
   const uploadedRequired = SHOT_LIST.filter(s => s.required && shotFiles[s.key]).length
   const pct = requiredCount > 0 ? (uploadedRequired / requiredCount) * 100 : 0
@@ -404,6 +426,21 @@ function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFi
   function removeExtra(i) {
     setExtraFiles(p => p.filter((_, j) => j !== i))
     setExtraPreviews(p => p.filter((_, j) => j !== i))
+  }
+
+  function onDragStartExtra(i) { dragIdx.current = i }
+  function onDropExtra(i) {
+    const from = dragIdx.current
+    dragIdx.current = null
+    if (from === null || from === i) return
+    const nf = [...extraFiles]
+    const np = [...extraPreviews]
+    const [ff] = nf.splice(from, 1)
+    const [fp] = np.splice(from, 1)
+    nf.splice(i, 0, ff)
+    np.splice(i, 0, fp)
+    setExtraFiles(nf)
+    setExtraPreviews(np)
   }
 
   return (
@@ -511,21 +548,31 @@ function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFi
             onChange={e => { handleExtraFiles(e.target.files); e.target.value = '' }} />
         </div>
         {extraPreviews.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8 }}>
-            {extraPreviews.map((src, i) => (
-              <div key={i} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 'var(--r)', overflow: 'hidden' }}>
-                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <button onClick={() => removeExtra(i)} style={{
-                  position: 'absolute', top: 4, right: 4,
-                  background: 'rgba(0,0,0,.6)', border: 'none', borderRadius: '50%',
-                  width: 22, height: 22, cursor: 'pointer', color: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-                }}>
-                  <Icon name="x" size={11} />
-                </button>
-              </div>
-            ))}
-          </div>
+          <>
+            <div style={{ fontSize: 11, color: 'var(--c-fg-3)', marginBottom: 6 }}>
+              Arrastrá para reordenar
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8 }}>
+              {extraPreviews.map((src, i) => (
+                <div key={i}
+                  draggable
+                  onDragStart={() => onDragStartExtra(i)}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={() => onDropExtra(i)}
+                  style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 'var(--r)', overflow: 'hidden', cursor: 'grab' }}>
+                  <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                  <button onClick={() => removeExtra(i)} style={{
+                    position: 'absolute', top: 4, right: 4,
+                    background: 'rgba(0,0,0,.6)', border: 'none', borderRadius: '50%',
+                    width: 22, height: 22, cursor: 'pointer', color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                  }}>
+                    <Icon name="x" size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -547,6 +594,8 @@ export default function Ingreso({ onLogout }) {
   const [shotPreviews, setShotPreviews]   = useState({})
   const [extraFiles, setExtraFiles]       = useState([])
   const [extraPreviews, setExtraPreviews] = useState([])
+  const [moneda, setMoneda] = useState('USD')
+  const [toast, setToast] = useState(null)
   const [vendedores, setVendedores] = useState([])
   const [form, setForm] = useState({
     tipo: 'auto', marca: '', modelo: '', anio: '', version: '',
@@ -569,6 +618,45 @@ export default function Ingreso({ onLogout }) {
       ...p,
       combustible: specs.combustible || p.combustible,
       transmision: specs.transmision || p.transmision,
+      specs: {
+        ...p.specs,
+        ...(specs.potencia_hp    != null && { potencia_hp:    specs.potencia_hp }),
+        ...(specs.torque_nm      != null && { torque_nm:      specs.torque_nm }),
+        ...(specs.cilindros      != null && { cilindros:      specs.cilindros }),
+        ...(specs.tanque_litros  != null && { tanque_litros:  specs.tanque_litros }),
+        ...(specs.peso_kg        != null && { peso_kg:        specs.peso_kg }),
+        ...(specs.consumo_mixto  != null && { consumo_mixto:  specs.consumo_mixto }),
+        ...(specs.vel_max_kmh    != null && { vel_max_kmh:    specs.vel_max_kmh }),
+        ...(specs.aceleracion_0_100 != null && { aceleracion_0_100: specs.aceleracion_0_100 }),
+        ...(specs.airbags        != null && { airbags:        specs.airbags }),
+        ...(specs.abs            != null && { abs:            specs.abs }),
+        ...(specs.esp            != null && { esp:            specs.esp }),
+        ...(specs.camara_retroceso != null && { camara_retroceso: specs.camara_retroceso }),
+        ...(specs.sensores_estacionamiento != null && { sensores_estacionamiento: specs.sensores_estacionamiento }),
+        ...(specs.control_crucero != null && { control_crucero: specs.control_crucero }),
+        ...(specs.apple_carplay  != null && { apple_carplay:  specs.apple_carplay }),
+        ...(specs.android_auto   != null && { android_auto:   specs.android_auto }),
+        ...(specs.bluetooth      != null && { bluetooth:      specs.bluetooth }),
+        ...(specs.gps_integrado  != null && { gps_integrado:  specs.gps_integrado }),
+        ...(specs.pantalla_pulg  != null && { pantalla_pulg:  specs.pantalla_pulg }),
+        ...(specs.climatizacion  != null && { climatizacion:  specs.climatizacion }),
+        ...(specs.vidrios_electricos != null && { vidrios_electricos: specs.vidrios_electricos }),
+        ...(specs.cierre_centralizado != null && { cierre_centralizado: specs.cierre_centralizado }),
+        ...(specs.alarma         != null && { alarma:         specs.alarma }),
+        ...(specs.llantas_aleacion != null && { llantas_aleacion: specs.llantas_aleacion }),
+        ...(specs.faros          != null && { faros:          specs.faros }),
+        ...(specs.tapizado       != null && { tapizado:       specs.tapizado }),
+        ...(specs.asientos_calefaccionados != null && { asientos_calefaccionados: specs.asientos_calefaccionados }),
+        ...(specs.asientos_electricos != null && { asientos_electricos: specs.asientos_electricos }),
+        ...(specs.techo_solar    != null && { techo_solar:    specs.techo_solar }),
+        ...(specs.techo_panoramico != null && { techo_panoramico: specs.techo_panoramico }),
+        ...(specs.arranque_sin_llave != null && { arranque_sin_llave: specs.arranque_sin_llave }),
+        ...(specs.freno_mano_electrico != null && { freno_mano_electrico: specs.freno_mano_electrico }),
+        ...(specs.frenado_autonomo != null && { frenado_autonomo: specs.frenado_autonomo }),
+        ...(specs.crucero_adaptativo != null && { crucero_adaptativo: specs.crucero_adaptativo }),
+        ...(specs.hud            != null && { hud:            specs.hud }),
+        ...(specs.carga_inalambrica != null && { carga_inalambrica: specs.carga_inalambrica }),
+      },
     }))
     setAiSpecs(specs)
     return specs
@@ -722,16 +810,33 @@ export default function Ingreso({ onLogout }) {
     setSaving(true)
     setError('')
     try {
+      const specsPayload = {
+        ...(form.specs || {}),
+        ...(form.combustible && { combustible: form.combustible }),
+        ...(form.transmision && { transmision: form.transmision }),
+        moneda_precio: moneda,
+      }
       const payload = {
-        ...form,
+        tipo: form.tipo,
+        marca: form.marca,
+        modelo: form.modelo,
         anio: Number(form.anio),
+        version: form.version || null,
+        patente: form.patente ? form.patente.toUpperCase() : null,
+        color: form.color || null,
         km_hs: form.km_hs ? Number(form.km_hs) : null,
         precio_base: Number(form.precio_base),
         precio_lista: form.precio_lista ? Number(form.precio_lista) : null,
         costo_compra: form.costo_compra ? Number(form.costo_compra) : null,
-        patente: form.patente ? form.patente.toUpperCase() : null,
-        responsable_id: form.responsable_id || null,
-        specs: Object.keys(form.specs || {}).length > 0 ? form.specs : null,
+        origen: form.origen || 'compra_directa',
+        vendedor_ingreso_id: form.responsable_id || null,
+        nro_motor: form.nro_motor || null,
+        nro_chasis: form.nro_chasis || null,
+        notas_internas: form.notas_internas || null,
+        estado: form.estado || 'disponible',
+        ubicacion: form.ubicacion || 'showroom',
+        estado_recon: form.estado_recon || 'ingresado',
+        specs: Object.keys(specsPayload).length > 0 ? specsPayload : null,
       }
       const v = await createVehiculo(payload)
       // Upload shot list fotos
@@ -748,9 +853,11 @@ export default function Ingreso({ onLogout }) {
         const fotoData = await uploadFotoVehiculo(v.id, extraFiles[i], 'extra')
         await saveFotoRecord(v.id, fotoData, false)
       }
-      navigate(`/vehiculo/${v.id}`)
+      setSaving(false)
+      setToast('Vehículo guardado correctamente')
+      setTimeout(() => navigate(`/vehiculo/${v.id}`), 1500)
     } catch (e) {
-      setError(e.message || 'Error al guardar.')
+      setError(e.message || 'Error al guardar el vehículo. Intentá de nuevo.')
       setSaving(false)
     }
   }
@@ -954,7 +1061,7 @@ export default function Ingreso({ onLogout }) {
         )}
 
         <div className="card" style={{ marginBottom: 20 }}>
-          {step === 1 && <Step1 form={form} set={setForm} vendedores={vendedores} />}
+          {step === 1 && <Step1 form={form} set={setForm} vendedores={vendedores} moneda={moneda} setMoneda={setMoneda} />}
           {step === 2 && <Step2 shotFiles={shotFiles} setShotFiles={setShotFiles} shotPreviews={shotPreviews} setShotPreviews={setShotPreviews} extraFiles={extraFiles} setExtraFiles={setExtraFiles} extraPreviews={extraPreviews} setExtraPreviews={setExtraPreviews} />}
           {step === 3 && <Step3 form={form} setForm={setForm} />}
         </div>
@@ -977,6 +1084,18 @@ export default function Ingreso({ onLogout }) {
           )}
         </div>
       </div>
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          background: '#22c55e', color: '#fff', padding: '12px 28px',
+          borderRadius: 12, fontWeight: 600, fontSize: 14, zIndex: 9999,
+          boxShadow: '0 4px 24px rgba(0,0,0,.25)',
+          display: 'flex', alignItems: 'center', gap: 8,
+          animation: 'fadeIn .2s ease',
+        }}>
+          <Icon name="check" size={16} /> {toast}
+        </div>
+      )}
     </div>
   )
 }
