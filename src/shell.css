@@ -637,6 +637,9 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   /* Metric grid: 2 columns */
   .metric-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
+  /* Quick actions: 2 columns instead of 4 */
+  .qa-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
   /* Rank table: horizontal scroll */
   .rank { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }

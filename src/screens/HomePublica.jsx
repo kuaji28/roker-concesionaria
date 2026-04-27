@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
+import { useIsMobile } from '../hooks/useIsMobile'
 import TiltCard from '../components/TiltCard'
 import ThemeToggle from '../components/ThemeToggle'
 import { useWANumber } from '../hooks/useWANumber'
@@ -10,7 +11,7 @@ import { useWANumber } from '../hooks/useWANumber'
 const FALLBACK_TC = 1415
 const ADDRESS    = 'Calle 1 1750, Benavídez, Buenos Aires'
 const GMAPS_EMBED = 'https://www.google.com/maps?q=Calle+1+1750,+Benavídez,+Buenos+Aires&output=embed&z=14'
-const GMAPS_LINK  = 'https://maps.google.com/?q=Calle+1+1750,+Benavídez,+Buenos+Aires'
+const GMAPS_LINK  = 'https://maps.app.goo.gl/VYKu4otJrNhqwNNXA'
 const INSTAGRAM   = 'https://www.instagram.com/ghcars.ok/'
 const TIKTOK      = 'https://www.tiktok.com/@ghcars.ok'
 
@@ -142,6 +143,7 @@ export default function HomePublica() {
   const navigate  = useNavigate()
   const { colors: c, resolved } = useTheme()
   const waNumber  = useWANumber()
+  const isMobile  = useIsMobile()
 
   const [tc,       setTc]       = useState(FALLBACK_TC)
   const [vehiculos, setVehiculos] = useState([])
@@ -239,7 +241,7 @@ export default function HomePublica() {
       <section style={{
         padding: 'clamp(40px,6vw,72px) clamp(20px,5vw,56px)',
         display: 'grid',
-        gridTemplateColumns: 'minmax(0,1.1fr) minmax(0,0.9fr)',
+        gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1.1fr) minmax(0,0.9fr)',
         gap: 'clamp(24px,4vw,56px)',
         alignItems: 'center',
         background: isDark

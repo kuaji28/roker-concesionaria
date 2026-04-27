@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
 import { useTheme } from '../context/ThemeContext'
 import { useWANumber } from '../hooks/useWANumber'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 export default function ContactoPublico() {
   const navigate = useNavigate()
   const { resolved } = useTheme()
   const waNumber = useWANumber()
+  const isMobile = useIsMobile()
   const [form, setForm] = useState({ nombre: '', telefono: '', email: '', mensaje: '' })
   const [sent, setSent] = useState(false)
   const [hoverNav, setHoverNav] = useState(null)
@@ -46,7 +48,7 @@ export default function ContactoPublico() {
           <img src="/logo.png" alt="GH Cars" style={{ height: 28, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
           <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>GH Cars</span>
         </div>
-        <nav style={{ display: 'flex', gap: 4 }}>
+        <nav style={{ display: isMobile ? 'none' : 'flex', gap: 4 }}>
           {[
             { label: 'Catálogo', to: '/p/catalogo' },
             { label: 'Vender mi auto', to: '/p/home' },
@@ -93,7 +95,7 @@ export default function ContactoPublico() {
         </div>
 
         {/* Two-col layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 40, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: isMobile ? 24 : 40, alignItems: 'start' }}>
           {/* Form */}
           <div style={{ background: 'var(--c-card)', borderRadius: 16, padding: '32px 36px', border: '1px solid var(--c-border)' }}>
             {sent ? (
@@ -158,7 +160,7 @@ export default function ContactoPublico() {
                 </div>
               ))}
               <a
-                href="https://maps.google.com/?q=Calle+1+1750,+Benavídez,+Buenos+Aires"
+                href="https://maps.app.goo.gl/VYKu4otJrNhqwNNXA"
                 target="_blank" rel="noopener noreferrer"
                 style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '10px 16px', borderRadius: 10, border: '1px solid var(--c-border)', background: 'var(--c-card-2)', color: 'var(--c-fg-2)', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}
               >

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useIsMobile } from '../hooks/useIsMobile'
 import TopBar from '../components/TopBar'
 import MetricCard from '../components/MetricCard'
 import Icon from '../components/Icon'
@@ -22,6 +23,7 @@ function QuickAction({ icon, title, desc, cta, to }) {
 
 export default function Dashboard({ onLogout }) {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const TC = useTc()
   const [stats, setStats] = useState(null)
   const [vehiculos, setVehiculos] = useState([])
@@ -76,13 +78,14 @@ export default function Dashboard({ onLogout }) {
         </div>
 
         {/* ── HERO ROW ─────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 16, marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '2fr 1fr 1fr', gap: 16, marginBottom: 28 }}>
           {/* Hero card — ventas del mes */}
           <div style={{
             background: 'linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%)',
             borderRadius: 16, padding: '24px 28px',
             display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
             minHeight: 160, position: 'relative', overflow: 'hidden',
+            gridColumn: isMobile ? '1 / -1' : 'auto',
           }}>
             <div style={{ position:'absolute',inset:0,background:'radial-gradient(circle at 80% 20%, rgba(255,255,255,.08), transparent 60%)',pointerEvents:'none'}}/>
             <div>
@@ -130,7 +133,7 @@ export default function Dashboard({ onLogout }) {
         </div>
 
         {/* ── ROW 2: Stock por estado + Necesitan atención ─────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 28 }}>
           <div className="card" style={{ padding: '20px 22px' }}>
             <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 16 }}>Stock por estado</div>
             {stats && (() => {
@@ -198,7 +201,7 @@ export default function Dashboard({ onLogout }) {
         </div>
 
         {/* ── ROW 3: Actividad reciente + Top vendedores ────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: 16, marginBottom: 28 }}>
           <div className="card" style={{ padding: '20px 22px' }}>
             <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 16 }}>Actividad reciente</div>
             {recentActivity.map((act, i) => (

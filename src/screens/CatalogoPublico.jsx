@@ -3,6 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useWANumber } from '../hooks/useWANumber'
 import { useTheme } from '../context/ThemeContext'
+import { useIsMobile } from '../hooks/useIsMobile'
 import ThemeToggle from '../components/ThemeToggle'
 import TiltCard from '../components/TiltCard'
 
@@ -225,6 +226,7 @@ function VehicleCard({ v, foto, tc, waNumber, c }) {
 export default function CatalogoPublico() {
   const { colors: c } = useTheme()
   const waNumber = useWANumber()
+  const isMobile = useIsMobile()
   const [vehiculos, setVehiculos] = useState([])
   const [portadas,  setPortadas]  = useState({})
   const [tc,        setTc]        = useState(FALLBACK_TC)
@@ -394,127 +396,128 @@ export default function CatalogoPublico() {
         )}
 
         {/* Search + filtros row */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-          {/* Search */}
-          <div style={{ flex: 2, position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c.fg3}
-                 strokeWidth="2" strokeLinecap="round"
-                 style={{ position: 'absolute', left: 10, pointerEvents: 'none' }}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              style={{
-                width: '100%', height: 38,
-                background: c.bg2, border: `1px solid ${c.border}`,
-                borderRadius: 10, color: c.fg, fontSize: 12,
-                paddingLeft: 32, paddingRight: 10, outline: 'none', boxSizing: 'border-box',
-              }}
-              placeholder="Buscar marca, modelo..."
-              value={buscar}
-              onChange={e => setBuscar(e.target.value)}
-            />
-          </div>
-
-          {/* Año desde */}
-          <div style={{ flex: 1, position: 'relative' }}>
-            <span style={{
-              position: 'absolute', top: -7, left: 9,
-              padding: '0 4px', fontSize: 10, color: c.fg2,
-              background: c.bg, borderRadius: 3, zIndex: 1, pointerEvents: 'none',
-            }}>Año desde</span>
-            <select
-              style={{
-                width: '100%', height: 38,
-                background: c.bg2, border: `1px solid ${c.border}`,
-                borderRadius: 10, color: c.fg, fontSize: 12,
-                padding: '0 10px', outline: 'none', appearance: 'none', cursor: 'pointer',
-              }}
-              value={anioMin}
-              onChange={e => setAnioMin(e.target.value)}
-            >
-              <option value="">Todos</option>
-              {[2025,2024,2023,2022,2021,2020,2018,2015,2012,2010].map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Precio máx */}
-          <div style={{ flex: 1, position: 'relative' }}>
-            <span style={{
-              position: 'absolute', top: -7, left: 9,
-              padding: '0 4px', fontSize: 10, color: c.fg2,
-              background: c.bg, borderRadius: 3, zIndex: 1, pointerEvents: 'none',
-            }}>Precio máx USD</span>
-            <input
-              style={{
-                width: '100%', height: 38,
-                background: c.bg2, border: `1px solid ${c.border}`,
-                borderRadius: 10, color: c.fg, fontSize: 12,
-                padding: '0 10px', outline: 'none', boxSizing: 'border-box',
-              }}
-              inputMode="numeric"
-              placeholder="—"
-              value={precioMax}
-              onChange={e => setPrecioMax(e.target.value.replace(/\D/g, ''))}
-            />
-          </div>
-
-          {/* Km máximos */}
-          <div style={{ flex: 1, position: 'relative' }}>
-            <span style={{
-              position: 'absolute', top: -7, left: 9,
-              padding: '0 4px', fontSize: 10, color: c.fg2,
-              background: c.bg, borderRadius: 3, zIndex: 1, pointerEvents: 'none',
-            }}>Km máximos</span>
-            <input
-              style={{
-                width: '100%', height: 38,
-                background: c.bg2, border: `1px solid ${c.border}`,
-                borderRadius: 10, color: c.fg, fontSize: 12,
-                padding: '0 10px', outline: 'none', boxSizing: 'border-box',
-              }}
-              inputMode="numeric"
-              placeholder="—"
-              value={kmMax}
-              onChange={e => setKmMax(e.target.value.replace(/\D/g, ''))}
-            />
-          </div>
-
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            style={{
-              height: 38, background: c.bg2, border: `1px solid ${c.border}`,
-              borderRadius: 10, color: c.fg, fontSize: 12,
-              padding: '0 10px', outline: 'none', cursor: 'pointer', flexShrink: 0,
-            }}
-          >
-            <option value="reciente">Más reciente</option>
-            <option value="precio_asc">Precio ↑</option>
-            <option value="precio_desc">Precio ↓</option>
-            <option value="anio_desc">Año ↓</option>
-            <option value="km_asc">Km ↑</option>
-          </select>
-
-          {hasFiltros && (
-            <button
-              style={{
-                width: 38, height: 38, flexShrink: 0,
-                display: 'grid', placeItems: 'center',
-                background: c.bg2, border: `1px solid ${c.border}`,
-                borderRadius: 10, color: c.accent, cursor: 'pointer',
-              }}
-              onClick={limpiarFiltros}
-              aria-label="Limpiar filtros"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
+          {/* Fila 1: Search + Sort */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c.fg3}
+                   strokeWidth="2" strokeLinecap="round"
+                   style={{ position: 'absolute', left: 10, pointerEvents: 'none' }}>
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
-            </button>
-          )}
+              <input
+                style={{
+                  width: '100%', height: 38,
+                  background: c.bg2, border: `1px solid ${c.border}`,
+                  borderRadius: 10, color: c.fg, fontSize: 12,
+                  paddingLeft: 32, paddingRight: 10, outline: 'none', boxSizing: 'border-box',
+                }}
+                placeholder="Buscar marca, modelo..."
+                value={buscar}
+                onChange={e => setBuscar(e.target.value)}
+              />
+            </div>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              style={{
+                height: 38, background: c.bg2, border: `1px solid ${c.border}`,
+                borderRadius: 10, color: c.fg, fontSize: 12,
+                padding: '0 10px', outline: 'none', cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              <option value="reciente">Más reciente</option>
+              <option value="precio_asc">Precio ↑</option>
+              <option value="precio_desc">Precio ↓</option>
+              <option value="anio_desc">Año ↓</option>
+              <option value="km_asc">Km ↑</option>
+            </select>
+            {hasFiltros && (
+              <button
+                style={{
+                  width: 38, height: 38, flexShrink: 0,
+                  display: 'grid', placeItems: 'center',
+                  background: c.bg2, border: `1px solid ${c.border}`,
+                  borderRadius: 10, color: c.accent, cursor: 'pointer',
+                }}
+                onClick={limpiarFiltros}
+              >✕</button>
+            )}
+          </div>
+
+          {/* Fila 2: Filtros numéricos */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {/* Año desde */}
+            <div style={{ position: 'relative' }}>
+              <span style={{
+                position: 'absolute', top: -7, left: 9,
+                padding: '0 4px', fontSize: 10, color: c.fg2,
+                background: c.bg, borderRadius: 3, zIndex: 1, pointerEvents: 'none',
+                whiteSpace: 'nowrap',
+              }}>Año desde</span>
+              <select
+                style={{
+                  width: '100%', height: 38,
+                  background: c.bg2, border: `1px solid ${c.border}`,
+                  borderRadius: 10, color: c.fg, fontSize: 12,
+                  padding: '0 10px', outline: 'none', appearance: 'none', cursor: 'pointer',
+                }}
+                value={anioMin}
+                onChange={e => setAnioMin(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {[2025,2024,2023,2022,2021,2020,2018,2015,2012,2010].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Precio máx */}
+            <div style={{ position: 'relative' }}>
+              <span style={{
+                position: 'absolute', top: -7, left: 9,
+                padding: '0 4px', fontSize: 10, color: c.fg2,
+                background: c.bg, borderRadius: 3, zIndex: 1, pointerEvents: 'none',
+                whiteSpace: 'nowrap',
+              }}>Precio máx</span>
+              <input
+                style={{
+                  width: '100%', height: 38,
+                  background: c.bg2, border: `1px solid ${c.border}`,
+                  borderRadius: 10, color: c.fg, fontSize: 12,
+                  padding: '0 10px', outline: 'none', boxSizing: 'border-box',
+                }}
+                inputMode="numeric"
+                placeholder="USD"
+                value={precioMax}
+                onChange={e => setPrecioMax(e.target.value.replace(/\D/g, ''))}
+              />
+            </div>
+
+            {/* Km máximos */}
+            <div style={{ position: 'relative' }}>
+              <span style={{
+                position: 'absolute', top: -7, left: 9,
+                padding: '0 4px', fontSize: 10, color: c.fg2,
+                background: c.bg, borderRadius: 3, zIndex: 1, pointerEvents: 'none',
+                whiteSpace: 'nowrap',
+              }}>Km máx</span>
+              <input
+                style={{
+                  width: '100%', height: 38,
+                  background: c.bg2, border: `1px solid ${c.border}`,
+                  borderRadius: 10, color: c.fg, fontSize: 12,
+                  padding: '0 10px', outline: 'none', boxSizing: 'border-box',
+                }}
+                inputMode="numeric"
+                placeholder="—"
+                value={kmMax}
+                onChange={e => setKmMax(e.target.value.replace(/\D/g, ''))}
+              />
+            </div>
+          </div>
         </div>
+
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ fontSize: 11, color: c.fg3, letterSpacing: '0.02em' }}>
@@ -627,7 +630,7 @@ export default function CatalogoPublico() {
 
           {/* Google Maps button */}
           <a
-            href="https://maps.google.com/?q=Calle+1+1750,+Benavidez,+Buenos+Aires,+Argentina"
+            href="https://maps.app.goo.gl/VYKu4otJrNhqwNNXA"
             target="_blank" rel="noreferrer"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
