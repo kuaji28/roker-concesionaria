@@ -48,7 +48,8 @@ export function generateChipsFromSpecs(specs = {}) {
 }
 
 function generarMsgWhatsApp(v, chips, tc) {
-  const precioARS = v.precio_base ? `$${((v.precio_base) * (tc || 1415)).toLocaleString('es-AR')}` : 'Consultar precio'
+  const precioPublico = v.precio_lista || v.precio_base
+  const precioARS = precioPublico ? `$${(precioPublico * (tc || 1415)).toLocaleString('es-AR')}` : 'Consultar precio'
   const equipTop = chips.slice(0, 5).join(' · ')
   return `🚗 *${v.marca} ${v.modelo} ${v.anio}*\n` +
     (v.version ? `_${v.version}_\n` : '') +
@@ -56,7 +57,7 @@ function generarMsgWhatsApp(v, chips, tc) {
     `🎨 Color ${v.color || 'a confirmar'}\n` +
     `⚙️ ${[v.transmision, v.combustible].filter(Boolean).join(' · ')}` + '\n' +
     (equipTop ? `\n✨ ${equipTop}\n` : '') +
-    `\n💵 USD ${v.precio_base?.toLocaleString('es-AR') || '—'} / ${precioARS}\n` +
+    `\n💵 USD ${precioPublico?.toLocaleString('es-AR') || '—'} / ${precioARS}\n` +
     `\n📲 ¿Querés coordinar una prueba de manejo?`
 }
 
@@ -495,13 +496,16 @@ export default function Detalle({ onLogout }) {
     setEditForm({
       marca: v.marca, modelo: v.modelo, anio: v.anio,
       version: v.version || '', color: v.color || '',
-      km_hs: v.km_hs || '', precio_base: v.precio_base || '',
+      km_hs: v.km_hs || '',
+      precio_lista: v.precio_lista || '',
+      precio_base: v.precio_base || '',
       costo_compra: v.costo_compra || '', estado: v.estado,
       combustible: v.combustible || '', transmision: v.transmision || '',
       patente: v.patente || '', notas_internas: v.notas_internas || '',
       link_ml: v.link_ml || '', link_drive: v.link_drive || '',
       ubicacion: v.ubicacion || 'showroom',
       estado_recon: v.estado_recon || 'ingresado',
+      edit_moneda: 'USD',
     })
     setEditing(true)
   }
@@ -511,12 +515,16 @@ export default function Detalle({ onLogout }) {
   async function saveEdit() {
     setSaving(true)
     try {
+      const moneda = editForm.edit_moneda || 'USD'
+      const divisor = moneda === 'ARS' && TC > 0 ? TC : 1
+      const { edit_moneda, ...rest } = editForm
       await updateVehiculo(v.id, {
-        ...editForm,
+        ...rest,
         anio: Number(editForm.anio),
         km_hs: editForm.km_hs ? Number(editForm.km_hs) : null,
-        precio_base: editForm.precio_base ? Number(editForm.precio_base) : null,
-        costo_compra: editForm.costo_compra ? Number(editForm.costo_compra) : null,
+        precio_lista: editForm.precio_lista ? Math.round(Number(editForm.precio_lista) / divisor) : null,
+        precio_base: editForm.precio_base ? Math.round(Number(editForm.precio_base) / divisor) : null,
+        costo_compra: editForm.costo_compra ? Math.round(Number(editForm.costo_compra) / divisor) : null,
       })
       setEditing(false)
       getVehiculo(id).then(setData)
@@ -1621,8 +1629,52 @@ export default function Detalle({ onLogout }) {
             <FormField label="Patente"><input className="input" value={editForm.patente} onChange={fe('patente')} /></FormField>
             <FormField label="Color"><input className="input" value={editForm.color} onChange={fe('color')} /></FormField>
             <FormField label="Km / Hs"><input className="input" type="number" value={editForm.km_hs} onChange={fe('km_hs')} /></FormField>
-            <FormField label="Precio USD"><input className="input" type="number" value={editForm.precio_base} onChange={fe('precio_base')} /></FormField>
-            <FormField label="Costo USD"><input className="input" type="number" value={editForm.costo_compra} onChange={fe('costo_compra')} /></FormField>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-fg-2)', marginBottom: 8 }}>Moneda de precios</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['USD', 'ARS'].map(m => (
+                  <button key={m} type="button"
+                    onClick={() => setEditForm(p => ({ ...p, edit_moneda: m }))}
+                    style={{
+                      padding: '6px 16px', borderRadius: 8, border: '1px solid var(--c-border)',
+                      background: editForm.edit_moneda === m ? 'var(--c-accent)' : 'transparent',
+                      color: editForm.edit_moneda === m ? '#fff' : 'var(--c-fg)', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                    }}>
+                    {m === 'USD' ? 'USD — Dólares' : 'ARS — Pesos'}
+                  </button>
+                ))}
+              </div>
+              {editForm.edit_moneda === 'ARS' && (
+                <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--c-fg-2)' }}>
+                  Los valores en ARS se convierten a USD automáticamente al guardar (TC: {TC?.toLocaleString('es-AR')})
+                </p>
+              )}
+            </div>
+            <FormField
+              label={`Precio público (${editForm.edit_moneda || 'USD'})`}
+              hint="Precio visible para clientes en catálogo">
+              <input className="input" type="number" value={editForm.precio_lista}
+                onChange={fe('precio_lista')}
+                placeholder={editForm.edit_moneda === 'ARS' ? '10000000' : '8000'} />
+              {editForm.edit_moneda === 'ARS' && editForm.precio_lista && TC > 0 && (
+                <small style={{ color: 'var(--c-fg-3)', fontSize: 11, marginTop: 3, display: 'block' }}>
+                  = USD {Math.round(Number(editForm.precio_lista) / TC).toLocaleString('es-AR')}
+                </small>
+              )}
+            </FormField>
+            <FormField
+              label={`Precio piso (${editForm.edit_moneda || 'USD'})`}
+              hint="Para vendedores / revendedores">
+              <input className="input" type="number" value={editForm.precio_base}
+                onChange={fe('precio_base')}
+                placeholder={editForm.edit_moneda === 'ARS' ? '9000000' : '7000'} />
+              {editForm.edit_moneda === 'ARS' && editForm.precio_base && TC > 0 && (
+                <small style={{ color: 'var(--c-fg-3)', fontSize: 11, marginTop: 3, display: 'block' }}>
+                  = USD {Math.round(Number(editForm.precio_base) / TC).toLocaleString('es-AR')}
+                </small>
+              )}
+            </FormField>
+            <FormField label={`Costo (${editForm.edit_moneda || 'USD'})`}><input className="input" type="number" value={editForm.costo_compra} onChange={fe('costo_compra')} /></FormField>
             <FormField label="Estado">
               <select className="input" value={editForm.estado} onChange={fe('estado')}>
                 {['disponible', 'señado', 'en_revision', 'en_preparacion', 'vendido'].map(e =>
