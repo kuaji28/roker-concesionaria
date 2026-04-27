@@ -5,6 +5,7 @@ import ThemeToggle from './ThemeToggle'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useUser } from '../hooks/useUser'
 import { useTheme } from '../context/ThemeContext'
+import { updateTC } from '../lib/supabase'
 
 const NAV = [
   { to: '/',          icon: 'home',      label: 'Dashboard',           tip: 'Resumen general: vehículos disponibles, ventas recientes y métricas clave' },
@@ -62,6 +63,28 @@ export default function Sidebar({ tc }) {
   const [open, setOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const user = useUser()
+  const [tcEditing, setTcEditing] = useState(false)
+  const [tcInput, setTcInput]     = useState('')
+  const [tcSaving, setTcSaving]   = useState(false)
+
+  function startTcEdit() {
+    setTcInput(String(tc || ''))
+    setTcEditing(true)
+  }
+
+  async function saveTcInline() {
+    const v = Number(tcInput)
+    if (!v || v < 100) return
+    setTcSaving(true)
+    try { await updateTC(v) } catch (e) { console.error('saveTcInline:', e) }
+    setTcSaving(false)
+    setTcEditing(false)
+  }
+
+  function onTcKeyDown(e) {
+    if (e.key === 'Enter') saveTcInline()
+    if (e.key === 'Escape') setTcEditing(false)
+  }
 
   function handleNavClick() {
     if (isMobile) setOpen(false)
@@ -154,10 +177,45 @@ export default function Sidebar({ tc }) {
           </nav>
           <div className="side-block" style={{ marginTop: 'auto' }}>
             <h6>Cotización USD</h6>
-            <div className="tc-row">
-              <strong>$ {(tc || 0).toLocaleString('es-AR')}</strong>
-              <small>ARS</small>
-            </div>
+            {tcEditing ? (
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input
+                  className="input"
+                  type="number"
+                  value={tcInput}
+                  onChange={e => setTcInput(e.target.value)}
+                  onKeyDown={onTcKeyDown}
+                  style={{ flex: 1, height: 32, padding: '0 8px', fontSize: 13 }}
+                  autoFocus
+                  min={1}
+                />
+                <button
+                  onClick={saveTcInline}
+                  disabled={tcSaving}
+                  style={{ height: 32, width: 32, borderRadius: 6, border: 'none', background: 'var(--c-accent)', color: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
+                >
+                  <Icon name="check" size={14} />
+                </button>
+                <button
+                  onClick={() => setTcEditing(false)}
+                  style={{ height: 32, width: 32, borderRadius: 6, border: '1px solid var(--c-border)', background: 'transparent', color: 'var(--c-fg-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            ) : (
+              <div
+                className="tc-row"
+                onClick={startTcEdit}
+                title="Clic para editar tipo de cambio"
+                style={{ cursor: 'pointer', borderRadius: 6, padding: '2px 4px', margin: '-2px -4px', transition: 'background .15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--c-card-2)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <strong>$ {(tc || 0).toLocaleString('es-AR')}</strong>
+                <small>ARS</small>
+              </div>
+            )}
           </div>
         </aside>
       </>
@@ -251,10 +309,45 @@ export default function Sidebar({ tc }) {
         {!collapsed && (
           <div className="side-block">
             <h6>Cotización USD</h6>
-            <div className="tc-row">
-              <strong>$ {(tc || 0).toLocaleString('es-AR')}</strong>
-              <small>ARS</small>
-            </div>
+            {tcEditing ? (
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input
+                  className="input"
+                  type="number"
+                  value={tcInput}
+                  onChange={e => setTcInput(e.target.value)}
+                  onKeyDown={onTcKeyDown}
+                  style={{ flex: 1, height: 30, padding: '0 8px', fontSize: 13 }}
+                  autoFocus
+                  min={1}
+                />
+                <button
+                  onClick={saveTcInline}
+                  disabled={tcSaving}
+                  style={{ height: 30, width: 30, borderRadius: 6, border: 'none', background: 'var(--c-accent)', color: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
+                >
+                  <Icon name="check" size={13} />
+                </button>
+                <button
+                  onClick={() => setTcEditing(false)}
+                  style={{ height: 30, width: 30, borderRadius: 6, border: '1px solid var(--c-border)', background: 'transparent', color: 'var(--c-fg-2)', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            ) : (
+              <div
+                className="tc-row"
+                onClick={startTcEdit}
+                title="Clic para editar tipo de cambio"
+                style={{ cursor: 'pointer', borderRadius: 6, padding: '2px 4px', margin: '-2px -4px', transition: 'background .15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--c-card-2)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <strong>$ {(tc || 0).toLocaleString('es-AR')}</strong>
+                <small>ARS</small>
+              </div>
+            )}
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', gap: 8 }}>

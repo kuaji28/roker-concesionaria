@@ -482,6 +482,9 @@ export async function updateTC(valor) {
     .from('config')
     .upsert({ clave: 'tipo_cambio', valor: JSON.stringify({ valor }) }, { onConflict: 'clave' })
   if (error) throw error
+  // Propagate to all useTc() instances immediately (no reload needed)
+  localStorage.setItem('gh_manual_tc', String(valor))
+  window.dispatchEvent(new CustomEvent('gh:tc-change', { detail: Number(valor) }))
 }
 
 // ── Cobranza ─────────────────────────────────────────────────────
