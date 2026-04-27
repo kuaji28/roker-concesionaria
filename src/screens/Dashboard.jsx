@@ -6,7 +6,7 @@ import MetricCard from '../components/MetricCard'
 import Icon from '../components/Icon'
 import AlertasWidget from '../components/AlertasWidget'
 import Sparkline from '../components/Sparkline'
-import { getStats, getVehiculos, getVentas } from '../lib/supabase'
+import { getStats, getVehiculos, getVentas, getRecentActivity, getTopVendedores } from '../lib/supabase'
 import { useTc } from '../hooks/useTc'
 
 function QuickAction({ icon, title, desc, cta, to }) {
@@ -31,23 +31,14 @@ export default function Dashboard({ onLogout }) {
   const [ventasDelta, setVentasDelta] = useState(null)
   const today = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
 
-  const [recentActivity] = useState([
-    { icon: '💚', text: 'Venta cerrada — Ford Ranger 2022', time: 'hace 2h', user: 'Marcos', color: '#22c55e' },
-    { icon: '🚗', text: 'Ingreso — Toyota Hilux 2021', time: 'hace 4h', user: 'Admin', color: '#3b82f6' },
-    { icon: '👤', text: 'Nuevo lead — Juan García', time: 'hace 6h', user: 'Juliana', color: '#f59e0b' },
-    { icon: '💰', text: 'Seña recibida — VW Amarok', time: 'ayer 15:30', user: 'Marcos', color: '#f59e0b' },
-    { icon: '🔧', text: 'Service completado — Peugeot 208', time: 'ayer 10:00', user: 'Admin', color: '#6b7280' },
-  ])
-
-  const [topVendedores] = useState([
-    { nombre: 'Marcos', ventas: 8, ingresos: 142000, max: 8 },
-    { nombre: 'Juliana', ventas: 5, ingresos: 89500, max: 8 },
-    { nombre: 'Diego', ventas: 3, ingresos: 51000, max: 8 },
-  ])
+  const [recentActivity, setRecentActivity] = useState([])
+  const [topVendedores, setTopVendedores] = useState([])
 
   useEffect(() => {
     getStats().then(setStats)
     getVehiculos().then(data => setVehiculos(data || []))
+    getRecentActivity().then(data => setRecentActivity(data || [])).catch(() => {})
+    getTopVendedores().then(data => setTopVendedores(data || [])).catch(() => {})
     getVentas().then(ventas => {
       const now = new Date()
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
@@ -204,6 +195,9 @@ export default function Dashboard({ onLogout }) {
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: 16, marginBottom: 28 }}>
           <div className="card" style={{ padding: '20px 22px' }}>
             <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 16 }}>Actividad reciente</div>
+            {recentActivity.length === 0 && (
+              <p style={{ fontSize: 13, color: 'var(--c-fg-3)', textAlign: 'center', padding: '20px 0' }}>Sin actividad reciente</p>
+            )}
             {recentActivity.map((act, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14, position: 'relative' }}>
                 {i < recentActivity.length - 1 && (
@@ -222,6 +216,9 @@ export default function Dashboard({ onLogout }) {
 
           <div className="card" style={{ padding: '20px 22px' }}>
             <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 16 }}>Top vendedores</div>
+            {topVendedores.length === 0 && (
+              <p style={{ fontSize: 13, color: 'var(--c-fg-3)', textAlign: 'center', padding: '20px 0' }}>Sin ventas este mes</p>
+            )}
             {topVendedores.map((v, i) => (
               <div key={v.nombre} style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>

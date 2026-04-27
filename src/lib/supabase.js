@@ -256,6 +256,209 @@ export async function getReportes() {
   return { ventasMes, ingresoUSD, stockUSD, ingresosMes, leadsNuevos, bars }
 }
 
+// ── Analytics ────────────────────────────────────────────────────
+
+function _timeAgo(dateStr) {
+  if (!dateStr) return ''
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 60) return m <= 1 ? 'hace 1 min' : `hace ${m} min`
+  const h = Math.floor(m / 60)
+  if (h < 24) return h === 1 ? 'hace 1h' : `hace ${h}h`
+  const d = Math.floor(h / 24)
+  return d === 1 ? 'ayer' : `hace ${d} días`
+}
+
+export async function getRecentActivity(limit = 8) {
+  const [{ data: ventas }, { data: prospectos }, { data: autos }] = await Promise.all([
+    supabase.from('con_ventas')
+      .select('id, created_at, fecha_venta, vehiculos(marca, modelo, anio), vendedores(nombre)')
+      .order('created_at', { ascending: false }).limit(10),
+    supabase.from('prospectos')
+      .select('id, nombre, created_at, vendedores(nombre)')
+      .order('created_at', { ascending: false }).limit(10),
+    supabase.from('vehiculos')
+      .select('id, marca, modelo, anio, created_at')
+      .order('created_at', { ascending: false }).limit(10),
+  ])
+
+  const items = []
+  for (const v of ventas || []) {
+    const auto = v.vehiculos
+    items.push({
+      icon: '💚', color: '#22c55e',
+      text: `Venta cerrada — ${auto ? `${auto.marca} ${auto.modelo} ${auto.anio}` : 'Vehículo'}`,
+      time: _timeAgo(v.created_at || v.fecha_venta),
+      user: v.vendedores?.nombre || 'Admin',
+      date: v.created_at || v.fecha_venta,
+    })
+  }
+  for (const p of prospectos || []) {
+    items.push({
+      icon: '👤', color: '#f59e0b',
+      text: `Nuevo lead — ${p.nombre || 'Sin nombre'}`,
+      time: _timeAgo(p.created_at),
+      user: p.vendedores?.nombre || 'Admin',
+      date: p.created_at,
+    })
+  }
+  for (const a of autos || []) {
+    items.push({
+      icon: '🚗', color: '#3b82f6',
+      text: `Ingreso — ${a.marca} ${a.modelo} ${a.anio}`,
+      time: _timeAgo(a.created_at),
+      user: 'Admin',
+      date: a.created_at,
+    })
+  }
+
+  return items.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit)
+}
+
+export async function getTopVendedores() {
+  const now = new Date()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+
+  const { data: ventas } = await supabase
+    .from('con_ventas')
+    .select('vendedor_id, precio_final, vendedores(nombre)')
+    .gte('fecha_venta', firstDay)
+
+  if (!ventas?.length) return []
+
+  const map = {}
+  for (const v of ventas) {
+    const id = v.vendedor_id
+    if (!id) continue
+    if (!map[id]) map[id] = { nombre: v.vendedores?.nombre || 'Vendedor', ventas: 0, ingresos: 0 }
+    map[id].ventas++
+    map[id].ingresos += Number(v.precio_final) || 0
+  }
+
+  const list = Object.values(map).sort((a, b) => b.ventas - a.ventas)
+  const maxV = list[0]?.ventas || 1
+  return list.map(v => ({ ...v, max: maxV }))
+}
+
+export async function getAnalyticsData() {
+  const now = new Date()
+  const d90 = new Date(now - 90 * 86400000).toISOString()
+  const d30 = new Date(now - 30 * 86400000).toISOString()
+  const d7  = new Date(now - 7 * 86400000).toISOString()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
+  let vw = [], va = []
+  try {
+    const [{ data: views }, { data: actions }] = await Promise.all([
+      supabase.from('vehiculo_views').select('vehiculo_id, created_at, user_agent').gte('created_at', d90),
+      supabase.from('vehiculo_actions').select('vehiculo_id, action, created_at').gte('created_at', d90),
+    ])
+    vw = views || []
+    va = actions || []
+  } catch (_) { /* tablas pendientes de migración */ }
+
+  const [{ data: prospectos30 }, { data: ventas30 }] = await Promise.all([
+    supabase.from('prospectos').select('id').gte('created_at', firstDay),
+    supabase.from('con_ventas').select('vehiculo_id').gte('fecha_venta', firstDay.split('T')[0]),
+  ])
+
+  // Área — últimos 30 días
+  const area = { visits: [], contacts: [] }
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const ds = d.toISOString().split('T')[0]
+    area.visits.push(vw.filter(v => v.created_at.startsWith(ds)).length)
+    area.contacts.push(va.filter(v => v.created_at.startsWith(ds) && ['contactar', 'whatsapp'].includes(v.action)).length)
+  }
+
+  // Top vehículos por período
+  function buildTop(since) {
+    const vwP = vw.filter(v => v.created_at >= since)
+    const vaP = va.filter(v => v.created_at >= since)
+    const vMap = {}, aMap = {}
+    for (const v of vwP) { if (v.vehiculo_id) vMap[v.vehiculo_id] = (vMap[v.vehiculo_id] || 0) + 1 }
+    for (const a of vaP) {
+      if (!a.vehiculo_id) continue
+      if (!aMap[a.vehiculo_id]) aMap[a.vehiculo_id] = { contacto: 0, wa: 0 }
+      if (['contactar', 'consultar'].includes(a.action)) aMap[a.vehiculo_id].contacto++
+      if (a.action === 'whatsapp') aMap[a.vehiculo_id].wa++
+    }
+    return Object.entries(vMap).sort(([, a], [, b]) => b - a).slice(0, 5)
+      .map(([vid, visitas]) => ({
+        vehiculo_id: vid, visitas,
+        contacto: aMap[vid]?.contacto || 0,
+        wa: aMap[vid]?.wa || 0,
+        fav: 0,
+        ctr: visitas > 0 ? Math.round(((aMap[vid]?.contacto || 0) / visitas) * 100) : 0,
+      }))
+  }
+
+  const top7 = buildTop(d7), top30 = buildTop(d30), top90 = buildTop(d90)
+  const allIds = [...new Set([...top7, ...top30, ...top90].map(v => v.vehiculo_id))]
+  const nameMap = {}
+  if (allIds.length > 0) {
+    const { data: vehNames } = await supabase.from('vehiculos').select('id, marca, modelo, anio').in('id', allIds)
+    for (const v of vehNames || []) nameMap[v.id] = `${v.marca} ${v.modelo} ${v.anio}`
+  }
+  const withNames = list => list.map(v => ({ ...v, nombre: nameMap[v.vehiculo_id] || `Vehículo #${v.vehiculo_id}` }))
+
+  // Clicks por acción
+  const ACTION_META = {
+    whatsapp:     { ico: '📱', label: 'WhatsApp directo' },
+    llamar:       { ico: '📞', label: 'Llamar' },
+    contactar:    { ico: '💬', label: 'Contactar' },
+    compartir:    { ico: '🔗', label: 'Compartir' },
+    favorito:     { ico: '❤️', label: 'Favoritos' },
+    financiacion: { ico: '💳', label: 'Ver financiación' },
+    parte_pago:   { ico: '🔄', label: 'Parte de pago' },
+  }
+  const clickMap = {}
+  for (const a of va) { if (a.action) clickMap[a.action] = (clickMap[a.action] || 0) + 1 }
+  const clicks = Object.entries(clickMap).sort(([, a], [, b]) => b - a)
+    .map(([action, count]) => ({
+      ico: ACTION_META[action]?.ico || '🖱️',
+      label: ACTION_META[action]?.label || action,
+      clicks: count, delta: 0,
+    }))
+
+  // Dispositivos
+  let mobile = 0, desktop = 0, tablet = 0
+  for (const v of vw) {
+    const ua = (v.user_agent || '').toLowerCase()
+    if (/ipad|tablet/i.test(ua)) tablet++
+    else if (/mobile|android|iphone/i.test(ua)) mobile++
+    else desktop++
+  }
+  const totalSessions = vw.length
+  const dTotal = totalSessions || 1
+  const devices = [
+    { label: 'Mobile',  pct: Math.round(mobile / dTotal * 100),  count: mobile,  color: 'var(--c-accent)' },
+    { label: 'Desktop', pct: Math.round(desktop / dTotal * 100), count: desktop, color: 'var(--c-info)' },
+    { label: 'Tablet',  pct: Math.round(tablet / dTotal * 100),  count: tablet,  color: 'var(--c-fg-3)' },
+  ]
+
+  // Embudo (últimos 30 días)
+  const vw30 = vw.filter(v => v.created_at >= d30)
+  const va30 = va.filter(v => v.created_at >= d30)
+  const embudo = {
+    visitas:     vw30.length,
+    vieron:      new Set(vw30.map(v => v.vehiculo_id).filter(Boolean)).size,
+    contactaron: va30.filter(a => ['contactar', 'whatsapp', 'llamar'].includes(a.action)).length,
+    leads:       (prospectos30 || []).length,
+    ventas:      (ventas30 || []).length,
+  }
+
+  return {
+    area,
+    topByPeriod: { '7d': withNames(top7), '30d': withNames(top30), '90d': withNames(top90) },
+    clicks,
+    devices,
+    totalSessions,
+    embudo,
+  }
+}
+
 // ── Config ───────────────────────────────────────────────────────
 export async function updatePin(newPin) {
   const { error } = await supabase

@@ -3,7 +3,7 @@ import TopBar from '../components/TopBar'
 import MetricCard from '../components/MetricCard'
 import Icon from '../components/Icon'
 import Sparkline from '../components/Sparkline'
-import { getReportes } from '../lib/supabase'
+import { getReportes, getAnalyticsData } from '../lib/supabase'
 
 function AreaChart({ series, w = '100%', h = 180 }) {
   // series = [{label, color, data: number[]}]
@@ -70,57 +70,6 @@ function AreaChart({ series, w = '100%', h = 180 }) {
   )
 }
 
-const AREA_DATA = (() => {
-  const n = 30
-  const visits = []
-  const contacts = []
-  for (let i = 0; i < n; i++) {
-    const base = 350 + Math.sin(i * 0.4) * 80 + (i / n) * 150
-    visits.push(Math.round(base + Math.random() * 60))
-    contacts.push(Math.round(base * 0.035 + Math.random() * 4))
-  }
-  return { visits, contacts }
-})()
-
-const TOP_VEHICLES = {
-  '7d': [
-    { nombre: 'Ford Ranger XLS 2022', visitas: 142, contacto: 18, wa: 14, fav: 9, ctr: 22 },
-    { nombre: 'Toyota Hilux 2021 4x4', visitas: 98, contacto: 11, wa: 9, fav: 6, ctr: 20 },
-    { nombre: 'VW Amarok V6 2023', visitas: 87, contacto: 14, wa: 11, fav: 8, ctr: 29 },
-    { nombre: 'Renault Duster Oroch 2022', visitas: 74, contacto: 8, wa: 6, fav: 4, ctr: 19 },
-    { nombre: 'Peugeot 2008 2021', visitas: 61, contacto: 7, wa: 5, fav: 5, ctr: 20 },
-  ],
-  '30d': [
-    { nombre: 'Ford Ranger XLS 2022', visitas: 612, contacto: 78, wa: 61, fav: 38, ctr: 22 },
-    { nombre: 'Toyota Hilux 2021 4x4', visitas: 441, contacto: 52, wa: 44, fav: 27, ctr: 22 },
-    { nombre: 'VW Amarok V6 2023', visitas: 389, contacto: 67, wa: 49, fav: 31, ctr: 30 },
-    { nombre: 'Renault Duster Oroch 2022', visitas: 312, contacto: 34, wa: 28, fav: 19, ctr: 20 },
-    { nombre: 'Peugeot 2008 2021', visitas: 267, contacto: 31, wa: 22, fav: 21, ctr: 20 },
-  ],
-  '90d': [
-    { nombre: 'Ford Ranger XLS 2022', visitas: 1840, contacto: 234, wa: 188, fav: 112, ctr: 23 },
-    { nombre: 'Toyota Hilux 2021 4x4', visitas: 1320, contacto: 156, wa: 130, fav: 84, ctr: 22 },
-    { nombre: 'VW Amarok V6 2023', visitas: 1167, contacto: 201, wa: 147, fav: 93, ctr: 30 },
-    { nombre: 'Renault Duster Oroch 2022', visitas: 936, contacto: 102, wa: 84, fav: 57, ctr: 20 },
-    { nombre: 'Peugeot 2008 2021', visitas: 801, contacto: 93, wa: 66, fav: 63, ctr: 20 },
-  ],
-}
-
-const CLICKS_DATA = [
-  { ico: '📱', label: 'WhatsApp directo', clicks: 248, delta: 32 },
-  { ico: '📞', label: 'Llamar', clicks: 184, delta: 8 },
-  { ico: '💬', label: 'Contactar', clicks: 156, delta: 24 },
-  { ico: '🔗', label: 'Compartir', clicks: 89, delta: 15 },
-  { ico: '❤️', label: 'Favoritos', clicks: 67, delta: 41 },
-  { ico: '💳', label: 'Ver financiación', clicks: 42, delta: -4 },
-  { ico: '🔄', label: 'Parte de pago', clicks: 28, delta: 12 },
-]
-
-const DEVICE_DATA = [
-  { label: 'Mobile', pct: 68, count: 843, color: 'var(--c-accent)' },
-  { label: 'Desktop', pct: 26, count: 322, color: 'var(--c-info)' },
-  { label: 'Tablet', pct: 6, count: 75, color: 'var(--c-fg-3)' },
-]
 
 const MESES_ABREV = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
@@ -222,12 +171,20 @@ function exportCSV(bars) {
 }
 
 export default function Reportes({ onLogout }) {
-  const [data, setData]       = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [topTab, setTopTab]   = useState('30d')
+  const [data, setData]           = useState(null)
+  const [analytics, setAnalytics] = useState(null)
+  const [loading, setLoading]     = useState(true)
+  const [topTab, setTopTab]       = useState('30d')
 
   useEffect(() => {
-    getReportes().then(d => { setData(d ?? null); setLoading(false) }).catch(() => setLoading(false))
+    Promise.all([
+      getReportes().catch(() => null),
+      getAnalyticsData().catch(() => null),
+    ]).then(([d, a]) => {
+      setData(d ?? null)
+      setAnalytics(a ?? null)
+      setLoading(false)
+    })
   }, [])
 
   return (
@@ -250,10 +207,10 @@ export default function Reportes({ onLogout }) {
             {/* ── ANALÍTICAS DEL CATÁLOGO — 4 KPI cards ─────────────── */}
             <h2 className="section-title">Analíticas del catálogo</h2>
             <div className="metric-grid">
-              <MetricCard label="Visitas al catálogo" icon="chart" value="12.480"  tone="b" sub="últimos 30 días" />
-              <MetricCard label="Click «Contactar»"   icon="users" value="312"     tone="g" sub="CTR 2.5 %" />
-              <MetricCard label="Enviados a WhatsApp" icon="message" value="248"     tone="g" sub="79% de los contactos" />
-              <MetricCard label="Tiempo medio"        icon="clock" value="3:42"    tone="o" sub="min por visita" />
+              <MetricCard label="Visitas al catálogo" icon="chart"   value={analytics?.embudo?.visitas ?? '—'}     tone="b" sub="últimos 30 días" />
+              <MetricCard label="Click «Contactar»"   icon="users"   value={analytics?.embudo?.contactaron ?? '—'} tone="g" sub="último mes" />
+              <MetricCard label="Enviados a WhatsApp" icon="message" value={analytics?.clicks?.find(c => c.label === 'WhatsApp directo')?.clicks ?? '—'} tone="g" sub="último mes" />
+              <MetricCard label="Leads nuevos"        icon="users"   value={analytics?.embudo?.leads ?? data.leadsNuevos ?? '—'} tone="o" sub="este mes" />
             </div>
 
             {/* ── RESUMEN DE VENTAS ─────────────────────────────────── */}
@@ -277,7 +234,7 @@ export default function Reportes({ onLogout }) {
                   <div style={{ display: 'flex', gap: 20 }}>
                     <div>
                       <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-fg)' }}>
-                        {AREA_DATA.visits.reduce((a, b) => a + b, 0).toLocaleString('es-AR')}
+                        {(analytics?.area?.visits ?? []).reduce((a, b) => a + b, 0).toLocaleString('es-AR')}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--c-fg-3)', marginTop: 1 }}>
                         <span style={{ width: 10, height: 2, borderRadius: 1, background: 'var(--c-accent)', display: 'inline-block' }} />
@@ -286,7 +243,7 @@ export default function Reportes({ onLogout }) {
                     </div>
                     <div>
                       <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-fg)' }}>
-                        {AREA_DATA.contacts.reduce((a, b) => a + b, 0)}
+                        {(analytics?.area?.contacts ?? []).reduce((a, b) => a + b, 0)}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--c-fg-3)', marginTop: 1 }}>
                         <span style={{ width: 10, height: 2, borderRadius: 1, background: 'var(--c-success)', display: 'inline-block' }} />
@@ -298,8 +255,8 @@ export default function Reportes({ onLogout }) {
               </div>
               <AreaChart
                 series={[
-                  { label: 'Visitas', color: 'var(--c-accent)', data: AREA_DATA.visits },
-                  { label: 'Contactos', color: 'var(--c-success)', data: AREA_DATA.contacts },
+                  { label: 'Visitas', color: 'var(--c-accent)', data: analytics?.area?.visits ?? [] },
+                  { label: 'Contactos', color: 'var(--c-success)', data: analytics?.area?.contacts ?? [] },
                 ]}
                 h={160}
               />
@@ -355,13 +312,25 @@ export default function Reportes({ onLogout }) {
             {/* ── EMBUDO DE CONVERSIÓN ─────────────────────────────── */}
             <h2 className="section-title" style={{ marginTop: 32 }}>Embudo de conversión</h2>
             <div className="card" style={{ padding: '20px 24px' }}>
-              {[
-                { label: 'Visitas al catálogo', count: 1240, pct: 100, drop: null },
-                { label: 'Vieron un vehículo', count: 612, pct: 49, drop: 51 },
-                { label: 'Click en contactar', count: 187, pct: 31, drop: 69 },
-                { label: 'Lead calificado', count: 89, pct: 48, drop: 52 },
-                { label: 'Cerró venta', count: data.ventasMes ?? 6, pct: data.ventasMes ? Math.round((data.ventasMes/89)*100) : 7, drop: 93 },
-              ].map((step, i, arr) => (
+              {(() => {
+                const e = analytics?.embudo ?? {}
+                const v1 = e.visitas || 0
+                const v2 = e.vieron || 0
+                const v3 = e.contactaron || 0
+                const v4 = e.leads || 0
+                const v5 = e.ventas || data.ventasMes || 0
+                const p2 = v1 > 0 ? Math.min(100, Math.round(v2/v1*100)) : 0
+                const p3 = v2 > 0 ? Math.min(100, Math.round(v3/v2*100)) : 0
+                const p4 = v3 > 0 ? Math.min(100, Math.round(v4/v3*100)) : 0
+                const p5 = v4 > 0 ? Math.min(100, Math.round(v5/v4*100)) : 0
+                return [
+                  { label: 'Visitas al catálogo', count: v1, pct: 100, drop: null },
+                  { label: 'Vieron un vehículo', count: v2, pct: p2, drop: p2 < 100 ? 100-p2 : null },
+                  { label: 'Click en contactar', count: v3, pct: p3, drop: p3 < 100 ? 100-p3 : null },
+                  { label: 'Lead calificado',    count: v4, pct: p4, drop: p4 < 100 ? 100-p4 : null },
+                  { label: 'Cerró venta',        count: v5, pct: p5, drop: null },
+                ]
+              })().map((step, i, arr) => (
                 <div key={step.label} style={{ marginBottom: i < arr.length - 1 ? 6 : 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--c-card-2)', border: '1px solid var(--c-border)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-fg-2)', flexShrink: 0 }}>{i+1}</div>
@@ -377,9 +346,11 @@ export default function Reportes({ onLogout }) {
                   )}
                 </div>
               ))}
-              <div style={{ marginTop: 14, padding: '10px 0 0', borderTop: '1px solid var(--c-border)', fontSize: 11, color: 'var(--c-fg-3)' }}>
-                Datos simulados — conectar analytics real para métricas en vivo
-              </div>
+              {!analytics?.embudo?.visitas && (
+                <div style={{ marginTop: 14, padding: '10px 0 0', borderTop: '1px solid var(--c-border)', fontSize: 11, color: 'var(--c-fg-3)' }}>
+                  Sin datos aún — los eventos se registran cuando los visitantes navegan el catálogo público.
+                </div>
+              )}
             </div>
 
             {/* ── VEHÍCULOS MÁS VISTOS ─────────────────────────────── */}
@@ -411,24 +382,29 @@ export default function Reportes({ onLogout }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {TOP_VEHICLES[topTab].map((v, i) => (
-                    <tr key={v.nombre} style={{ borderBottom: '1px solid var(--c-border)', opacity: i === 0 ? 1 : 0.85 }}>
-                      <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: i === 0 ? 'var(--c-warning)' : 'var(--c-fg-3)', fontSize: 12 }}>{i+1}</td>
-                      <td style={{ padding: '10px 14px', fontWeight: 600 }}>{v.nombre}</td>
-                      <td style={{ padding: '10px 14px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 60, height: 4, borderRadius: 999, background: 'var(--c-card-2)', overflow: 'hidden', flexShrink: 0 }}>
-                            <div style={{ height: '100%', width: `${(v.visitas / TOP_VEHICLES[topTab][0].visitas) * 100}%`, background: 'var(--c-accent)' }} />
+                  {(analytics?.topByPeriod?.[topTab] ?? []).length === 0 ? (
+                    <tr><td colSpan={7} style={{ padding: '20px 14px', textAlign: 'center', color: 'var(--c-fg-3)', fontSize: 13 }}>Sin datos de visitas para este período</td></tr>
+                  ) : (analytics?.topByPeriod?.[topTab] ?? []).map((v, i) => {
+                    const maxVisitas = analytics.topByPeriod[topTab][0]?.visitas || 1
+                    return (
+                      <tr key={v.vehiculo_id} style={{ borderBottom: '1px solid var(--c-border)', opacity: i === 0 ? 1 : 0.85 }}>
+                        <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: i === 0 ? 'var(--c-warning)' : 'var(--c-fg-3)', fontSize: 12 }}>{i+1}</td>
+                        <td style={{ padding: '10px 14px', fontWeight: 600 }}>{v.nombre}</td>
+                        <td style={{ padding: '10px 14px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ width: 60, height: 4, borderRadius: 999, background: 'var(--c-card-2)', overflow: 'hidden', flexShrink: 0 }}>
+                              <div style={{ height: '100%', width: `${(v.visitas / maxVisitas) * 100}%`, background: 'var(--c-accent)' }} />
+                            </div>
+                            <span>{v.visitas}</span>
                           </div>
-                          <span>{v.visitas}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '10px 14px', color: 'var(--c-fg-2)' }}>{v.contacto}</td>
-                      <td style={{ padding: '10px 14px', color: 'var(--c-fg-2)' }}>{v.wa}</td>
-                      <td style={{ padding: '10px 14px', color: 'var(--c-fg-2)' }}>{v.fav}</td>
-                      <td style={{ padding: '10px 14px', fontWeight: 700, color: v.ctr > 15 ? 'var(--c-success)' : 'var(--c-fg-2)' }}>{v.ctr}%</td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td style={{ padding: '10px 14px', color: 'var(--c-fg-2)' }}>{v.contacto}</td>
+                        <td style={{ padding: '10px 14px', color: 'var(--c-fg-2)' }}>{v.wa}</td>
+                        <td style={{ padding: '10px 14px', color: 'var(--c-fg-2)' }}>{v.fav}</td>
+                        <td style={{ padding: '10px 14px', fontWeight: 700, color: v.ctr > 15 ? 'var(--c-success)' : 'var(--c-fg-2)' }}>{v.ctr}%</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -465,19 +441,21 @@ export default function Reportes({ onLogout }) {
                   </button>
                 </div>
                 <div className="card" style={{ padding: '8px 0' }}>
-                  {CLICKS_DATA.map(row => (
-                    <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px' }}>
-                      <span style={{ fontSize: 16, flexShrink: 0 }}>{row.ico}</span>
-                      <span style={{ fontSize: 13, color: 'var(--c-fg-2)', flex: 1 }}>{row.label}</span>
-                      <div style={{ width: 80, height: 4, borderRadius: 999, background: 'var(--c-card-2)', overflow: 'hidden', flexShrink: 0 }}>
-                        <div style={{ height: '100%', width: `${(row.clicks / CLICKS_DATA[0].clicks) * 100}%`, background: 'var(--c-info)' }} />
+                  {!(analytics?.clicks?.length) ? (
+                    <p style={{ padding: '20px', textAlign: 'center', color: 'var(--c-fg-3)', fontSize: 13 }}>Sin datos de clicks aún</p>
+                  ) : (analytics?.clicks ?? []).map(row => {
+                    const maxClicks = analytics.clicks[0]?.clicks || 1
+                    return (
+                      <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px' }}>
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>{row.ico}</span>
+                        <span style={{ fontSize: 13, color: 'var(--c-fg-2)', flex: 1 }}>{row.label}</span>
+                        <div style={{ width: 80, height: 4, borderRadius: 999, background: 'var(--c-card-2)', overflow: 'hidden', flexShrink: 0 }}>
+                          <div style={{ height: '100%', width: `${(row.clicks / maxClicks) * 100}%`, background: 'var(--c-info)' }} />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 700, width: 40, textAlign: 'right' }}>{row.clicks}</span>
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 700, width: 40, textAlign: 'right' }}>{row.clicks}</span>
-                      <span style={{ fontSize: 11, color: row.delta >= 0 ? 'var(--c-success)' : 'var(--c-danger)', width: 48, textAlign: 'right', fontWeight: 600 }}>
-                        {row.delta >= 0 ? '+' : ''}{row.delta}%
-                      </span>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
@@ -487,50 +465,55 @@ export default function Reportes({ onLogout }) {
                 <div className="card" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
                   {/* SVG Donut */}
                   {(() => {
+                    const deviceData = analytics?.devices ?? []
+                    if (!deviceData.length || !analytics?.totalSessions) {
+                      return <p style={{ fontSize: 13, color: 'var(--c-fg-3)', textAlign: 'center' }}>Sin datos aún</p>
+                    }
                     const R = 52, stroke = 14, cx = 70, cy = 70
                     const circ = 2 * Math.PI * R
-                    const total = DEVICE_DATA.reduce((s, d) => s + d.pct, 0)
+                    const total = deviceData.reduce((s, d) => s + d.pct, 0) || 1
                     let offset = 0
                     return (
-                      <div style={{ position: 'relative', width: 140, height: 140 }}>
-                        <svg width="140" height="140" viewBox="0 0 140 140">
-                          {DEVICE_DATA.map(d => {
-                            const dash = (d.pct / total) * circ
-                            const gap = circ - dash
-                            const el = (
-                              <circle
-                                key={d.label}
-                                cx={cx} cy={cy} r={R}
-                                fill="none"
-                                stroke={d.color}
-                                strokeWidth={stroke}
-                                strokeDasharray={`${dash - 2} ${gap + 2}`}
-                                strokeDashoffset={-(offset * circ / total) + circ / 4}
-                                strokeLinecap="round"
-                              />
-                            )
-                            offset += d.pct
-                            return el
-                          })}
-                        </svg>
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>1.240</span>
-                          <span style={{ fontSize: 10, color: 'var(--c-fg-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em' }}>sesiones</span>
+                      <>
+                        <div style={{ position: 'relative', width: 140, height: 140 }}>
+                          <svg width="140" height="140" viewBox="0 0 140 140">
+                            {deviceData.map(d => {
+                              const dash = (d.pct / total) * circ
+                              const gap = circ - dash
+                              const el = (
+                                <circle
+                                  key={d.label}
+                                  cx={cx} cy={cy} r={R}
+                                  fill="none"
+                                  stroke={d.color}
+                                  strokeWidth={stroke}
+                                  strokeDasharray={`${dash - 2} ${gap + 2}`}
+                                  strokeDashoffset={-(offset * circ / total) + circ / 4}
+                                  strokeLinecap="round"
+                                />
+                              )
+                              offset += d.pct
+                              return el
+                            })}
+                          </svg>
+                          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>{(analytics.totalSessions).toLocaleString('es-AR')}</span>
+                            <span style={{ fontSize: 10, color: 'var(--c-fg-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em' }}>sesiones</span>
+                          </div>
                         </div>
-                      </div>
+                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {deviceData.map(d => (
+                            <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{ width: 10, height: 10, borderRadius: 999, background: d.color, flexShrink: 0 }} />
+                              <span style={{ fontSize: 13, color: 'var(--c-fg-2)', flex: 1 }}>{d.label}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700 }}>{d.pct}%</span>
+                              <span style={{ fontSize: 11, color: 'var(--c-fg-3)', width: 60, textAlign: 'right' }}>{d.count.toLocaleString('es-AR')} ses.</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     )
                   })()}
-                  {/* Legend */}
-                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {DEVICE_DATA.map(d => (
-                      <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: 999, background: d.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 13, color: 'var(--c-fg-2)', flex: 1 }}>{d.label}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700 }}>{d.pct}%</span>
-                        <span style={{ fontSize: 11, color: 'var(--c-fg-3)', width: 60, textAlign: 'right' }}>{d.count.toLocaleString('es-AR')} ses.</span>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>
