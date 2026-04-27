@@ -367,6 +367,33 @@ export default function DetallePublico() {
               </div>
             )}
 
+            {/* ¿Qué incluye? */}
+            <div style={{ padding: '12px 16px 0' }}>
+              <div style={{ background: 'var(--c-card)', borderRadius: 12,
+                            padding: '14px 16px', border: '1px solid var(--c-border)' }}>
+                <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 12,
+                              color: 'var(--c-fg-2)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                  ¿Qué incluye?
+                </div>
+                {[
+                  'Documentación al día y transferencia',
+                  'Revisión mecánica previa a la entrega',
+                  'Asesoramiento sin compromiso',
+                ].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10,
+                                        marginBottom: i < 2 ? 10 : 0 }}>
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                                  background: 'var(--c-accent)', display: 'grid', placeItems: 'center' }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                        <path d="M20 6 9 17l-5-5"/>
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: 13, color: 'var(--c-fg)', lineHeight: 1.4 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Volver */}
             <div style={{ padding: '12px 16px 0' }}>
               <button className="btn btn-ghost" style={{ width: '100%', fontSize: 13 }}
@@ -618,6 +645,30 @@ export default function DetallePublico() {
                   </div>
                 </div>
               )}
+
+              {/* ¿Qué incluye? desktop */}
+              <div className="card" style={{ padding: '16px 18px' }}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12,
+                              color: 'var(--c-fg-2)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                  ¿Qué incluye?
+                </div>
+                {[
+                  'Documentación al día y transferencia',
+                  'Revisión mecánica previa a la entrega',
+                  'Asesoramiento sin compromiso',
+                ].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10,
+                                        marginBottom: i < 2 ? 10 : 0 }}>
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                                  background: 'var(--c-accent)', display: 'grid', placeItems: 'center' }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                        <path d="M20 6 9 17l-5-5"/>
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: 13, color: 'var(--c-fg)', lineHeight: 1.4 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
 
               <button className="btn btn-ghost" style={{ width: '100%', fontSize: 13 }}
                       onClick={() => navigate('/p/catalogo')}>
