@@ -173,8 +173,13 @@ function Step1({ form, set, vendedores, moneda, setMoneda }) {
       <FormField label="Responsable (quien ingresa)">
         <select className="input" value={form.responsable_id} onChange={f('responsable_id')}>
           <option value="">Sin asignar</option>
+          <option value="gh_cars">GH Cars</option>
           {vendedores.map(v => <option key={v.id} value={v.id}>{v.nombre}</option>)}
         </select>
+      </FormField>
+      <FormField label="Nombre libre (opcional)" hint="Ej: nombre de quien trae el auto">
+        <input className="input" placeholder="Nombre del responsable"
+          value={form.responsable_nombre_libre} onChange={f('responsable_nombre_libre')} />
       </FormField>
       <FormField label="Nro Motor">
         <input className="input" placeholder="ABC123" value={form.nro_motor} onChange={f('nro_motor')} />
@@ -396,6 +401,8 @@ const SHOT_LIST = [
 
 function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFiles, setExtraFiles, extraPreviews, setExtraPreviews }) {
   const dragIdx = useRef(null)
+  const [dragFromIdx, setDragFromIdx] = useState(null)
+  const [dragOverIdx, setDragOverIdx] = useState(null)
   const requiredCount = SHOT_LIST.filter(s => s.required).length
   const uploadedRequired = SHOT_LIST.filter(s => s.required && shotFiles[s.key]).length
   const pct = requiredCount > 0 ? (uploadedRequired / requiredCount) * 100 : 0
@@ -428,8 +435,20 @@ function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFi
     setExtraPreviews(p => p.filter((_, j) => j !== i))
   }
 
-  function onDragStartExtra(i) { dragIdx.current = i }
-  function onDropExtra(i) {
+  function onDragStartExtra(e, i) {
+    dragIdx.current = i
+    setDragFromIdx(i)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+  function onDragEndExtra() {
+    dragIdx.current = null
+    setDragFromIdx(null)
+    setDragOverIdx(null)
+  }
+  function onDropExtra(e, i) {
+    e.preventDefault()
+    setDragOverIdx(null)
+    setDragFromIdx(null)
     const from = dragIdx.current
     dragIdx.current = null
     if (from === null || from === i) return
@@ -552,20 +571,32 @@ function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFi
             <div style={{ fontSize: 11, color: 'var(--c-fg-3)', marginBottom: 6 }}>
               Arrastrá para reordenar
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8 }}>
+            <div
+              onDragOver={e => e.preventDefault()}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8 }}>
               {extraPreviews.map((src, i) => (
                 <div key={i}
                   draggable
-                  onDragStart={() => onDragStartExtra(i)}
+                  onDragStart={e => onDragStartExtra(e, i)}
+                  onDragEnter={() => setDragOverIdx(i)}
                   onDragOver={e => e.preventDefault()}
-                  onDrop={() => onDropExtra(i)}
-                  style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 'var(--r)', overflow: 'hidden', cursor: 'grab' }}>
-                  <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
-                  <button onClick={() => removeExtra(i)} style={{
+                  onDrop={e => onDropExtra(e, i)}
+                  onDragEnd={onDragEndExtra}
+                  style={{
+                    position: 'relative', aspectRatio: '4/3', borderRadius: 'var(--r)',
+                    overflow: 'hidden', cursor: 'grab',
+                    opacity: dragFromIdx === i ? 0.4 : 1,
+                    outline: dragOverIdx === i && dragFromIdx !== i ? '2px solid var(--c-accent)' : '2px solid transparent',
+                    transition: 'opacity .15s, outline .1s',
+                  }}>
+                  <img src={src} alt="" draggable={false}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                  <button draggable={false} onClick={e => { e.stopPropagation(); removeExtra(i) }} style={{
                     position: 'absolute', top: 4, right: 4,
                     background: 'rgba(0,0,0,.6)', border: 'none', borderRadius: '50%',
                     width: 22, height: 22, cursor: 'pointer', color: '#fff',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                    pointerEvents: 'auto',
                   }}>
                     <Icon name="x" size={11} />
                   </button>
@@ -577,6 +608,18 @@ function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFi
       </div>
     </div>
   )
+}
+
+const DRAFT_KEY = 'gh_cars_ingreso_draft'
+
+const FORM_EMPTY = {
+  tipo: 'auto', marca: '', modelo: '', anio: '', version: '',
+  patente: '', color: '', km_hs: '', precio_base: '', precio_lista: '', costo_compra: '',
+  combustible: '', transmision: '', origen: 'compra_directa',
+  responsable_id: '', responsable_nombre_libre: '',
+  nro_motor: '', nro_chasis: '', notas_internas: '', estado: 'disponible',
+  ubicacion: 'showroom', estado_recon: 'ingresado',
+  specs: {},
 }
 
 export default function Ingreso({ onLogout }) {
@@ -597,15 +640,45 @@ export default function Ingreso({ onLogout }) {
   const [moneda, setMoneda] = useState('USD')
   const [toast, setToast] = useState(null)
   const [vendedores, setVendedores] = useState([])
-  const [form, setForm] = useState({
-    tipo: 'auto', marca: '', modelo: '', anio: '', version: '',
-    patente: '', color: '', km_hs: '', precio_base: '', precio_lista: '', costo_compra: '',
-    combustible: '', transmision: '', origen: 'compra_directa',
-    responsable_id: '',
-    nro_motor: '', nro_chasis: '', notas_internas: '', estado: 'disponible',
-    ubicacion: 'showroom', estado_recon: 'ingresado',
-    specs: {},
+  const [hasDraft, setHasDraft] = useState(false)
+  const [form, setForm] = useState(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY)
+      if (saved) {
+        const { form: f } = JSON.parse(saved)
+        if (f && f.marca) return { ...FORM_EMPTY, ...f }
+      }
+    } catch {}
+    return FORM_EMPTY
   })
+
+  // Detect and restore moneda from draft on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY)
+      if (saved) {
+        const { form: f, moneda: m } = JSON.parse(saved)
+        if (f && f.marca) { setHasDraft(true); if (m) setMoneda(m) }
+      }
+    } catch {}
+  }, [])
+
+  // Autosave draft on every form/moneda change
+  useEffect(() => {
+    const hasData = form.marca || form.modelo || form.patente || form.precio_base
+    if (!hasData) return
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, moneda })) } catch {}
+  }, [form, moneda])
+
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY) } catch {}
+    setForm(FORM_EMPTY)
+    setMoneda('USD')
+    setHasDraft(false)
+    setAiMsg(null)
+    setAiSpecs(null)
+    setTasacion(null)
+  }
 
   useEffect(() => { getVendedores().then(setVendedores) }, [])
 
@@ -815,6 +888,8 @@ export default function Ingreso({ onLogout }) {
         ...(form.combustible && { combustible: form.combustible }),
         ...(form.transmision && { transmision: form.transmision }),
         moneda_precio: moneda,
+        ...(form.responsable_id === 'gh_cars' && { responsable: 'GH Cars' }),
+        ...(form.responsable_nombre_libre && { responsable_custom: form.responsable_nombre_libre }),
       }
       const payload = {
         tipo: form.tipo,
@@ -829,7 +904,7 @@ export default function Ingreso({ onLogout }) {
         precio_lista: form.precio_lista ? Number(form.precio_lista) : null,
         costo_compra: form.costo_compra ? Number(form.costo_compra) : null,
         origen: form.origen || 'compra_directa',
-        vendedor_ingreso_id: form.responsable_id || null,
+        vendedor_ingreso_id: (form.responsable_id && form.responsable_id !== 'gh_cars') ? form.responsable_id : null,
         nro_motor: form.nro_motor || null,
         nro_chasis: form.nro_chasis || null,
         notas_internas: form.notas_internas || null,
@@ -854,6 +929,8 @@ export default function Ingreso({ onLogout }) {
         await saveFotoRecord(v.id, fotoData, false)
       }
       setSaving(false)
+      try { localStorage.removeItem(DRAFT_KEY) } catch {}
+      setHasDraft(false)
       setToast('Vehículo guardado correctamente')
       setTimeout(() => navigate(`/vehiculo/${v.id}`), 1500)
     } catch (e) {
@@ -885,6 +962,17 @@ export default function Ingreso({ onLogout }) {
           </div>
         </div>
 
+        {hasDraft && (
+          <div className="banner info" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Icon name="info" size={16} />
+              Borrador guardado — los datos del formulario fueron restaurados.
+            </span>
+            <button className="btn ghost" style={{ fontSize: 12, flexShrink: 0 }} onClick={clearDraft}>
+              Descartar borrador
+            </button>
+          </div>
+        )}
         {error && (
           <div className="banner warning">
             <Icon name="alert" size={16} />{error}
