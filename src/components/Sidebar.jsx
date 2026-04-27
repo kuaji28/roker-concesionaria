@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import Icon from './Icon'
-import GHLogo from './GHLogo'
-import GHLogoFull from './GHLogoFull'
 import ThemeToggle from './ThemeToggle'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useUser } from '../hooks/useUser'
+import { useTheme } from '../context/ThemeContext'
 
 const NAV = [
   { to: '/',          icon: 'home',      label: 'Dashboard',           tip: 'Resumen general: vehículos disponibles, ventas recientes y métricas clave' },
@@ -43,8 +42,23 @@ const TOGGLE_ICO = (collapsed) => (
   </svg>
 )
 
+function GHLogo({ size = 36 }) {
+  const { resolved } = useTheme()
+  return (
+    <img
+      src="/logo.png"
+      alt="GH Cars"
+      style={{
+        width: size, height: size, objectFit: 'contain', display: 'block', flexShrink: 0,
+        filter: resolved === 'dark' ? 'invert(1)' : 'none',
+      }}
+    />
+  )
+}
+
 export default function Sidebar({ tc }) {
   const isMobile = useIsMobile()
+  const { resolved } = useTheme()
   const [open, setOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const user = useUser()
@@ -65,8 +79,9 @@ export default function Sidebar({ tc }) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           height: 52,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <GHLogoFull width={110} style={{ color: 'var(--c-fg)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <GHLogo size={30} />
+            <span style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <ThemeToggle />
@@ -101,9 +116,9 @@ export default function Sidebar({ tc }) {
           overflowY: 'auto',
           transition: 'left 0.25s ease',
         }}>
-          <div style={{ marginBottom: 12 }}>
-            <GHLogoFull width={160} style={{ color: 'var(--c-fg)' }} />
-            <small style={{ fontSize: 10, color: 'var(--c-fg-3)', paddingLeft: 2 }}>Gestión Automotriz</small>
+          <div className="brand" style={{ marginBottom: 10 }}>
+            <GHLogo size={36} />
+            <div className="brand-txt">GH Cars<small>Gestión Automotriz</small></div>
           </div>
           <nav className="nav" onClick={handleNavClick}>
             {NAV.map(n => (
@@ -160,16 +175,14 @@ export default function Sidebar({ tc }) {
       position: 'relative',
     }}>
       {/* Brand */}
-      <div className="brand" style={{ overflow: 'hidden', flexShrink: 0 }}>
-        {collapsed
-          ? <GHLogo size={32} style={{ flexShrink: 0 }} />
-          : <div style={{ display: 'flex', flexDirection: 'column', gap: 2, overflow: 'hidden' }}>
-              <GHLogoFull width={148} style={{ color: 'var(--c-fg)', flexShrink: 0 }} />
-              <small style={{ fontSize: 10, color: 'var(--c-fg-3)', paddingLeft: 2, whiteSpace: 'nowrap' }}>
-                Gestión Automotriz
-              </small>
-            </div>
-        }
+      <div className="brand" style={{ overflow: 'hidden', flexShrink: 0, gap: collapsed ? 0 : 10 }}>
+        <GHLogo size={collapsed ? 34 : 42} />
+        {!collapsed && (
+          <div className="brand-txt" style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
+            GH Cars
+            <small>Gestión Automotriz</small>
+          </div>
+        )}
       </div>
 
       {/* Nav */}
