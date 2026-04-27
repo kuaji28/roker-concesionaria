@@ -98,6 +98,7 @@ export default function DetallePublico() {
       const next = isFav ? favs.filter(f => f !== id) : [...favs, id]
       localStorage.setItem('gh-favs', JSON.stringify(next))
       setIsFav(!isFav)
+      if (!isFav) trackVehiculoAction(id, 'favorito', null, { isPublic: true })
     } catch {}
   }
 
@@ -114,6 +115,7 @@ export default function DetallePublico() {
     const url = window.location.href
     const nombre = v ? `${v.marca} ${v.modelo} ${v.anio}` : 'Vehículo'
     const precio = v?.precio_lista ? ` — USD ${v.precio_lista.toLocaleString('es-AR')}` : ''
+    trackVehiculoAction(id, 'compartir', null, { isPublic: true })
     if (navigator.share) {
       try {
         await navigator.share({ title: `${nombre}${precio}`, text: `Mirá este vehículo en GH Cars`, url })

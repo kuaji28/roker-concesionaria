@@ -369,7 +369,7 @@ export async function getAnalyticsData() {
     d.setDate(d.getDate() - i)
     const ds = d.toISOString().split('T')[0]
     area.visits.push(vw.filter(v => v.created_at.startsWith(ds)).length)
-    area.contacts.push(va.filter(v => v.created_at.startsWith(ds) && ['contactar', 'whatsapp'].includes(v.action)).length)
+    area.contacts.push(va.filter(v => v.created_at.startsWith(ds) && ['contacto_wsp', 'contactar', 'llamar'].includes(v.action)).length)
   }
 
   // Top vehículos por período
@@ -381,8 +381,8 @@ export async function getAnalyticsData() {
     for (const a of vaP) {
       if (!a.vehiculo_id) continue
       if (!aMap[a.vehiculo_id]) aMap[a.vehiculo_id] = { contacto: 0, wa: 0 }
-      if (['contactar', 'consultar'].includes(a.action)) aMap[a.vehiculo_id].contacto++
-      if (a.action === 'whatsapp') aMap[a.vehiculo_id].wa++
+      if (['contacto_wsp', 'contactar', 'consultar', 'llamar'].includes(a.action)) aMap[a.vehiculo_id].contacto++
+      if (a.action === 'contacto_wsp') aMap[a.vehiculo_id].wa++
     }
     return Object.entries(vMap).sort(([, a], [, b]) => b - a).slice(0, 5)
       .map(([vid, visitas]) => ({
@@ -405,13 +405,14 @@ export async function getAnalyticsData() {
 
   // Clicks por acción
   const ACTION_META = {
-    whatsapp:     { ico: '📱', label: 'WhatsApp directo' },
+    contacto_wsp: { ico: '📱', label: 'WhatsApp directo' },
     llamar:       { ico: '📞', label: 'Llamar' },
     contactar:    { ico: '💬', label: 'Contactar' },
     compartir:    { ico: '🔗', label: 'Compartir' },
     favorito:     { ico: '❤️', label: 'Favoritos' },
     financiacion: { ico: '💳', label: 'Ver financiación' },
     parte_pago:   { ico: '🔄', label: 'Parte de pago' },
+    consultar:    { ico: '💬', label: 'Consultar' },
   }
   const clickMap = {}
   for (const a of va) { if (a.action) clickMap[a.action] = (clickMap[a.action] || 0) + 1 }
@@ -444,7 +445,7 @@ export async function getAnalyticsData() {
   const embudo = {
     visitas:     vw30.length,
     vieron:      new Set(vw30.map(v => v.vehiculo_id).filter(Boolean)).size,
-    contactaron: va30.filter(a => ['contactar', 'whatsapp', 'llamar'].includes(a.action)).length,
+    contactaron: va30.filter(a => ['contacto_wsp', 'contactar', 'llamar', 'consultar'].includes(a.action)).length,
     leads:       (prospectos30 || []).length,
     ventas:      (ventas30 || []).length,
   }
