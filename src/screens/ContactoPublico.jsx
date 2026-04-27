@@ -13,6 +13,7 @@ export default function ContactoPublico() {
   const isMobile = useIsMobile()
   const [form, setForm] = useState({ nombre: '', telefono: '', email: '', mensaje: '' })
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
   const [hoverNav, setHoverNav] = useState(null)
 
   function handleChange(e) {
@@ -21,6 +22,8 @@ export default function ContactoPublico() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (sending) return
+    setSending(true)
     // Guardar prospecto en Supabase
     await supabase.from('prospectos').insert([{
       nombre: form.nombre,
@@ -35,6 +38,7 @@ export default function ContactoPublico() {
     const text = `Consulta desde web:\nNombre: ${form.nombre}\nTeléfono: ${form.telefono}\nEmail: ${form.email}\nMensaje: ${form.mensaje}`
     window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank')
     setSent(true)
+    setSending(false)
   }
 
   const inp = {
@@ -139,12 +143,13 @@ export default function ContactoPublico() {
                   <label style={{ display: 'block', fontSize: 12, color: 'var(--c-fg-2)', marginBottom: 6, fontWeight: 500 }}>Mensaje *</label>
                   <textarea name="mensaje" value={form.mensaje} onChange={handleChange} required placeholder="¿Qué auto buscás? ¿Querés tasar el tuyo?" rows={5} style={{ ...inp, resize: 'vertical', minHeight: 120 }} />
                 </div>
-                <button type="submit" style={{
+                <button type="submit" disabled={sending} style={{
                   width: '100%', padding: '14px 24px', borderRadius: 10,
-                  background: 'var(--c-accent)', color: '#fff', border: 'none',
-                  fontSize: 15, fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.01em',
+                  background: sending ? 'var(--c-fg-3)' : 'var(--c-accent)', color: '#fff', border: 'none',
+                  fontSize: 15, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', letterSpacing: '-0.01em',
+                  transition: 'background .15s',
                 }}>
-                  Enviar por WhatsApp →
+                  {sending ? 'Enviando...' : 'Enviar por WhatsApp →'}
                 </button>
                 <p style={{ fontSize: 11, color: 'var(--c-fg-3)', marginTop: 10, textAlign: 'center' }}>
                   Al enviar se abre WhatsApp con tu mensaje pre-armado
