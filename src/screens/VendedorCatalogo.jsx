@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getVehiculos } from '../lib/supabase'
-import GHLogo from '../components/GHLogo'
 import VendedorTabs from '../components/VendedorTabs'
+import { useTheme } from '../context/ThemeContext'
 
 const CHIP_FILTERS = [
   { label: 'Todos',      estado: null,          extra: {} },
@@ -33,6 +33,7 @@ function fmt(n) { return (n || 0).toLocaleString('es-AR') }
 
 export default function VendedorCatalogo() {
   const navigate = useNavigate()
+  const { resolved } = useTheme()
   const [vehiculos, setVehiculos] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -61,7 +62,7 @@ export default function VendedorCatalogo() {
     <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--c-bg)', color: 'var(--c-fg)', maxWidth: 480, margin: '0 auto' }}>
       {/* Top bar */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <GHLogo size={28} />
+        <img src="/logo.png" alt="GH Cars" style={{ height: 28, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
         <h1 style={{ flex: 1, fontSize: 16, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Catálogo</h1>
         <button
           style={{ width: 36, height: 36, borderRadius: 999, background: 'var(--c-card)', border: 0, color: 'var(--c-fg)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}

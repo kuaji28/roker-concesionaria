@@ -5,7 +5,6 @@ import { useWANumber } from '../hooks/useWANumber'
 import { useTheme } from '../context/ThemeContext'
 import ThemeToggle from '../components/ThemeToggle'
 import TiltCard from '../components/TiltCard'
-import GHLogoFull from '../components/GHLogoFull'
 
 /* ─── Tipo de cambio ────────────────────────────────────────── */
 const FALLBACK_TC = 1415
@@ -311,7 +310,7 @@ export default function CatalogoPublico() {
       }}>
         {/* Logo */}
         <Link to="/p/home" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <GHLogoFull width={110} style={{ color: c.fg }} />
+          <img src="/logo.png" alt="GH Cars" style={{ height: 28, objectFit: 'contain', display: 'block', filter: c.resolved === 'dark' ? 'invert(1)' : 'none' }} />
         </Link>
 
         {/* Nav + actions */}

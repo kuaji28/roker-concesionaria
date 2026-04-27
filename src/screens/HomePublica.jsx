@@ -5,12 +5,12 @@ import { useTheme } from '../context/ThemeContext'
 import TiltCard from '../components/TiltCard'
 import ThemeToggle from '../components/ThemeToggle'
 import { useWANumber } from '../hooks/useWANumber'
-import GHLogoFull from '../components/GHLogoFull'
+
 
 const FALLBACK_TC = 1415
-const ADDRESS    = 'Ruta 9 km 1750, Benavidez, Bs As'
-const GMAPS_EMBED = 'https://www.google.com/maps?q=Ruta+9+km+1750,+Benavidez,+Buenos+Aires&output=embed&z=14'
-const GMAPS_LINK  = 'https://maps.google.com/?q=Ruta+9+km+1750,+Benavidez'
+const ADDRESS    = 'Calle 1 1750, Benavídez, Buenos Aires'
+const GMAPS_EMBED = 'https://www.google.com/maps?q=Calle+1+1750,+Benavídez,+Buenos+Aires&output=embed&z=14'
+const GMAPS_LINK  = 'https://maps.google.com/?q=Calle+1+1750,+Benavídez,+Buenos+Aires'
 const INSTAGRAM   = 'https://www.instagram.com/ghcars.ok/'
 const TIKTOK      = 'https://www.tiktok.com/@ghcars.ok'
 
@@ -211,7 +211,7 @@ export default function HomePublica() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
           <div style={{ cursor: 'pointer' }} onClick={() => navigate('/p/home')}>
-            <GHLogoFull width={120} style={{ color: c.fg }} />
+            <img src="/logo.png" alt="GH Cars" style={{ height: 30, objectFit: 'contain', display: 'block', filter: isDark ? 'invert(1)' : 'none' }} />
           </div>
           <nav style={{ display: 'flex', gap: 2 }}>
             {[['Stock', '/p/catalogo'], ['Contacto', '/p/contacto']].map(([label, path]) => (

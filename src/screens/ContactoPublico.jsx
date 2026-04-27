@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import GHLogo from '../components/GHLogo'
 import ThemeToggle from '../components/ThemeToggle'
+import { useTheme } from '../context/ThemeContext'
+import { useWANumber } from '../hooks/useWANumber'
 
 export default function ContactoPublico() {
   const navigate = useNavigate()
+  const { resolved } = useTheme()
+  const waNumber = useWANumber()
   const [form, setForm] = useState({ nombre: '', telefono: '', email: '', mensaje: '' })
   const [sent, setSent] = useState(false)
   const [hoverNav, setHoverNav] = useState(null)
@@ -17,7 +20,7 @@ export default function ContactoPublico() {
     e.preventDefault()
     // Build WhatsApp message
     const text = `Consulta desde web:\nNombre: ${form.nombre}\nTeléfono: ${form.telefono}\nEmail: ${form.email}\nMensaje: ${form.mensaje}`
-    window.open(`https://wa.me/541152348902?text=${encodeURIComponent(text)}`, '_blank')
+    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank')
     setSent(true)
   }
 
@@ -40,7 +43,7 @@ export default function ContactoPublico() {
         height: 60,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/p/home')}>
-          <GHLogo size={28} />
+          <img src="/logo.png" alt="GH Cars" style={{ height: 28, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
           <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>GH Cars</span>
         </div>
         <nav style={{ display: 'flex', gap: 4 }}>
@@ -68,7 +71,7 @@ export default function ContactoPublico() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <ThemeToggle />
           <a
-            href="https://wa.me/541152348902?text=Hola%2C%20vi%20su%20catálogo%20y%20quería%20más%20info"
+            href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola GH Cars, quería más información')}`}
             target="_blank" rel="noopener noreferrer"
             style={{ padding: '7px 16px', borderRadius: 10, background: '#25d366', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
           >
@@ -142,7 +145,7 @@ export default function ContactoPublico() {
             <div style={{ background: 'var(--c-card)', borderRadius: 16, padding: '28px 28px', border: '1px solid var(--c-border)' }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 20px' }}>Visitanos</h3>
               {[
-                { icon: '📍', label: 'Dirección', value: 'Av. Juan Domingo Perón 2440\nBenavidez, Buenos Aires' },
+                { icon: '📍', label: 'Dirección', value: 'Calle 1 1750\nBenavídez, Buenos Aires' },
                 { icon: '📞', label: 'Teléfono', value: '+54 11 5234-8902' },
                 { icon: '🕐', label: 'Horarios', value: 'Lun–Vie: 9:00–18:00\nSáb: 9:00–14:00' },
               ].map(row => (
@@ -155,7 +158,7 @@ export default function ContactoPublico() {
                 </div>
               ))}
               <a
-                href="https://maps.google.com/?q=Av.+Juan+Domingo+Perón+2440,+Benavidez"
+                href="https://maps.google.com/?q=Calle+1+1750,+Benavídez,+Buenos+Aires"
                 target="_blank" rel="noopener noreferrer"
                 style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '10px 16px', borderRadius: 10, border: '1px solid var(--c-border)', background: 'var(--c-card-2)', color: 'var(--c-fg-2)', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}
               >

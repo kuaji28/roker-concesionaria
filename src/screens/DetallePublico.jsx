@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase, trackVehiculoView, trackVehiculoAction } from '../lib/supabase'
 import { useIsMobile } from '../hooks/useIsMobile'
 import WhatsAppIcon from '../components/WhatsAppIcon'
-import GHLogo from '../components/GHLogo'
+import { useTheme } from '../context/ThemeContext'
 import { useWANumber } from '../hooks/useWANumber'
 
 const FALLBACK_TC = 1415
@@ -32,6 +32,7 @@ export default function DetallePublico() {
   const navigate  = useNavigate()
   const isMobile  = useIsMobile()
   const waNumber  = useWANumber()
+  const { resolved } = useTheme()
   const [v,       setV]      = useState(null)
   const [fotos,   setFotos]  = useState([])
   const [idx,     setIdx]    = useState(0)
@@ -41,6 +42,16 @@ export default function DetallePublico() {
   const touchStartX = useRef(null)
   const touchStartY = useRef(null)
 
+  // Favoritos
+  const [isFav, setIsFav] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('gh-favs') || '[]').includes(id) }
+    catch { return false }
+  })
+
+  // Similares
+  const [similares, setSimilares] = useState([])
+  const [portadasSim, setPortadasSim] = useState({})
+
   useEffect(() => { fetchTc().then(setTc) }, [])
 
   useEffect(() => {
@@ -48,13 +59,47 @@ export default function DetallePublico() {
     Promise.all([
       supabase.from('vehiculos').select('*').eq('id', id).single(),
       supabase.from('medias').select('*').eq('vehiculo_id', id).eq('tipo', 'foto').order('orden'),
-    ]).then(([{ data: vehiculo }, { data: medias }]) => {
+    ]).then(async ([{ data: vehiculo }, { data: medias }]) => {
       setV(vehiculo)
       setFotos(medias || [])
       setLoading(false)
+      // Cargar similares
+      if (vehiculo) {
+        const tipoFiltro = vehiculo.carroceria || vehiculo.tipo
+        let q = supabase
+          .from('vehiculos')
+          .select('id,marca,modelo,anio,precio_lista,precio_base,km_hs,transmision')
+          .eq('estado', 'disponible')
+          .neq('id', id)
+          .limit(4)
+        if (tipoFiltro) q = q.eq(vehiculo.carroceria ? 'carroceria' : 'tipo', tipoFiltro)
+        const { data: simsData } = await q
+        if (simsData?.length) {
+          setSimilares(simsData)
+          const simIds = simsData.map(s => s.id)
+          const { data: simMedias } = await supabase
+            .from('medias').select('vehiculo_id,url,orden')
+            .in('vehiculo_id', simIds).order('orden', { ascending: true })
+          const simMap = {}
+          for (const m of (simMedias || [])) {
+            if (!simMap[m.vehiculo_id]) simMap[m.vehiculo_id] = m.url
+          }
+          setPortadasSim(simMap)
+        }
+      }
     })
     trackVehiculoView(id, { isPublic: true })
   }, [id])
+
+  function toggleFav(e) {
+    e.stopPropagation()
+    try {
+      const favs = JSON.parse(localStorage.getItem('gh-favs') || '[]')
+      const next = isFav ? favs.filter(f => f !== id) : [...favs, id]
+      localStorage.setItem('gh-favs', JSON.stringify(next))
+      setIsFav(!isFav)
+    } catch {}
+  }
 
   function abrirWhatsApp() {
     const nombre = v ? `${v.marca} ${v.modelo} ${v.anio}` : 'un vehículo'
@@ -129,23 +174,37 @@ export default function DetallePublico() {
             >
               ←
             </button>
-            <GHLogo size={28} />
+            <img src="/logo.png" alt="GH Cars" style={{ height: 28, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
             <span style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</span>
           </div>
           {v && (
-            <button
-              onClick={compartir}
-              style={{ background: 'none', border: '1px solid var(--c-border)', cursor: 'pointer',
-                       color: shared ? 'var(--c-success, #22c55e)' : 'var(--c-fg-2)', borderRadius: 8,
-                       padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12,
-                       fontWeight: 500, transition: 'color .2s' }}
-            >
-              {shared ? (
-                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg> ¡Copiado!</>
-              ) : (
-                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Compartir</>
-              )}
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={toggleFav}
+                style={{
+                  background: 'none', border: '1px solid var(--c-border)', cursor: 'pointer',
+                  borderRadius: 8, padding: '6px 10px', display: 'flex', alignItems: 'center',
+                  color: isFav ? '#ef4444' : 'var(--c-fg-2)', transition: 'color .2s',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
+              <button
+                onClick={compartir}
+                style={{ background: 'none', border: '1px solid var(--c-border)', cursor: 'pointer',
+                         color: shared ? 'var(--c-success, #22c55e)' : 'var(--c-fg-2)', borderRadius: 8,
+                         padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12,
+                         fontWeight: 500, transition: 'color .2s' }}
+              >
+                {shared ? (
+                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg> ¡Copiado!</>
+                ) : (
+                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Compartir</>
+                )}
+              </button>
+            </div>
           )}
         </header>
 
@@ -284,6 +343,28 @@ export default function DetallePublico() {
               </div>
             )}
 
+            {/* Equipamiento */}
+            {v.equipamiento && Array.isArray(v.equipamiento) && v.equipamiento.length > 0 && (
+              <div style={{ padding: '12px 16px 0' }}>
+                <div style={{ background: 'var(--c-card)', borderRadius: 12,
+                              padding: '14px 16px', border: '1px solid var(--c-border)' }}>
+                  <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 12,
+                                color: 'var(--c-fg-2)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                    Equipamiento
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {v.equipamiento.map((item, i) => (
+                      <span key={i} style={{
+                        padding: '4px 12px', borderRadius: 999,
+                        background: 'var(--c-bg-2, var(--c-bg2))', border: '1px solid var(--c-border)',
+                        fontSize: 11, color: 'var(--c-fg-2)', fontWeight: 500,
+                      }}>{item}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Volver */}
             <div style={{ padding: '12px 16px 0' }}>
               <button className="btn btn-ghost" style={{ width: '100%', fontSize: 13 }}
@@ -295,6 +376,39 @@ export default function DetallePublico() {
             <div style={{ padding: '16px 16px 0', textAlign: 'center', color: 'var(--c-fg-3)', fontSize: 11 }}>
               Precios en USD · ARS al dólar blue
             </div>
+
+            {/* Similares mobile */}
+            {similares.length > 0 && (
+              <div style={{ padding: '20px 16px 0' }}>
+                <h2 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 14px' }}>También te puede interesar</h2>
+                <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+                  {similares.map(s => {
+                    const precUSD = s.precio_lista || s.precio_base
+                    const foto = portadasSim[s.id]
+                    return (
+                      <div key={s.id} onClick={() => navigate(`/p/vehiculo/${s.id}`)}
+                        style={{ flexShrink: 0, width: 160, borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
+                                 background: 'var(--c-card)', border: '1px solid var(--c-border)' }}>
+                        <div style={{ width: '100%', aspectRatio: '4/3', background: 'var(--c-bg)', overflow: 'hidden' }}>
+                          {foto
+                            ? <img src={foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            : <div style={{ height: '100%', display: 'grid', placeItems: 'center' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c-border)" strokeWidth="1" strokeLinecap="round"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>
+                              </div>
+                          }
+                        </div>
+                        <div style={{ padding: '8px 10px' }}>
+                          <p style={{ margin: 0, fontSize: 12, fontWeight: 700, lineHeight: 1.2 }}>{s.marca} {s.modelo}</p>
+                          <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 800 }}>
+                            {precUSD ? `USD ${precUSD.toLocaleString('es-AR')}` : 'Consultar'}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -335,10 +449,22 @@ export default function DetallePublico() {
             style={{ background: 'none', border: 'none', cursor: 'pointer',
                      color: 'var(--c-fg-2)', fontSize: 20, padding: 4 }}
           >←</button>
-          <GHLogo size={32} />
+          <img src="/logo.png" alt="GH Cars" style={{ height: 32, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
           <div style={{ fontWeight: 700, fontSize: 15 }}>GH Cars</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          {v && (
+            <button
+              onClick={toggleFav}
+              className="btn btn-ghost"
+              style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, color: isFav ? '#ef4444' : undefined }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              {isFav ? 'Guardado' : 'Guardar'}
+            </button>
+          )}
           {v && (
             <button
               onClick={compartir}
@@ -473,12 +599,74 @@ export default function DetallePublico() {
                 </div>
               )}
 
+              {v.equipamiento && Array.isArray(v.equipamiento) && v.equipamiento.length > 0 && (
+                <div className="card" style={{ padding: '16px 18px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12,
+                                color: 'var(--c-fg-2)', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                    Equipamiento
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {v.equipamiento.map((item, i) => (
+                      <span key={i} style={{
+                        padding: '4px 12px', borderRadius: 999,
+                        background: 'var(--c-bg)', border: '1px solid var(--c-border)',
+                        fontSize: 11, color: 'var(--c-fg-2)', fontWeight: 500,
+                      }}>{item}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button className="btn btn-ghost" style={{ width: '100%', fontSize: 13 }}
                       onClick={() => navigate('/p/catalogo')}>
                 ← Volver al catálogo
               </button>
             </div>
           </div>
+
+          {/* ── SIMILARES ─────────────────────────────────────────── */}
+          {similares.length > 0 && (
+            <div style={{ marginTop: 48, paddingTop: 32, borderTop: '1px solid var(--c-border)' }}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 20px', letterSpacing: '-0.01em' }}>
+                También te puede interesar
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+                {similares.map(s => {
+                  const precUSD = s.precio_lista || s.precio_base
+                  const foto = portadasSim[s.id]
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => navigate(`/p/vehiculo/${s.id}`)}
+                      style={{
+                        borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
+                        background: 'var(--c-card)', border: '1px solid var(--c-border)',
+                        transition: 'transform .2s, box-shadow .2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,.12)' }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' }}
+                    >
+                      <div style={{ aspectRatio: '16/10', background: 'var(--c-bg)', overflow: 'hidden' }}>
+                        {foto
+                          ? <img src={foto} alt={`${s.marca} ${s.modelo}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center' }}>
+                              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-border)" strokeWidth="1" strokeLinecap="round"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/></svg>
+                            </div>
+                        }
+                      </div>
+                      <div style={{ padding: '12px 14px' }}>
+                        <p style={{ margin: 0, fontSize: 11, color: 'var(--c-fg-2)', textTransform: 'uppercase', letterSpacing: '.08em' }}>{s.marca}</p>
+                        <p style={{ margin: '3px 0 8px', fontSize: 15, fontWeight: 700 }}>{s.modelo} {s.anio}</p>
+                        <p style={{ margin: 0, fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em' }}>
+                          {precUSD ? `USD ${precUSD.toLocaleString('es-AR')}` : 'Consultar'}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
