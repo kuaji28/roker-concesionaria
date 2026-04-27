@@ -472,6 +472,44 @@ export default function HomePublica() {
         </div>
       </section>
 
+      {/* ── CTA VENDEDORES ────────────────────────────────────────── */}
+      <section style={{ padding: '0 clamp(20px,5vw,56px) clamp(32px,4vw,48px)' }}>
+        <div style={{
+          background: `linear-gradient(135deg, ${c.accent}18 0%, ${c.accent}08 100%)`,
+          border: `1px solid ${c.accent}30`,
+          borderRadius: 20,
+          padding: isMobile ? '28px 24px' : '36px 40px',
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          justifyContent: 'space-between',
+          gap: 20,
+        }}>
+          <div>
+            <p style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: c.accent, fontWeight: 700, margin: '0 0 8px' }}>¿Tenés un auto para vender?</p>
+            <h3 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.02em', color: c.fg }}>Cotizá gratis en minutos</h3>
+            <p style={{ fontSize: 14, color: c.fg2, margin: 0, lineHeight: 1.6, maxWidth: 420 }}>
+              Tasación sin compromiso. Si acordamos, lo vendemos por vos o te lo compramos al contado.
+            </p>
+          </div>
+          <Link
+            to="/p/contacto?intent=vender"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
+              padding: '14px 28px', borderRadius: 999,
+              background: c.accent, color: '#fff',
+              fontSize: 14, fontWeight: 700, textDecoration: 'none',
+              flexShrink: 0,
+            }}
+          >
+            Cotizá tu auto
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </Link>
+        </div>
+      </section>
+
       {/* ── STOCK GRID ────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(20px,4vw,40px) clamp(20px,5vw,56px)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
