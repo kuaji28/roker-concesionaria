@@ -60,7 +60,7 @@ export default function ContactoPublico() {
         height: 60,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/p/home')}>
-          <img src="/logo.png" alt="GH Cars" style={{ height: 28, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
+          <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
           <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>GH Cars</span>
         </div>
         <nav style={{ display: isMobile ? 'none' : 'flex', gap: 4 }}>

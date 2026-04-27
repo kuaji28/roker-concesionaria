@@ -213,8 +213,8 @@ export default function HomePublica() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          <div style={{ cursor: 'pointer' }} onClick={() => navigate('/p/home')}>
-            <img src="/logo.png" alt="GH Cars" style={{ height: 30, objectFit: 'contain', display: 'block', filter: isDark ? 'invert(1)' : 'none' }} />
+          <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => navigate('/p/home')}>
+            <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: isDark ? 'invert(1)' : 'none' }} />
           </div>
           <nav style={{ display: 'flex', gap: 2 }}>
             {[['Stock', '/p/catalogo'], ['Contacto', '/p/contacto']].map(([label, path]) => (
@@ -275,16 +275,24 @@ export default function HomePublica() {
               <WaIcon size={14} /> Hablar por WhatsApp
             </a>
           </div>
-          {/* Stats strip */}
-          <div ref={statsRef} style={{ display: 'flex', gap: 28, marginTop: 44, paddingTop: 28, borderTop: `1px solid ${c.border}`, flexWrap: 'wrap' }}>
+          {/* Value props strip */}
+          <div ref={statsRef} style={{ display: 'flex', gap: 20, marginTop: 44, paddingTop: 28, borderTop: `1px solid ${c.border}`, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Stock dinámico — único contador real */}
+            {!loading && totalStock > 0 && (
+              <div style={{ paddingRight: 20, borderRight: `1px solid ${c.border}` }}>
+                <AnimatedCounter target={totalStock} suffix="+" active={statsVisible} />
+                <p style={{ fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: c.fg2, margin: 0 }}>Unidades</p>
+              </div>
+            )}
+            {/* Propuestas de valor — sin números inventados */}
             {[
-              { num: loading ? 0 : totalStock, suffix: '+', label: 'Unidades' },
-              { num: 14,    suffix: 'yr', label: 'Trayectoria' },
-              { num: 1400,  suffix: '+', label: 'Operaciones' },
-            ].map(s => (
-              <div key={s.label}>
-                <AnimatedCounter target={s.num} suffix={s.suffix} active={statsVisible} />
-                <p style={{ fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: c.fg2, margin: 0 }}>{s.label}</p>
+              { icon: '⚡', label: 'Respuesta en menos de 2 horas' },
+              { icon: '💳', label: 'Financiamiento disponible' },
+              { icon: '🤝', label: 'Compramos y consignamos' },
+            ].map(v => (
+              <div key={v.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 18 }}>{v.icon}</span>
+                <p style={{ fontSize: 13, color: c.fg2, margin: 0, lineHeight: 1.3 }}>{v.label}</p>
               </div>
             ))}
           </div>
@@ -477,7 +485,7 @@ export default function HomePublica() {
       <footer style={{ marginTop: 56, padding: 'clamp(16px,2vw,24px) clamp(20px,5vw,56px)', borderTop: `1px solid ${c.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 28, height: 28, borderRadius: 6, background: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10, color: '#fff' }}>GH</div>
-          <p style={{ fontSize: 12, color: c.fg2, margin: 0 }}>© GH Cars · Compra · Venta · Asesoramiento</p>
+          <p style={{ fontSize: 12, color: c.fg2, margin: 0 }}>© GH Cars · Compra · Venta · Consignaciones · Benavídez</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <p style={{ fontSize: 12, color: c.fg2, margin: 0 }}>

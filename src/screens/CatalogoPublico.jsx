@@ -312,7 +312,7 @@ export default function CatalogoPublico() {
       }}>
         {/* Logo */}
         <Link to="/p/home" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <img src="/logo.png" alt="GH Cars" style={{ height: 28, objectFit: 'contain', display: 'block', filter: c.resolved === 'dark' ? 'invert(1)' : 'none' }} />
+          <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: c.resolved === 'dark' ? 'invert(1)' : 'none' }} />
         </Link>
 
         {/* Nav + actions */}

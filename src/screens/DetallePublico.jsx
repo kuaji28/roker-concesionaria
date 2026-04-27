@@ -176,7 +176,7 @@ export default function DetallePublico() {
             >
               ←
             </button>
-            <img src="/logo.png" alt="GH Cars" style={{ height: 28, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
+            <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 140, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
             <span style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</span>
           </div>
           {v && (
@@ -451,7 +451,7 @@ export default function DetallePublico() {
             style={{ background: 'none', border: 'none', cursor: 'pointer',
                      color: 'var(--c-fg-2)', fontSize: 20, padding: 4 }}
           >←</button>
-          <img src="/logo.png" alt="GH Cars" style={{ height: 32, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
+          <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 140, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
           <div style={{ fontWeight: 700, fontSize: 15 }}>GH Cars</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
