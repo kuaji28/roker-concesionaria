@@ -169,6 +169,8 @@ export default function App() {
         <Route path="/vendedor/v/:id"     element={auth ? <VendedorDetalle /> : <Navigate to="/login" replace />} />
         <Route path="/vendedor/lead/nuevo" element={auth ? <VendedorLead /> : <Navigate to="/login" replace />} />
 
+        {/* Redirect raíz: visitante no autenticado → home pública */}
+        {!auth && <Route path="/" element={<Navigate to="/p/home" replace />} />}
         <Route path="/login" element={auth ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />} />
         <Route
           path="*"

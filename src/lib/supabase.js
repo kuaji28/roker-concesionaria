@@ -72,7 +72,7 @@ export async function getVehiculos({ estado, tipo, search } = {}) {
   if (vehicles.length > 0) {
     const ids = vehicles.map(v => v.id)
     const { data: covers } = await supabase
-      .from('medias')
+      .from('media')
       .select('vehiculo_id, url')
       .in('vehiculo_id', ids)
       .eq('tipo', 'foto')
@@ -90,7 +90,7 @@ export async function getVehiculos({ estado, tipo, search } = {}) {
 export async function getVehiculo(id) {
   const [{ data: v }, { data: medias }] = await Promise.all([
     supabase.from('vehiculos').select('*').eq('id', id).single(),
-    supabase.from('medias').select('*').eq('vehiculo_id', id).order('orden'),
+    supabase.from('media').select('*').eq('vehiculo_id', id).order('orden'),
   ])
   return { vehiculo: v, medias: medias || [] }
 }
@@ -121,7 +121,7 @@ const CLOUDINARY_PRESET = 'ghcars_uploads'
 export async function uploadFoto(vehiculoId, file) {
   // Obtener el próximo número de orden para este vehículo
   const { data: existentes } = await supabase
-    .from('medias')
+    .from('media')
     .select('orden')
     .eq('vehiculo_id', vehiculoId)
     .order('orden', { ascending: false })
@@ -146,19 +146,18 @@ export async function uploadFoto(vehiculoId, file) {
   const cld = await res.json()
   const url = cld.secure_url
 
-  // Registrar en medias
-  const { error: mediaErr } = await supabase.from('medias').insert([{
+  const { error: mediaErr } = await supabase.from('media').insert([{
     vehiculo_id: vehiculoId, tipo: 'foto', url, orden: nextOrden,
-    cloudinary_public_id: cld.public_id
+    nombre_archivo: cld.public_id,
   }])
-  if (mediaErr) console.warn('uploadFoto: foto subida pero no registrada en medias', mediaErr)
+  if (mediaErr) console.warn('uploadFoto: foto subida pero no registrada en media', mediaErr)
   return url
 }
 
 export async function deleteFoto(mediaId, cloudinaryPublicId) {
   // La limpieza en Cloudinary se hace via Edge Function o manualmente
   // No exponemos API secret en el frontend
-  await supabase.from('medias').delete().eq('id', mediaId)
+  await supabase.from('media').delete().eq('id', mediaId)
 }
 
 // Reordena las fotos de un vehículo actualizando el campo `orden` de cada una.
@@ -166,7 +165,7 @@ export async function deleteFoto(mediaId, cloudinaryPublicId) {
 export async function reordenarFotos(orderedIds) {
   await Promise.all(
     orderedIds.map((id, i) =>
-      supabase.from('medias').update({ orden: i + 1 }).eq('id', id)
+      supabase.from('media').update({ orden: i + 1 }).eq('id', id)
     )
   )
 }

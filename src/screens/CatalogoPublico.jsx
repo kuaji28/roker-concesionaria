@@ -49,7 +49,7 @@ async function getVehiculosPublicos({ tipo, anioMin, precioMax, kmMax }) {
 async function getPortadas(vehiculoIds) {
   if (!vehiculoIds.length) return {}
   const { data } = await supabase
-    .from('medias')
+    .from('media')
     .select('vehiculo_id, url, orden')
     .in('vehiculo_id', vehiculoIds)
     .order('orden', { ascending: true })

@@ -58,7 +58,7 @@ export default function DetallePublico() {
     setLoading(true)
     Promise.all([
       supabase.from('vehiculos').select('*').eq('id', id).single(),
-      supabase.from('medias').select('*').eq('vehiculo_id', id).eq('tipo', 'foto').order('orden'),
+      supabase.from('media').select('*').eq('vehiculo_id', id).eq('tipo', 'foto').order('orden'),
     ]).then(async ([{ data: vehiculo }, { data: medias }]) => {
       setV(vehiculo)
       setFotos(medias || [])
@@ -78,7 +78,7 @@ export default function DetallePublico() {
           setSimilares(simsData)
           const simIds = simsData.map(s => s.id)
           const { data: simMedias } = await supabase
-            .from('medias').select('vehiculo_id,url,orden')
+            .from('media').select('vehiculo_id,url,orden')
             .in('vehiculo_id', simIds).order('orden', { ascending: true })
           const simMap = {}
           for (const m of (simMedias || [])) {

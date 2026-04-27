@@ -4,6 +4,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import { useTheme } from '../context/ThemeContext'
 import { useWANumber } from '../hooks/useWANumber'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { supabase } from '../lib/supabase'
 
 export default function ContactoPublico() {
   const navigate = useNavigate()
@@ -18,9 +19,19 @@ export default function ContactoPublico() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    // Build WhatsApp message
+    // Guardar prospecto en Supabase
+    await supabase.from('prospectos').insert([{
+      nombre: form.nombre,
+      telefono: form.telefono,
+      email: form.email || null,
+      mensaje: form.mensaje || null,
+      origen: 'web_contacto',
+      estado: 'nuevo',
+      created_at: new Date().toISOString(),
+    }]).catch(() => {}) // silencioso — no bloquear el flujo si falla
+    // Abrir WhatsApp con el mensaje
     const text = `Consulta desde web:\nNombre: ${form.nombre}\nTeléfono: ${form.telefono}\nEmail: ${form.email}\nMensaje: ${form.mensaje}`
     window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank')
     setSent(true)

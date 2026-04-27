@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { Truck, Car } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
@@ -178,7 +179,7 @@ export default function HomePublica() {
 
       const ids = vehs.map(v => v.id)
       const { data: medias } = await supabase
-        .from('medias').select('vehiculo_id,url,orden')
+        .from('media').select('vehiculo_id,url,orden')
         .in('vehiculo_id', ids).order('orden', { ascending: true })
 
       const portMap = {}
@@ -327,44 +328,33 @@ export default function HomePublica() {
           {[
             {
               label: 'Pickups', carroceria: 'Pickup',
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 9h10l3-4h4l2 4v4H2V9z" /><rect x="1" y="13" width="22" height="4" rx="1" />
-                  <circle cx="6" cy="17.5" r="2" /><circle cx="18" cy="17.5" r="2" />
-                  <line x1="8" y1="13" x2="8" y2="9" />
-                </svg>
-              ),
+              icon: <Truck size={18} strokeWidth={1.6} />,
             },
             {
               label: 'SUVs', carroceria: 'SUV',
               icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 11l2-5h12l2 5v4H4v-4z" />
-                  <path d="M6 6h12" /><rect x="2" y="15" width="20" height="3" rx="1" />
-                  <circle cx="6.5" cy="18" r="2" /><circle cx="17.5" cy="18" r="2" />
-                  <rect x="6" y="7" width="5" height="4" rx="0.5" /><rect x="13" y="7" width="5" height="4" rx="0.5" />
+                <svg width="20" height="18" viewBox="0 0 24 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1" y="9" width="22" height="8" rx="2" />
+                  <path d="M4 9V6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3" />
+                  <path d="M6 5l1.5-3h9L18 5" />
+                  <circle cx="6.5" cy="17" r="2.5" /><circle cx="17.5" cy="17" r="2.5" />
+                  <rect x="6" y="6" width="5" height="3" rx="0.5" /><rect x="13" y="6" width="5" height="3" rx="0.5" />
                 </svg>
               ),
             },
             {
               label: 'Sedanes', carroceria: 'Sedán',
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 13l3-5h14l3 5v3H2v-3z" />
-                  <path d="M5 8l2-3h10l2 3" />
-                  <circle cx="6" cy="16.5" r="2" /><circle cx="18" cy="16.5" r="2" />
-                  <rect x="7" y="5" width="4" height="3" rx="0.5" /><rect x="13" y="5" width="4" height="3" rx="0.5" />
-                </svg>
-              ),
+              icon: <Car size={18} strokeWidth={1.6} />,
             },
             {
               label: 'Hatchbacks', carroceria: 'Hatchback',
               icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 14l2-6h7l4 3h7v3H2v-3z" />
-                  <path d="M4 8l1-2h8l3 3" />
-                  <circle cx="6" cy="17" r="2" /><circle cx="18" cy="17" r="2" />
-                  <rect x="5" y="6" width="4" height="3" rx="0.5" /><rect x="11" y="8" width="3" height="3" rx="0.5" />
+                <svg width="20" height="18" viewBox="0 0 24 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 13h20v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-4z" />
+                  <path d="M2 13l3-6h10l5 6" />
+                  <path d="M5 7l2-4h8l1 4" />
+                  <circle cx="6.5" cy="17" r="2.5" /><circle cx="17.5" cy="17" r="2.5" />
+                  <rect x="6" y="7.5" width="5" height="3.5" rx="0.5" /><rect x="12.5" y="9" width="4" height="2.5" rx="0.5" />
                 </svg>
               ),
             },
