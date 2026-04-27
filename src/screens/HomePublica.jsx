@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { Truck, Car } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -202,6 +203,10 @@ export default function HomePublica() {
 
   return (
     <div style={{ background: c.bg, color: c.fg, minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+      <Helmet>
+        <title>GH Cars | Compra y venta de autos en Benavídez</title>
+        <meta name="description" content="Comprá, vendé o consignás tu auto en GH Cars, Benavídez. Amplio stock de usados y 0km. Tasación sin compromiso. Te respondemos en menos de 2 horas." />
+      </Helmet>
 
       {/* ── TOP BAR ───────────────────────────────────────────────── */}
       <header style={{
