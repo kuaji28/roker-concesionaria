@@ -406,6 +406,72 @@ export default function HomePublica() {
         </div>
       </section>
 
+      {/* ── POR QUÉ ELEGIRNOS ─────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,56px)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <p style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: c.accent, fontWeight: 600, margin: '0 0 10px' }}>Por qué elegirnos</p>
+          <h2 style={{ fontSize: 'clamp(24px,3.5vw,36px)', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: c.fg }}>Todo lo que necesitás en un solo lugar</h2>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+          gap: isMobile ? 14 : 20,
+        }}>
+          {[
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
+                  <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
+                </svg>
+              ),
+              title: 'Comprá tu próximo auto',
+              desc: 'Amplio stock de autos usados y 0km con financiamiento disponible. Revisados y con documentación al día.',
+            },
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              ),
+              title: 'Vendé o consignación',
+              desc: 'Tasamos tu auto sin compromiso. Opción de consignación: lo vendemos nosotros y vos cobrás más.',
+            },
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/>
+                  <path d="M8 21h8M12 17v4"/>
+                </svg>
+              ),
+              title: 'Financiamiento fácil',
+              desc: 'Coordinamos el financiamiento con las principales entidades. Cuotas accesibles para tu presupuesto.',
+            },
+          ].map((item, i) => (
+            <div key={i} style={{
+              background: c.card, borderRadius: 16, padding: isMobile ? '20px 20px' : '24px 24px',
+              border: `1px solid ${c.border}`,
+              display: 'flex', flexDirection: isMobile ? 'row' : 'column',
+              alignItems: isMobile ? 'flex-start' : 'flex-start',
+              gap: isMobile ? 16 : 14,
+            }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+                background: c.accentTint || `${c.accent}18`,
+                color: c.accent,
+                display: 'grid', placeItems: 'center',
+              }}>
+                {item.icon}
+              </div>
+              <div>
+                <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 6px', color: c.fg, letterSpacing: '-0.01em' }}>{item.title}</h3>
+                <p style={{ fontSize: 13, color: c.fg2, margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── STOCK GRID ────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(20px,4vw,40px) clamp(20px,5vw,56px)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
