@@ -678,8 +678,9 @@ export default function CatalogoPublico() {
         </div>
 
         {/* Legal */}
-        <div style={{ fontSize: 11, color: c.fg3, borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
-          Precios en USD · ARS calculado al dólar blue
+        <div style={{ fontSize: 11, color: c.fg3, borderTop: `1px solid ${c.border}`, paddingTop: 16, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
+          <span>Precios en USD · ARS calculado al dólar blue</span>
+          <Link to="/login" style={{ color: c.fg3, textDecoration: 'none', opacity: 0.6 }}>Ingresar →</Link>
         </div>
       </footer>
     </div>

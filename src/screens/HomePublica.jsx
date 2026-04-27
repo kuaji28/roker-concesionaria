@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Truck, Car } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -479,9 +479,14 @@ export default function HomePublica() {
           <div style={{ width: 28, height: 28, borderRadius: 6, background: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10, color: '#fff' }}>GH</div>
           <p style={{ fontSize: 12, color: c.fg2, margin: 0 }}>© GH Cars · Compra · Venta · Asesoramiento</p>
         </div>
-        <p style={{ fontSize: 12, color: c.fg2, margin: 0 }}>
-          USD/ARS · ${(tc || FALLBACK_TC).toLocaleString('es-AR')}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <p style={{ fontSize: 12, color: c.fg2, margin: 0 }}>
+            USD/ARS · ${(tc || FALLBACK_TC).toLocaleString('es-AR')}
+          </p>
+          <Link to="/login" style={{ fontSize: 11, color: c.fg3, textDecoration: 'none', opacity: 0.6 }}>
+            Ingresar →
+          </Link>
+        </div>
       </footer>
     </div>
   )
