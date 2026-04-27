@@ -449,10 +449,10 @@ export default function HomePublica() {
 
       {/* ── MAPA + INFO ───────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(40px,6vw,72px) clamp(20px,5vw,56px) 0' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.4fr)', gap: 48, alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) minmax(0,1.4fr)', gap: isMobile ? 32 : 48, alignItems: 'center' }}>
           <div>
             <p style={{ fontSize: 12, letterSpacing: '.16em', textTransform: 'uppercase', color: c.accent, margin: 0, fontWeight: 600 }}>Visitanos</p>
-            <h2 style={{ fontSize: 'clamp(32px,5vw,52px)', fontWeight: 800, margin: '16px 0 0', lineHeight: 1.05, letterSpacing: '-0.03em', color: c.fg }}>Showroom<br />en Benavidez</h2>
+            <h2 style={{ fontSize: 'clamp(32px,5vw,52px)', fontWeight: 800, margin: '16px 0 0', lineHeight: 1.05, letterSpacing: '-0.03em', color: c.fg }}>Showroom<br />en Benavídez</h2>
             <p style={{ fontSize: 15, color: c.fg2, marginTop: 16, lineHeight: 1.65 }}>{ADDRESS}<br />Lunes a Sábado · 9:00 – 18:00</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
               <a href={GMAPS_LINK} target="_blank" rel="noreferrer" style={{
