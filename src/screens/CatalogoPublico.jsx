@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useWANumber } from '../hooks/useWANumber'
@@ -298,6 +299,10 @@ export default function CatalogoPublico() {
       fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
       WebkitFontSmoothing: 'antialiased',
     }}>
+      <Helmet>
+        <title>Catálogo | GH Cars — Autos usados en Benavídez</title>
+        <meta name="description" content="Explorá el stock de autos usados y 0km en GH Cars, Benavídez. Filtrá por marca, tipo y precio. Financiamiento disponible." />
+      </Helmet>
 
       {/* ── Header ─────────────────────────────────────────── */}
       <header style={{

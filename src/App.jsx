@@ -58,6 +58,7 @@ import { useTc, TcContext } from './hooks/useTc'
 import { UserContext } from './hooks/useUser'
 import { ThemeProvider } from './context/ThemeContext'
 import { supabase } from './lib/supabase'
+import { HelmetProvider } from 'react-helmet-async'
 
 function ProtectedRoute({ element, isAuth }) {
   return isAuth ? element : <Navigate to="/login" replace />
@@ -155,6 +156,7 @@ export default function App() {
   }, [])
 
   return (
+    <HelmetProvider>
     <ThemeProvider>
     <BrowserRouter>
       <Routes>
@@ -179,5 +181,6 @@ export default function App() {
       </Routes>
     </BrowserRouter>
     </ThemeProvider>
+    </HelmetProvider>
   )
 }

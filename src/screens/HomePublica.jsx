@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { Truck, Car } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -202,6 +203,10 @@ export default function HomePublica() {
 
   return (
     <div style={{ background: c.bg, color: c.fg, minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+      <Helmet>
+        <title>GH Cars | Compra y venta de autos en Benavídez</title>
+        <meta name="description" content="Comprá, vendé o consignás tu auto en GH Cars, Benavídez. Amplio stock de usados y 0km. Tasación sin compromiso. Te respondemos en menos de 2 horas." />
+      </Helmet>
 
       {/* ── TOP BAR ───────────────────────────────────────────────── */}
       <header style={{
@@ -406,6 +411,110 @@ export default function HomePublica() {
         </div>
       </section>
 
+      {/* ── POR QUÉ ELEGIRNOS ─────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,56px)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <p style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: c.accent, fontWeight: 600, margin: '0 0 10px' }}>Por qué elegirnos</p>
+          <h2 style={{ fontSize: 'clamp(24px,3.5vw,36px)', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: c.fg }}>Todo lo que necesitás en un solo lugar</h2>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+          gap: isMobile ? 14 : 20,
+        }}>
+          {[
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
+                  <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
+                </svg>
+              ),
+              title: 'Comprá tu próximo auto',
+              desc: 'Amplio stock de autos usados y 0km con financiamiento disponible. Revisados y con documentación al día.',
+            },
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              ),
+              title: 'Vendé o consignación',
+              desc: 'Tasamos tu auto sin compromiso. Opción de consignación: lo vendemos nosotros y vos cobrás más.',
+            },
+            {
+              icon: (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/>
+                  <path d="M8 21h8M12 17v4"/>
+                </svg>
+              ),
+              title: 'Financiamiento fácil',
+              desc: 'Coordinamos el financiamiento con las principales entidades. Cuotas accesibles para tu presupuesto.',
+            },
+          ].map((item, i) => (
+            <div key={i} style={{
+              background: c.card, borderRadius: 16, padding: isMobile ? '20px 20px' : '24px 24px',
+              border: `1px solid ${c.border}`,
+              display: 'flex', flexDirection: isMobile ? 'row' : 'column',
+              alignItems: isMobile ? 'flex-start' : 'flex-start',
+              gap: isMobile ? 16 : 14,
+            }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+                background: c.accentTint || `${c.accent}18`,
+                color: c.accent,
+                display: 'grid', placeItems: 'center',
+              }}>
+                {item.icon}
+              </div>
+              <div>
+                <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 6px', color: c.fg, letterSpacing: '-0.01em' }}>{item.title}</h3>
+                <p style={{ fontSize: 13, color: c.fg2, margin: 0, lineHeight: 1.6 }}>{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CTA VENDEDORES ────────────────────────────────────────── */}
+      <section style={{ padding: '0 clamp(20px,5vw,56px) clamp(32px,4vw,48px)' }}>
+        <div style={{
+          background: `linear-gradient(135deg, ${c.accent}18 0%, ${c.accent}08 100%)`,
+          border: `1px solid ${c.accent}30`,
+          borderRadius: 20,
+          padding: isMobile ? '28px 24px' : '36px 40px',
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          justifyContent: 'space-between',
+          gap: 20,
+        }}>
+          <div>
+            <p style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: c.accent, fontWeight: 700, margin: '0 0 8px' }}>¿Tenés un auto para vender?</p>
+            <h3 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.02em', color: c.fg }}>Cotizá gratis en minutos</h3>
+            <p style={{ fontSize: 14, color: c.fg2, margin: 0, lineHeight: 1.6, maxWidth: 420 }}>
+              Tasación sin compromiso. Si acordamos, lo vendemos por vos o te lo compramos al contado.
+            </p>
+          </div>
+          <Link
+            to="/p/contacto?intent=vender"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
+              padding: '14px 28px', borderRadius: 999,
+              background: c.accent, color: '#fff',
+              fontSize: 14, fontWeight: 700, textDecoration: 'none',
+              flexShrink: 0,
+            }}
+          >
+            Cotizá tu auto
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </Link>
+        </div>
+      </section>
+
       {/* ── STOCK GRID ────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(20px,4vw,40px) clamp(20px,5vw,56px)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
@@ -449,10 +558,10 @@ export default function HomePublica() {
 
       {/* ── MAPA + INFO ───────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(40px,6vw,72px) clamp(20px,5vw,56px) 0' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.4fr)', gap: 48, alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) minmax(0,1.4fr)', gap: isMobile ? 32 : 48, alignItems: 'center' }}>
           <div>
             <p style={{ fontSize: 12, letterSpacing: '.16em', textTransform: 'uppercase', color: c.accent, margin: 0, fontWeight: 600 }}>Visitanos</p>
-            <h2 style={{ fontSize: 'clamp(32px,5vw,52px)', fontWeight: 800, margin: '16px 0 0', lineHeight: 1.05, letterSpacing: '-0.03em', color: c.fg }}>Showroom<br />en Benavidez</h2>
+            <h2 style={{ fontSize: 'clamp(32px,5vw,52px)', fontWeight: 800, margin: '16px 0 0', lineHeight: 1.05, letterSpacing: '-0.03em', color: c.fg }}>Showroom<br />en Benavídez</h2>
             <p style={{ fontSize: 15, color: c.fg2, marginTop: 16, lineHeight: 1.65 }}>{ADDRESS}<br />Lunes a Sábado · 9:00 – 18:00</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
               <a href={GMAPS_LINK} target="_blank" rel="noreferrer" style={{

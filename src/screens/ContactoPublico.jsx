@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
 import { useTheme } from '../context/ThemeContext'
 import { useWANumber } from '../hooks/useWANumber'
@@ -8,9 +9,11 @@ import { supabase } from '../lib/supabase'
 
 export default function ContactoPublico() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { resolved } = useTheme()
   const waNumber = useWANumber()
   const isMobile = useIsMobile()
+  const [intencion, setIntencion] = useState(() => searchParams.get('intent') === 'vender' ? 'vender' : 'comprar')
   const [form, setForm] = useState({ nombre: '', telefono: '', email: '', mensaje: '' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
@@ -29,8 +32,8 @@ export default function ContactoPublico() {
       nombre: form.nombre,
       telefono: form.telefono,
       email: form.email || null,
-      mensaje: form.mensaje || null,
-      origen: 'web_contacto',
+      notas: form.mensaje || null,
+      canal_origen: intencion === 'vender' ? 'web_contacto_venta' : 'web_contacto_compra',
       estado: 'nuevo',
       created_at: new Date().toISOString(),
     }]).catch(() => {}) // silencioso — no bloquear el flujo si falla
@@ -50,6 +53,10 @@ export default function ContactoPublico() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--c-bg)', color: 'var(--c-fg)', fontFamily: "'Inter', sans-serif" }}>
+      <Helmet>
+        <title>Contacto | GH Cars — Consultá sin compromiso</title>
+        <meta name="description" content="Contactate con GH Cars en Benavídez. Tasación gratuita de tu auto, compra, venta y consignación. Respondemos en menos de 2 horas." />
+      </Helmet>
       {/* TopBar */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 100,
@@ -124,7 +131,28 @@ export default function ContactoPublico() {
               </div>
             ) : (
               <form onSubmit={handleSubmit}>
-                <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 24px' }}>Envianos tu consulta</h3>
+                <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 16px' }}>Envianos tu consulta</h3>
+                {/* Intent toggle */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, padding: 4, background: 'var(--c-bg)', borderRadius: 12 }}>
+                  {[
+                    { value: 'comprar', label: '🚗 Quiero comprar' },
+                    { value: 'vender', label: '💰 Quiero vender' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setIntencion(opt.value)}
+                      style={{
+                        flex: 1, padding: '9px 8px', borderRadius: 9, border: 'none',
+                        fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all .15s',
+                        background: intencion === opt.value ? 'var(--c-accent)' : 'transparent',
+                        color: intencion === opt.value ? '#fff' : 'var(--c-fg-2)',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, color: 'var(--c-fg-2)', marginBottom: 6, fontWeight: 500 }}>Nombre *</label>
@@ -141,7 +169,7 @@ export default function ContactoPublico() {
                 </div>
                 <div style={{ marginBottom: 24 }}>
                   <label style={{ display: 'block', fontSize: 12, color: 'var(--c-fg-2)', marginBottom: 6, fontWeight: 500 }}>Mensaje *</label>
-                  <textarea name="mensaje" value={form.mensaje} onChange={handleChange} required placeholder="¿Qué auto buscás? ¿Querés tasar el tuyo?" rows={5} style={{ ...inp, resize: 'vertical', minHeight: 120 }} />
+                  <textarea name="mensaje" value={form.mensaje} onChange={handleChange} required placeholder={intencion === 'vender' ? '¿Qué auto querés vender? Marca, modelo, año, km...' : '¿Qué auto buscás? Marca, modelo, presupuesto...'} rows={5} style={{ ...inp, resize: 'vertical', minHeight: 120 }} />
                 </div>
                 <button type="submit" disabled={sending} style={{
                   width: '100%', padding: '14px 24px', borderRadius: 10,
