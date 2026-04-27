@@ -160,7 +160,7 @@ export default function ContactoPublico() {
                 </div>
               ))}
               <a
-                href="https://maps.app.goo.gl/VYKu4otJrNhqwNNXA"
+                href="https://maps.app.goo.gl/VYKu4otJrNhqwNNXA?g_st=ac"
                 target="_blank" rel="noopener noreferrer"
                 style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '10px 16px', borderRadius: 10, border: '1px solid var(--c-border)', background: 'var(--c-card-2)', color: 'var(--c-fg-2)', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}
               >

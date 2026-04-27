@@ -11,7 +11,7 @@ import { useWANumber } from '../hooks/useWANumber'
 const FALLBACK_TC = 1415
 const ADDRESS    = 'Calle 1 1750, Benavídez, Buenos Aires'
 const GMAPS_EMBED = 'https://www.google.com/maps?q=Calle+1+1750,+Benavídez,+Buenos+Aires&output=embed&z=14'
-const GMAPS_LINK  = 'https://maps.app.goo.gl/VYKu4otJrNhqwNNXA'
+const GMAPS_LINK  = 'https://maps.app.goo.gl/VYKu4otJrNhqwNNXA?g_st=ac'
 const INSTAGRAM   = 'https://www.instagram.com/ghcars.ok/'
 const TIKTOK      = 'https://www.tiktok.com/@ghcars.ok'
 
@@ -257,7 +257,7 @@ export default function HomePublica() {
             Encontrá tu<br />próximo auto.
           </h1>
           <p style={{ fontSize: 17, color: c.fg2, margin: '22px 0 0', lineHeight: 1.6, maxWidth: 460 }}>
-            {loading ? '…' : totalStock} unidades seleccionadas. Compra · Venta · Asesoramiento desde 2010.
+            {loading ? '…' : totalStock} unidades seleccionadas. Compra · Venta · Consignaciones.
           </p>
           <div style={{ display: 'flex', gap: 12, marginTop: 32, flexWrap: 'wrap' }}>
             <button onClick={() => navigate('/p/catalogo')} style={{
@@ -325,10 +325,49 @@ export default function HomePublica() {
         <p style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: c.fg3, margin: '0 0 14px', fontWeight: 600 }}>Navegá por categoría</p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {[
-            { label: 'Pickups',    carroceria: 'Pickup',   emoji: '🛻' },
-            { label: 'SUVs',       carroceria: 'SUV',       emoji: '🚙' },
-            { label: 'Sedanes',    carroceria: 'Sedán',     emoji: '🚗' },
-            { label: 'Hatchbacks', carroceria: 'Hatchback', emoji: '🚘' },
+            {
+              label: 'Pickups', carroceria: 'Pickup',
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9h10l3-4h4l2 4v4H2V9z" /><rect x="1" y="13" width="22" height="4" rx="1" />
+                  <circle cx="6" cy="17.5" r="2" /><circle cx="18" cy="17.5" r="2" />
+                  <line x1="8" y1="13" x2="8" y2="9" />
+                </svg>
+              ),
+            },
+            {
+              label: 'SUVs', carroceria: 'SUV',
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 11l2-5h12l2 5v4H4v-4z" />
+                  <path d="M6 6h12" /><rect x="2" y="15" width="20" height="3" rx="1" />
+                  <circle cx="6.5" cy="18" r="2" /><circle cx="17.5" cy="18" r="2" />
+                  <rect x="6" y="7" width="5" height="4" rx="0.5" /><rect x="13" y="7" width="5" height="4" rx="0.5" />
+                </svg>
+              ),
+            },
+            {
+              label: 'Sedanes', carroceria: 'Sedán',
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 13l3-5h14l3 5v3H2v-3z" />
+                  <path d="M5 8l2-3h10l2 3" />
+                  <circle cx="6" cy="16.5" r="2" /><circle cx="18" cy="16.5" r="2" />
+                  <rect x="7" y="5" width="4" height="3" rx="0.5" /><rect x="13" y="5" width="4" height="3" rx="0.5" />
+                </svg>
+              ),
+            },
+            {
+              label: 'Hatchbacks', carroceria: 'Hatchback',
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 14l2-6h7l4 3h7v3H2v-3z" />
+                  <path d="M4 8l1-2h8l3 3" />
+                  <circle cx="6" cy="17" r="2" /><circle cx="18" cy="17" r="2" />
+                  <rect x="5" y="6" width="4" height="3" rx="0.5" /><rect x="11" y="8" width="3" height="3" rx="0.5" />
+                </svg>
+              ),
+            },
           ].map(cat => (
             <button
               key={cat.label}
@@ -353,7 +392,7 @@ export default function HomePublica() {
                 e.currentTarget.style.boxShadow = 'none'
               }}
             >
-              <span style={{ fontSize: 16 }}>{cat.emoji}</span>
+              {cat.icon}
               {cat.label}
             </button>
           ))}

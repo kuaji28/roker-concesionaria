@@ -630,7 +630,7 @@ export default function CatalogoPublico() {
 
           {/* Google Maps button */}
           <a
-            href="https://maps.app.goo.gl/VYKu4otJrNhqwNNXA"
+            href="https://maps.app.goo.gl/VYKu4otJrNhqwNNXA?g_st=ac"
             target="_blank" rel="noreferrer"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
