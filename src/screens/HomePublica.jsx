@@ -225,15 +225,24 @@ export default function HomePublica() {
             ))}
           </nav>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <ThemeToggle />
+          <Link to="/login" style={{
+            padding: '8px 14px', borderRadius: 999,
+            border: `1px solid ${c.border}`, background: 'transparent',
+            color: c.fg2, fontSize: 13, fontWeight: 500, textDecoration: 'none',
+            display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
+          }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Ingresar
+          </Link>
           <a href={`https://wa.me/${phone}?text=${waMsg}`} target="_blank" rel="noreferrer" style={{
             display: 'inline-flex', alignItems: 'center', gap: 7,
             padding: '9px 18px', background: c.accent, color: '#fff',
             borderRadius: 999, fontSize: 13, fontWeight: 600, textDecoration: 'none',
             boxShadow: `0 4px 16px ${c.accent}44`,
           }}>
-            <WaIcon size={13} /> WhatsApp
+            <WaIcon size={13} /> {isMobile ? '' : 'WhatsApp'}
           </a>
         </div>
       </header>
