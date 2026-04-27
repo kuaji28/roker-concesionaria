@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>GH Cars · App interna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; font-family: 'Inter', sans-serif; background: #1a1a1a; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(128,128,128,.3); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="theme.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="InternalChrome.jsx"></script>
+<script type="text/babel" src="InternalDashboard.jsx"></script>
+<script type="text/babel" src="Analytics.jsx"></script>
+<script type="text/babel" src="MobileVendor.jsx"></script>
+<script type="text/babel" src="InternalApp.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+  function ScreenWrap({ children, theme }) {
+    return (
+      <div style={{
+        width: '100%', height: '100%', overflow: 'auto',
+        background: theme.colors.bg, color: theme.colors.fg,
+      }}>{children}</div>
+    );
+  }
+
+  function App() {
+    const dark = useTheme('dark');
+    const light = useTheme('light');
+
+    return (
+      <DesignCanvas title="GH Cars · App interna (sport-dark + light)">
+
+        <DCSection id="full" title="App completa con sidebar colapsable">
+          <DCArtboard id="app-dark" label="App interna (dark) · Dashboard" width={1440} height={1080}>
+            <ScreenWrap theme={dark}><InternalApp theme={dark} /></ScreenWrap>
+          </DCArtboard>
+          <DCArtboard id="app-light" label="App interna (light) · Dashboard" width={1440} height={1080}>
+            <ScreenWrap theme={light}><InternalApp theme={light} /></ScreenWrap>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="dash" title="Dashboard standalone (re-imaginado)">
+          <DCArtboard id="dash-dark" label="Dashboard (dark)" width={1280} height={1100}>
+            <ScreenWrap theme={dark}>
+              <div style={{ display: 'flex', height: '100%' }}>
+                <InternalSidebar theme={dark} active="dashboard" onNav={()=>{}} collapsed={false} setCollapsed={()=>{}} />
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <InternalTopBar theme={dark} />
+                  <InternalDashboard theme={dark} />
+                </div>
+              </div>
+            </ScreenWrap>
+          </DCArtboard>
+          <DCArtboard id="dash-light" label="Dashboard (light)" width={1280} height={1100}>
+            <ScreenWrap theme={light}>
+              <div style={{ display: 'flex', height: '100%' }}>
+                <InternalSidebar theme={light} active="dashboard" onNav={()=>{}} collapsed={false} setCollapsed={()=>{}} />
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <InternalTopBar theme={light} />
+                  <InternalDashboard theme={light} />
+                </div>
+              </div>
+            </ScreenWrap>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="cat" title="Catálogo interno (lista + tarjetas)">
+          <DCArtboard id="cat-dark" label="Catálogo lista (dark)" width={1280} height={900}>
+            <ScreenWrap theme={dark}>
+              <div style={{ display: 'flex', height: '100%' }}>
+                <InternalSidebar theme={dark} active="catalog" onNav={()=>{}} collapsed={true} setCollapsed={()=>{}} />
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <InternalTopBar theme={dark} />
+                  <InternalCatalog theme={dark} />
+                </div>
+              </div>
+            </ScreenWrap>
+          </DCArtboard>
+          <DCArtboard id="cat-light" label="Catálogo lista (light · sidebar colapsada)" width={1280} height={900}>
+            <ScreenWrap theme={light}>
+              <div style={{ display: 'flex', height: '100%' }}>
+                <InternalSidebar theme={light} active="catalog" onNav={()=>{}} collapsed={true} setCollapsed={()=>{}} />
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <InternalTopBar theme={light} />
+                  <InternalCatalog theme={light} />
+                </div>
+              </div>
+            </ScreenWrap>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="metrics" title="Métricas del catálogo público (Reportes)">
+          <DCArtboard id="metrics-dark" label="Métricas (dark) · catálogo + clicks + canales" width={1440} height={1900}>
+            <ScreenWrap theme={dark}>
+              <div style={{ display: 'flex', height: '100%' }}>
+                <InternalSidebar theme={dark} active="reports" onNav={()=>{}} collapsed={true} setCollapsed={()=>{}} />
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <InternalTopBar theme={dark} />
+                  <AnalyticsView theme={dark} />
+                </div>
+              </div>
+            </ScreenWrap>
+          </DCArtboard>
+          <DCArtboard id="metrics-light" label="Métricas (light)" width={1440} height={1900}>
+            <ScreenWrap theme={light}>
+              <div style={{ display: 'flex', height: '100%' }}>
+                <InternalSidebar theme={light} active="reports" onNav={()=>{}} collapsed={true} setCollapsed={()=>{}} />
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <InternalTopBar theme={light} />
+                  <AnalyticsView theme={light} />
+                </div>
+              </div>
+            </ScreenWrap>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="vendor" title="Mobile · App del vendedor en la calle (3 pantallas críticas)">
+          <DCArtboard id="m-cat-dark" label="Catálogo rápido (dark)" width={420} height={880}>
+            <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: '#0a0a0c' }}>
+              <MobileCatalogQuick theme={dark} />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="m-det-dark" label="Detalle + compartir (dark)" width={420} height={880}>
+            <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: '#0a0a0c' }}>
+              <MobileVehicleDetail theme={dark} />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="m-lead-dark" label="Nuevo lead (dark)" width={420} height={880}>
+            <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: '#0a0a0c' }}>
+              <MobileNewLead theme={dark} />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="m-cat-light" label="Catálogo rápido (light)" width={420} height={880}>
+            <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: '#e5e5e0' }}>
+              <MobileCatalogQuick theme={light} />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="m-lead-light" label="Nuevo lead (light)" width={420} height={880}>
+            <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: '#e5e5e0' }}>
+              <MobileNewLead theme={light} />
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="login" title="Login">
+          <DCArtboard id="login-dark" label="Login (dark)" width={1280} height={780}>
+            <InternalLogin theme={dark} />
+          </DCArtboard>
+          <DCArtboard id="login-light" label="Login (light)" width={1280} height={780}>
+            <InternalLogin theme={light} />
+          </DCArtboard>
+        </DCSection>
+
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@
       "name": "gh-cars-web",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
+      "cwd": "C:\\Users\\kuaji\\Documents\\roker_nexus\\sistemas\\concesionaria\\gh-cars-web",
       "port": 5173
     }
   ]

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>GH Cars · Sitio público</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; font-family: 'Inter', sans-serif; background: #1a1a1a; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(128,128,128,.3); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="theme.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="Chrome.jsx"></script>
+<script type="text/babel" src="Home.jsx"></script>
+<script type="text/babel" src="Catalog.jsx"></script>
+<script type="text/babel" src="Detail.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+  function ScreenWrap({ children, theme }) {
+    return (
+      <div style={{
+        width: '100%', height: '100%', overflow: 'auto',
+        background: theme.colors.bg, color: theme.colors.fg,
+      }}>{children}</div>
+    );
+  }
+
+  function PhoneStage({ children }) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: '#0a0a0c', padding: 20 }}>
+        {children}
+      </div>
+    );
+  }
+
+  function App() {
+    const themeDark = useTheme('dark');
+    const themeLight = useTheme('light');
+    const [vid, setVid] = React.useState(3);
+    const noop = (route, id) => { if (id) setVid(id); };
+
+    return (
+      <DesignCanvas title="GH Cars · Sitio público (mobile-first sport)">
+
+        {/* ── Section 1: Mobile flow (the hero) ── */}
+        <DCSection id="mobile" title="Mobile · Flujo público (dark mode)">
+          <DCArtboard id="m-home" label="Home (mobile)" width={430} height={884}>
+            <PhoneStage><HomeMobile theme={themeDark} onOpen={noop} /></PhoneStage>
+          </DCArtboard>
+          <DCArtboard id="m-catalog" label="Catálogo (mobile)" width={430} height={884}>
+            <PhoneStage><CatalogMobile theme={themeDark} onOpen={noop} /></PhoneStage>
+          </DCArtboard>
+          <DCArtboard id="m-detail" label="Detalle (mobile)" width={430} height={884}>
+            <PhoneStage><DetailMobile theme={themeDark} vehicleId={vid} onOpen={noop} /></PhoneStage>
+          </DCArtboard>
+        </DCSection>
+
+        {/* ── Section 2: Light mode mobile ── */}
+        <DCSection id="mobile-light" title="Mobile · Light mode">
+          <DCArtboard id="ml-home" label="Home (light)" width={430} height={884}>
+            <PhoneStage><HomeMobile theme={themeLight} onOpen={noop} /></PhoneStage>
+          </DCArtboard>
+          <DCArtboard id="ml-detail" label="Detalle (light)" width={430} height={884}>
+            <PhoneStage><DetailMobile theme={themeLight} vehicleId={vid} onOpen={noop} /></PhoneStage>
+          </DCArtboard>
+        </DCSection>
+
+        {/* ── Section 3: Web companion ── */}
+        <DCSection id="web" title="Web · Versión escritorio">
+          <DCArtboard id="w-home" label="Home (web · dark)" width={1280} height={1800}>
+            <ScreenWrap theme={themeDark}><HomeWeb theme={themeDark} onOpen={noop} /></ScreenWrap>
+          </DCArtboard>
+          <DCArtboard id="w-catalog" label="Catálogo (web · dark)" width={1280} height={1400}>
+            <ScreenWrap theme={themeDark}><CatalogWeb theme={themeDark} onOpen={noop} /></ScreenWrap>
+          </DCArtboard>
+          <DCArtboard id="w-detail" label="Detalle (web · dark)" width={1280} height={1300}>
+            <ScreenWrap theme={themeDark}><DetailWeb theme={themeDark} vehicleId={vid} onOpen={noop} /></ScreenWrap>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="web-light" title="Web · Light mode">
+          <DCArtboard id="wl-home" label="Home (web · light)" width={1280} height={1800}>
+            <ScreenWrap theme={themeLight}><HomeWeb theme={themeLight} onOpen={noop} /></ScreenWrap>
+          </DCArtboard>
+          <DCArtboard id="wl-detail" label="Detalle (web · light)" width={1280} height={1300}>
+            <ScreenWrap theme={themeLight}><DetailWeb theme={themeLight} vehicleId={vid} onOpen={noop} /></ScreenWrap>
+          </DCArtboard>
+        </DCSection>
+
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
