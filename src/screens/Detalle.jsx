@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar'
 import StateBadge, { UBICACION_META, RECON_META } from '../components/StateBadge'
 import Icon from '../components/Icon'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
-import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores, deleteFoto, reordenarFotos } from '../lib/supabase'
+import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores, deleteFoto, reordenarFotos, uploadFotoVehiculo, saveFotoRecord } from '../lib/supabase'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -353,6 +353,8 @@ export default function Detalle({ onLogout }) {
   const [selMode, setSelMode]   = useState(false)   // modo selección múltiple fotos
   const [selIds,  setSelIds]    = useState(new Set())
   const [deleting, setDeleting] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
   const [fotosOrden, setFotosOrden] = useState(null) // orden local para drag & drop
   const [savingOrden, setSavingOrden] = useState(false)
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -475,6 +477,24 @@ export default function Detalle({ onLogout }) {
   )
 
   const fotos = medias.filter(m => m.tipo === 'foto' && m.url)
+
+  async function handleUploadFotos(files) {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    try {
+      const esPortadaFirst = fotos.length === 0
+      for (let i = 0; i < files.length; i++) {
+        const fotoData = await uploadFotoVehiculo(v.id, files[i], 'extra')
+        await saveFotoRecord(v.id, fotoData, esPortadaFirst && i === 0)
+      }
+      reloadVehiculo()
+    } catch (err) {
+      alert('Error al subir foto: ' + (err.message || err))
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const gastosTotalARS  = gastos.filter(g => g.moneda === 'ARS').reduce((s, g) => s + Number(g.monto || 0), 0)
   const gastosTotalUSD  = gastos.filter(g => g.moneda === 'USD').reduce((s, g) => s + Number(g.monto || 0), 0)
@@ -834,12 +854,42 @@ export default function Detalle({ onLogout }) {
 
               {/* ── TAB: FOTOS ── */}
               {tab === 'fotos' && (
-                fotos.length === 0
-                  ? <div className="banner info"><Icon name="info" size={16} />Sin fotos cargadas.</div>
+                <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={e => handleUploadFotos(Array.from(e.target.files))}
+                />
+                {fotos.length === 0
+                  ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
+                      <div style={{ fontSize: 40 }}>📷</div>
+                      <p style={{ color: 'var(--c-fg-3)', margin: 0 }}>Sin fotos cargadas.</p>
+                      <button
+                        className="btn btn-primary"
+                        disabled={uploading}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {uploading ? 'Subiendo…' : '+ Agregar fotos'}
+                      </button>
+                    </div>
+                  )
                   : (
                     <>
                       {/* Barra de herramientas fotos */}
                       <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                        {!selMode && (
+                          <button
+                            className="btn btn-primary"
+                            disabled={uploading}
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            {uploading ? 'Subiendo…' : '+ Agregar fotos'}
+                          </button>
+                        )}
                         {aiConfigured() && !selMode && (
                           <button className="btn secondary" onClick={() => runAI('fotos')}>
                             <Icon name="image" size={14} /> Analizar estado con IA
