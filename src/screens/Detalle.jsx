@@ -5,7 +5,7 @@ import StateBadge, { UBICACION_META, RECON_META } from '../components/StateBadge
 import Icon from '../components/Icon'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
-import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores, deleteFoto, reordenarFotos, uploadFotoVehiculo, saveFotoRecord } from '../lib/supabase'
+import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores, deleteFotoVehiculo, reordenarFotos, uploadFotoVehiculo, saveFotoRecord } from '../lib/supabase'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -354,6 +354,7 @@ export default function Detalle({ onLogout }) {
   const [selIds,  setSelIds]    = useState(new Set())
   const [deleting, setDeleting] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef(null)
   const [fotosOrden, setFotosOrden] = useState(null) // orden local para drag & drop
   const [savingOrden, setSavingOrden] = useState(false)
@@ -863,11 +864,17 @@ export default function Detalle({ onLogout }) {
                   style={{ display: 'none' }}
                   onChange={e => handleUploadFotos(Array.from(e.target.files))}
                 />
+                <div
+                  onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={e => { e.preventDefault(); setDragOver(false); handleUploadFotos(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))) }}
+                  style={dragOver ? { outline: '2px dashed var(--c-accent)', borderRadius: 'var(--r-lg)', background: 'rgba(var(--c-accent-rgb, 99,102,241),.08)', padding: 4 } : undefined}
+                >
                 {fotos.length === 0
                   ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
                       <div style={{ fontSize: 40 }}>📷</div>
-                      <p style={{ color: 'var(--c-fg-3)', margin: 0 }}>Sin fotos cargadas.</p>
+                      <p style={{ color: 'var(--c-fg-3)', margin: 0 }}>{dragOver ? 'Soltá las fotos acá' : 'Sin fotos cargadas. Arrastrá imágenes aquí o usá el botón.'}</p>
                       <button
                         className="btn btn-primary"
                         disabled={uploading}
@@ -918,7 +925,7 @@ export default function Detalle({ onLogout }) {
                                 setDeleting(true)
                                 await Promise.all([...selIds].map(id => {
                                   const m = fotos.find(f => f.id === id)
-                                  return deleteFoto(id, m?.cloudinary_public_id)
+                                  return deleteFotoVehiculo(id, m?.storage_path)
                                 }))
                                 setDeleting(false)
                                 setSelMode(false)
@@ -1035,6 +1042,7 @@ export default function Detalle({ onLogout }) {
                     </>
                   )
                 }
+                </div>
                 </>
               )}
             </div>
