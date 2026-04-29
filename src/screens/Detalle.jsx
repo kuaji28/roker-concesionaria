@@ -1034,6 +1034,8 @@ export default function Detalle({ onLogout }) {
                       })()}
                     </>
                   )
+                }
+                </>
               )}
             </div>
 
