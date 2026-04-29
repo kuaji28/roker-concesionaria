@@ -69,7 +69,7 @@ export default function DetallePublico() {
         const tipoFiltro = vehiculo.carroceria || vehiculo.tipo
         let q = supabase
           .from('vehiculos')
-          .select('id,marca,modelo,anio,precio_lista,precio_base,km_hs,transmision')
+          .select('id,marca,modelo,anio,precio_lista,precio_base,moneda,km_hs,transmision')
           .eq('estado', 'disponible')
           .neq('id', id)
           .limit(4)
@@ -115,7 +115,7 @@ export default function DetallePublico() {
   async function compartir() {
     const url = window.location.href
     const nombre = v ? `${v.marca} ${v.modelo} ${v.anio}` : 'Vehículo'
-    const precio = v?.precio_lista ? ` — USD ${v.precio_lista.toLocaleString('es-AR')}` : ''
+    const precio = v?.precio_lista ? ` — ${v.moneda || 'USD'} ${Number(v.precio_lista).toLocaleString('es-AR')}` : ''
     trackVehiculoAction(id, 'compartir', null, { isPublic: true })
     if (navigator.share) {
       try {
@@ -142,9 +142,14 @@ export default function DetallePublico() {
     touchStartX.current = null
   }
 
-  const foto     = fotos[idx]
-  const precioUSD = v?.precio_lista || v?.precio_base
-  const precioARS = precioUSD && tc ? (precioUSD * tc).toLocaleString('es-AR') : null
+  const foto      = fotos[idx]
+  const moneda    = v?.moneda || 'USD'
+  const precioNum = v?.precio_lista || v?.precio_base
+  const precioSec = precioNum && tc
+    ? moneda === 'USD'
+      ? (precioNum * tc).toLocaleString('es-AR')
+      : Math.round(precioNum / tc).toLocaleString('es-AR')
+    : null
 
   const specs = [
     { label: 'Año',         value: v?.anio },
@@ -315,11 +320,11 @@ export default function DetallePublico() {
               <div style={{ background: 'var(--c-card)', borderRadius: 12,
                             padding: '14px 16px', border: '1px solid var(--c-border)' }}>
                 <div style={{ fontSize: 26, fontWeight: 800 }}>
-                  {precioUSD ? `USD ${precioUSD.toLocaleString('es-AR')}` : 'Precio a consultar'}
+                  {precioNum ? `${moneda} ${Number(precioNum).toLocaleString('es-AR')}` : 'Precio a consultar'}
                 </div>
-                {precioARS && (
+                {precioSec && (
                   <div style={{ fontSize: 12, color: 'var(--c-fg-3)', marginTop: 2 }}>
-                    ≈ ARS {precioARS} · TC ${tc.toLocaleString('es-AR')}
+                    ≈ {moneda === 'USD' ? 'ARS' : 'USD'} {precioSec} · TC {tc.toLocaleString('es-AR')}
                   </div>
                 )}
               </div>
@@ -404,7 +409,7 @@ export default function DetallePublico() {
             </div>
 
             <div style={{ padding: '16px 16px 0', textAlign: 'center', color: 'var(--c-fg-3)', fontSize: 11 }}>
-              Precios en USD · ARS al dólar blue
+              Precios en {moneda} · conversión al dólar blue
             </div>
 
             {/* Similares mobile */}
@@ -430,7 +435,7 @@ export default function DetallePublico() {
                         <div style={{ padding: '8px 10px' }}>
                           <p style={{ margin: 0, fontSize: 12, fontWeight: 700, lineHeight: 1.2 }}>{s.marca} {s.modelo}</p>
                           <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 800 }}>
-                            {precUSD ? `USD ${precUSD.toLocaleString('es-AR')}` : 'Consultar'}
+                            {precUSD ? `${s.moneda || 'USD'} ${Number(precUSD).toLocaleString('es-AR')}` : 'Consultar'}
                           </p>
                         </div>
                       </div>
@@ -599,11 +604,11 @@ export default function DetallePublico() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div className="card" style={{ padding: '20px 18px' }}>
                 <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 2 }}>
-                  {precioUSD ? `USD ${precioUSD.toLocaleString('es-AR')}` : 'Precio a consultar'}
+                  {precioNum ? `${moneda} ${Number(precioNum).toLocaleString('es-AR')}` : 'Precio a consultar'}
                 </div>
-                {precioARS && (
+                {precioSec && (
                   <div style={{ fontSize: 13, color: 'var(--c-fg-3)', marginBottom: 16 }}>
-                    ≈ ARS {precioARS} · TC ${tc.toLocaleString('es-AR')}
+                    ≈ {moneda === 'USD' ? 'ARS' : 'USD'} {precioSec} · TC {tc.toLocaleString('es-AR')}
                   </div>
                 )}
                 <button
@@ -716,7 +721,7 @@ export default function DetallePublico() {
                         <p style={{ margin: 0, fontSize: 11, color: 'var(--c-fg-2)', textTransform: 'uppercase', letterSpacing: '.08em' }}>{s.marca}</p>
                         <p style={{ margin: '3px 0 8px', fontSize: 15, fontWeight: 700 }}>{s.modelo} {s.anio}</p>
                         <p style={{ margin: 0, fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em' }}>
-                          {precUSD ? `USD ${precUSD.toLocaleString('es-AR')}` : 'Consultar'}
+                          {precUSD ? `${s.moneda || 'USD'} ${Number(precUSD).toLocaleString('es-AR')}` : 'Consultar'}
                         </p>
                       </div>
                     </div>

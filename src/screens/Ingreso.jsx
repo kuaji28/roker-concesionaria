@@ -148,6 +148,16 @@ function Step1({ form, set, vendedores, moneda, setMoneda }) {
         <input className="input" type="number" placeholder={form.precio_base || (cur === 'USD' ? '20000' : '22000000')}
           value={form.precio_lista || ''} onChange={f('precio_lista')} min={0} />
       </FormField>
+      {cur === 'USD' && (Number(form.precio_base) > 100000 || Number(form.precio_lista) > 100000) && (
+        <div style={{ gridColumn: '1 / -1', background: '#FFF3CD', border: '1px solid #FFC107', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#856404', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <span style={{ fontSize: 16, lineHeight: 1 }}>⚠️</span>
+          <span>
+            <strong>Este precio parece estar en ARS, no en USD.</strong><br />
+            Los autos se cargan en dólares (ej: 15.000 para un auto de USD 15.000).
+            Si el precio es en pesos, seleccioná <strong>ARS — Pesos</strong> arriba.
+          </span>
+        </div>
+      )}
       <FormField label={`Costo compra (${cur})`}>
         <input className="input" type="number" placeholder={cur === 'USD' ? '15000' : '16000000'} value={form.costo_compra} onChange={f('costo_compra')} min={0} />
       </FormField>
@@ -903,6 +913,7 @@ export default function Ingreso({ onLogout }) {
         precio_base: Number(form.precio_base),
         precio_lista: form.precio_lista ? Number(form.precio_lista) : null,
         costo_compra: form.costo_compra ? Number(form.costo_compra) : null,
+        moneda: moneda || 'USD',
         origen: form.origen || 'compra_directa',
         vendedor_ingreso_id: (form.responsable_id && form.responsable_id !== 'gh_cars') ? form.responsable_id : null,
         nro_motor: form.nro_motor || null,
@@ -928,6 +939,23 @@ export default function Ingreso({ onLogout }) {
         const fotoData = await uploadFotoVehiculo(v.id, extraFiles[i], 'extra')
         await saveFotoRecord(v.id, fotoData, false)
       }
+      // Notificar por Telegram (fire-and-forget — no bloquea el flujo si falla)
+      try {
+        const AI_URL = import.meta.env.VITE_AI_API_URL || 'https://gh-cars-api.fly.dev'
+        fetch(`${AI_URL}/notify/vehicle-added`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: v.id,
+            marca: payload.marca || '',
+            modelo: payload.modelo || '',
+            anio: payload.anio || null,
+            precio_base: payload.precio_base || null,
+            patente: payload.patente || null,
+            ingresado_por: form.responsable_id || null,
+          }),
+        }).catch(() => {}) // silencio si el endpoint no responde — no es crítico
+      } catch (_) {}
       setSaving(false)
       try { localStorage.removeItem(DRAFT_KEY) } catch {}
       setHasDraft(false)

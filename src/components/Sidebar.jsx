@@ -149,6 +149,19 @@ export default function Sidebar({ tc }) {
                 <Icon name={n.icon} size={18} />{n.label}
               </NavLink>
             ))}
+            <div className="sep">Sitio web</div>
+            <a
+              href="/p/home"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Ver el sitio público como lo ve un cliente"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              Ver sitio web ↗
+            </a>
             {user?.rol === 'dueno' && (
               <>
                 <div className="sep">Admin</div>
@@ -256,6 +269,21 @@ export default function Sidebar({ tc }) {
             {!collapsed && <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.label}</span>}
           </NavLink>
         ))}
+        {!collapsed && <div className="sep">Sitio web</div>}
+        {collapsed && <div style={{ height: 1, background: 'var(--c-border)', margin: '6px 12px' }} />}
+        <a
+          href="/p/home"
+          target="_blank"
+          rel="noopener noreferrer"
+          title={collapsed ? 'Ver sitio web' : 'Ver el sitio público como lo ve un cliente'}
+          style={collapsed ? { justifyContent: 'center', padding: '0 10px' } : undefined}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          {!collapsed && <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Ver sitio web ↗</span>}
+        </a>
         {user?.rol === 'dueno' && (
           <>
             {!collapsed && <div className="sep">Admin</div>}

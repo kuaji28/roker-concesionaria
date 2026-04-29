@@ -78,8 +78,13 @@ function AnimatedCounter({ target, suffix = '', active }) {
 }
 
 function VehicleCard({ v, foto, tc, waNumber, c, navigate }) {
-  const precioUSD = v.precio_lista || v.precio_base
-  const precioARS = precioUSD && tc ? Math.round(precioUSD * tc).toLocaleString('es-AR') : null
+  const moneda    = v.moneda || 'USD'
+  const precioNum = v.precio_lista || v.precio_base
+  const precioSec = precioNum && tc
+    ? moneda === 'USD'
+      ? Math.round(precioNum * tc).toLocaleString('es-AR')
+      : Math.round(precioNum / tc).toLocaleString('es-AR')
+    : null
   const msg = encodeURIComponent(
     `Hola! Vi el *${v.marca} ${v.modelo} ${v.anio}*${v.version ? ` (${v.version})` : ''} en el catálogo de GH Cars. ¿Sigue disponible? 🚗`
   )
@@ -113,12 +118,12 @@ function VehicleCard({ v, foto, tc, waNumber, c, navigate }) {
           <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                <span style={{ fontSize: 11, color: c.fg2 }}>USD</span>
+                <span style={{ fontSize: 11, color: c.fg2 }}>{moneda}</span>
                 <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: c.fg }}>
-                  {precioUSD ? fmt(precioUSD) : 'Consultar'}
+                  {precioNum ? fmt(precioNum) : 'Consultar'}
                 </span>
               </div>
-              {precioARS && <p style={{ fontSize: 11, color: c.fg3, margin: '2px 0 0' }}>≈ ARS {precioARS}</p>}
+              {precioSec && <p style={{ fontSize: 11, color: c.fg3, margin: '2px 0 0' }}>≈ {moneda === 'USD' ? 'ARS' : 'USD'} {precioSec}</p>}
             </div>
             <a
               href={`https://wa.me/${waNumber}?text=${msg}`}
@@ -172,7 +177,7 @@ export default function HomePublica() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('vehiculos').select('id,marca,modelo,version,anio,km_hs,precio_lista,precio_base,transmision,combustible,color,tipo').eq('estado', 'disponible').order('created_at', { ascending: false }).limit(7),
+      supabase.from('vehiculos').select('id,marca,modelo,version,anio,km_hs,precio_lista,precio_base,moneda,transmision,combustible,color,tipo').eq('estado', 'disponible').order('created_at', { ascending: false }).limit(7),
       supabase.from('vehiculos').select('id', { count: 'exact' }).eq('estado', 'disponible'),
     ]).then(async ([{ data: vehs }, { count }]) => {
       if (!vehs) return setLoading(false)
@@ -332,7 +337,7 @@ export default function HomePublica() {
                 <h3 style={{ fontSize: 'clamp(28px,4vw,40px)', fontWeight: 800, margin: '6px 0 4px', letterSpacing: '-0.02em' }}>{featured.modelo}</h3>
                 {featured.version && <p style={{ fontSize: 13, color: 'rgba(255,255,255,.65)', margin: 0 }}>{featured.version}</p>}
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 14 }}>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,.6)' }}>USD</span>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,.6)' }}>{featured.moneda || 'USD'}</span>
                   <span style={{ fontSize: 'clamp(28px,3.5vw,36px)', fontWeight: 800, letterSpacing: '-0.02em' }}>
                     {featured.precio_lista || featured.precio_base ? fmt(featured.precio_lista || featured.precio_base) : 'Consultar'}
                   </span>

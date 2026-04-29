@@ -34,7 +34,7 @@ async function fetchTc() {
 async function getVehiculosPublicos({ tipo, anioMin, precioMax, kmMax }) {
   let q = supabase
     .from('vehiculos')
-    .select('id,tipo,carroceria,marca,modelo,anio,version,km_hs,precio_lista,precio_base,transmision,color,combustible')
+    .select('id,tipo,carroceria,marca,modelo,anio,version,km_hs,precio_lista,precio_base,moneda,transmision,color,combustible')
     .eq('estado', 'disponible')
     .order('created_at', { ascending: false })
 
@@ -92,8 +92,13 @@ const IcoCombustible = () => (
 /* ─── Card ──────────────────────────────────────────────────── */
 function VehicleCard({ v, foto, tc, waNumber, c }) {
   const navigate  = useNavigate()
-  const precioUSD = v.precio_lista || v.precio_base
-  const precioARS = precioUSD && tc ? Math.round(precioUSD * tc).toLocaleString('es-AR') : null
+  const moneda    = v.moneda || 'USD'
+  const precioNum = v.precio_lista || v.precio_base
+  const precioSec = precioNum && tc
+    ? moneda === 'USD'
+      ? `≈ ARS ${Math.round(precioNum * tc).toLocaleString('es-AR')}`
+      : `≈ USD ${Math.round(precioNum / tc).toLocaleString('es-AR')}`
+    : null
 
   function consultarWA(e) {
     e.stopPropagation()
@@ -184,11 +189,11 @@ function VehicleCard({ v, foto, tc, waNumber, c }) {
         {/* Precio */}
         <div style={{ marginBottom: 12 }}>
           <p style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: c.fg }}>
-            {precioUSD ? `USD ${precioUSD.toLocaleString('es-AR')}` : 'Consultar'}
+            {precioNum ? `${moneda} ${Number(precioNum).toLocaleString('es-AR')}` : 'Consultar'}
           </p>
-          {precioARS && (
+          {precioSec && (
             <p style={{ margin: '3px 0 0', fontSize: 11, color: c.fg3 }}>
-              ≈ ARS {precioARS}
+              {precioSec}
             </p>
           )}
         </div>
