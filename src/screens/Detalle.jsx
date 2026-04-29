@@ -497,6 +497,62 @@ export default function Detalle({ onLogout }) {
     }
   }
 
+  function openGooglePicker() {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    if (!clientId) { alert('Google Drive no configurado. Falta VITE_GOOGLE_CLIENT_ID.'); return }
+    const loadScript = (src) => new Promise((res, rej) => {
+      if (document.querySelector(`script[src="${src}"]`)) return res()
+      const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej
+      document.head.appendChild(s)
+    })
+    Promise.all([
+      loadScript('https://apis.google.com/js/api.js'),
+      loadScript('https://accounts.google.com/gsi/client'),
+    ]).then(() => {
+      window.gapi.load('picker', () => {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'https://www.googleapis.com/auth/drive.readonly',
+          callback: (tokenResponse) => {
+            if (tokenResponse.error) return
+            const token = tokenResponse.access_token
+            const picker = new window.google.picker.PickerBuilder()
+              .addView(new window.google.picker.DocsView(window.google.picker.ViewId.DOCS_IMAGES)
+                .setIncludeFolders(true)
+                .setSelectFolderEnabled(false))
+              .addView(new window.google.picker.DocsView()
+                .setIncludeFolders(true)
+                .setMimeTypes('image/jpeg,image/png,image/webp,image/gif'))
+              .setOAuthToken(token)
+              .setDeveloperKey(import.meta.env.VITE_GOOGLE_API_KEY || '')
+              .enableFeature(window.google.picker.Feature.MULTISELECT_ENABLED)
+              .setCallback(async (data) => {
+                if (data.action !== window.google.picker.Action.PICKED) return
+                setUploading(true)
+                try {
+                  const files = await Promise.all(data.docs.map(async doc => {
+                    const res = await fetch(
+                      `https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`,
+                      { headers: { Authorization: `Bearer ${token}` } }
+                    )
+                    const blob = await res.blob()
+                    return new File([blob], doc.name, { type: blob.type || 'image/jpeg' })
+                  }))
+                  await handleUploadFotos(files)
+                } catch (err) {
+                  alert('Error al descargar desde Drive: ' + (err.message || err))
+                  setUploading(false)
+                }
+              })
+              .build()
+            picker.setVisible(true)
+          },
+        })
+        tokenClient.requestAccessToken({ prompt: '' })
+      })
+    })
+  }
+
   const gastosTotalARS  = gastos.filter(g => g.moneda === 'ARS').reduce((s, g) => s + Number(g.monto || 0), 0)
   const gastosTotalUSD  = gastos.filter(g => g.moneda === 'USD').reduce((s, g) => s + Number(g.monto || 0), 0)
   const gastosEquivUSD  = gastosTotalUSD + (TC > 0 ? gastosTotalARS / TC : 0)
@@ -875,13 +931,14 @@ export default function Detalle({ onLogout }) {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
                       <div style={{ fontSize: 40 }}>📷</div>
                       <p style={{ color: 'var(--c-fg-3)', margin: 0 }}>{dragOver ? 'Soltá las fotos acá' : 'Sin fotos cargadas. Arrastrá imágenes aquí o usá el botón.'}</p>
-                      <button
-                        className="btn btn-primary"
-                        disabled={uploading}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        {uploading ? 'Subiendo…' : '+ Agregar fotos'}
-                      </button>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <button className="btn btn-primary" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+                          {uploading ? 'Subiendo…' : '+ Desde la computadora'}
+                        </button>
+                        <button className="btn secondary" disabled={uploading} onClick={openGooglePicker}>
+                          📂 Desde Google Drive
+                        </button>
+                      </div>
                     </div>
                   )
                   : (
@@ -889,13 +946,14 @@ export default function Detalle({ onLogout }) {
                       {/* Barra de herramientas fotos */}
                       <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                         {!selMode && (
-                          <button
-                            className="btn btn-primary"
-                            disabled={uploading}
-                            onClick={() => fileInputRef.current?.click()}
-                          >
-                            {uploading ? 'Subiendo…' : '+ Agregar fotos'}
-                          </button>
+                          <>
+                            <button className="btn btn-primary" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+                              {uploading ? 'Subiendo…' : '+ Computadora'}
+                            </button>
+                            <button className="btn secondary" disabled={uploading} onClick={openGooglePicker}>
+                              📂 Drive
+                            </button>
+                          </>
                         )}
                         {aiConfigured() && !selMode && (
                           <button className="btn secondary" onClick={() => runAI('fotos')}>
