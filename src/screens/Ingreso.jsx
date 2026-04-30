@@ -413,6 +413,63 @@ function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFi
   const dragIdx = useRef(null)
   const [dragFromIdx, setDragFromIdx] = useState(null)
   const [dragOverIdx, setDragOverIdx] = useState(null)
+  const [driveLoading, setDriveLoading] = useState(false)
+
+  function openGooglePickerExtra() {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    if (!clientId) { alert('Google Drive no configurado. Falta VITE_GOOGLE_CLIENT_ID.'); return }
+    const loadScript = src => new Promise((res, rej) => {
+      if (document.querySelector(`script[src="${src}"]`)) return res()
+      const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej
+      document.head.appendChild(s)
+    })
+    Promise.all([
+      loadScript('https://apis.google.com/js/api.js'),
+      loadScript('https://accounts.google.com/gsi/client'),
+    ]).then(() => {
+      window.gapi.load('picker', () => {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'https://www.googleapis.com/auth/drive.readonly',
+          callback: async tokenResponse => {
+            if (tokenResponse.error) return
+            const token = tokenResponse.access_token
+            const picker = new window.google.picker.PickerBuilder()
+              .addView(new window.google.picker.DocsView(window.google.picker.ViewId.DOCS_IMAGES)
+                .setIncludeFolders(true).setSelectFolderEnabled(false))
+              .addView(new window.google.picker.DocsView()
+                .setIncludeFolders(true)
+                .setMimeTypes('image/jpeg,image/png,image/webp,image/gif'))
+              .setOAuthToken(token)
+              .setDeveloperKey(import.meta.env.VITE_GOOGLE_API_KEY || '')
+              .enableFeature(window.google.picker.Feature.MULTISELECT_ENABLED)
+              .setCallback(async data => {
+                if (data.action !== window.google.picker.Action.PICKED) return
+                setDriveLoading(true)
+                try {
+                  const files = await Promise.all(data.docs.map(async doc => {
+                    const res = await fetch(
+                      `https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`,
+                      { headers: { Authorization: `Bearer ${token}` } }
+                    )
+                    const blob = await res.blob()
+                    return new File([blob], doc.name, { type: blob.type || 'image/jpeg' })
+                  }))
+                  handleExtraFiles(files)
+                } catch (err) {
+                  alert('Error al descargar desde Drive: ' + (err.message || err))
+                } finally {
+                  setDriveLoading(false)
+                }
+              })
+              .build()
+            picker.setVisible(true)
+          },
+        })
+        tokenClient.requestAccessToken({ prompt: '' })
+      })
+    })
+  }
   const requiredCount = SHOT_LIST.filter(s => s.required).length
   const uploadedRequired = SHOT_LIST.filter(s => s.required && shotFiles[s.key]).length
   const pct = requiredCount > 0 ? (uploadedRequired / requiredCount) * 100 : 0
@@ -564,15 +621,33 @@ function Step2({ shotFiles, setShotFiles, shotPreviews, setShotPreviews, extraFi
         <div
           onDrop={e => { e.preventDefault(); handleExtraFiles(e.dataTransfer.files) }}
           onDragOver={e => e.preventDefault()}
-          onClick={() => document.getElementById('foto-extra-input').click()}
           style={{
             border: '2px dashed var(--c-border)', borderRadius: 'var(--r)',
-            padding: '16px 24px', textAlign: 'center', cursor: 'pointer',
+            padding: '12px 24px', textAlign: 'center',
             color: 'var(--c-fg-3)', marginBottom: extraPreviews.length ? 10 : 0,
           }}
         >
           <Icon name="image" size={20} style={{ stroke: 'var(--c-fg-3)', display: 'block', margin: '0 auto 6px' }} />
-          <div style={{ fontSize: 13 }}>Arrastrá o hacé click para agregar fotos extra</div>
+          <div style={{ fontSize: 12, marginBottom: 10 }}>Arrastrá fotos acá, o elegí el origen:</div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ fontSize: 12, padding: '5px 14px' }}
+              onClick={() => document.getElementById('foto-extra-input').click()}
+            >
+              + Computadora
+            </button>
+            <button
+              type="button"
+              className="btn secondary"
+              style={{ fontSize: 12, padding: '5px 14px' }}
+              disabled={driveLoading}
+              onClick={openGooglePickerExtra}
+            >
+              {driveLoading ? 'Descargando…' : '📂 Drive'}
+            </button>
+          </div>
           <input id="foto-extra-input" type="file" accept="image/*" multiple style={{ display: 'none' }}
             onChange={e => { handleExtraFiles(e.target.files); e.target.value = '' }} />
         </div>
