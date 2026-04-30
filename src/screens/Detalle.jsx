@@ -1009,6 +1009,28 @@ export default function Detalle({ onLogout }) {
                           <span style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: 12, padding: '3px 10px', borderRadius: 999 }}>
                             {foto + 1} / {fotos.length}
                           </span>
+                          {foto === 0 ? (
+                            <span style={{ position: 'absolute', top: 10, left: 10, background: 'var(--c-accent)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                              ⭐ Portada
+                            </span>
+                          ) : (
+                            <button
+                              disabled={savingOrden}
+                              onClick={async () => {
+                                setSavingOrden(true)
+                                const current = fotosOrden || fotos
+                                const newOrder = [current[foto], ...current.filter((_, i) => i !== foto)]
+                                await reordenarFotos(newOrder.map(f => f.id))
+                                setSavingOrden(false)
+                                setFotosOrden(null)
+                                setFoto(0)
+                                reloadVehiculo()
+                              }}
+                              style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(0,0,0,.65)', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: savingOrden ? 'wait' : 'pointer', color: '#fff', fontSize: 12, fontWeight: 600 }}
+                            >
+                              {savingOrden ? '⏳ Guardando…' : '⭐ Hacer portada'}
+                            </button>
+                          )}
                           {foto > 0 && (
                             <button onClick={() => setFoto(f => f - 1)} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Icon name="chev-l" size={18} />
@@ -1030,7 +1052,7 @@ export default function Detalle({ onLogout }) {
                           <>
                             {!selMode && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, fontSize: 12, color: 'var(--c-fg-3)' }}>
-                                <span>↕ Arrastrá para reordenar · La primera foto es la portada</span>
+                                <span>Hacé clic en una foto y tocá "⭐ Hacer portada" · También podés arrastrar para reordenar</span>
                                 {hasChanges && (
                                   <button
                                     className="btn btn-primary"
