@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 
-export default function TiltCard({ children, style, className, intensity = 1 }) {
+export default function TiltCard({ children, style, className, intensity = 1, ...rest }) {
   const ref = useRef(null)
   const [t, setT] = useState({ rx: 0, ry: 0, mx: 50, my: 50, hover: false })
 
@@ -27,6 +27,7 @@ export default function TiltCard({ children, style, className, intensity = 1 }) 
     <div
       ref={ref}
       className={className}
+      {...rest}
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
       style={{

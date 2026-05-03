@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Icon from './components/Icon'
 import { useIsMobile } from './hooks/useIsMobile'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 
 function BottomNavItem({ to, icon, label, end }) {
   return (
@@ -159,6 +165,7 @@ export default function App() {
     <HelmetProvider>
     <ThemeProvider>
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Rutas públicas — sin auth */}
         <Route path="/p/home"            element={<HomePublica />} />
