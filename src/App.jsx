@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Icon from './components/Icon'
@@ -6,7 +6,7 @@ import { useIsMobile } from './hooks/useIsMobile'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  useLayoutEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }) }, [pathname])
   return null
 }
 
