@@ -44,20 +44,29 @@ export default function VehicleCard({ v }) {
             <StateBadge ubicacion={v.ubicacion} small />
           </div>
         )}
-        <div className="price">
-          <span className="cur">USD</span>
-          {v.precio_lista
-            ? v.precio_lista.toLocaleString('es-AR')
-            : v.precio_base?.toLocaleString('es-AR')}
-        </div>
-        {canSeePrecioBase(rol) && v.precio_lista && v.precio_base && v.precio_base !== v.precio_lista && (
-          <div style={{ fontSize: 11, color: 'var(--c-fg-3)' }}>
-            Piso: USD {v.precio_base?.toLocaleString('es-AR')}
-          </div>
-        )}
-        <div className="ars">
-          $ {(((v.precio_lista || v.precio_base) || 0) * TC).toLocaleString('es-AR')} ARS
-        </div>
+        {(() => {
+          const moneda = v.moneda || 'USD'
+          const precioMain = v.precio_lista || v.precio_base || 0
+          const precioARS = moneda === 'ARS' ? precioMain : precioMain * TC
+          return <>
+            <div className="price">
+              <span className="cur">{moneda}</span>
+              {v.precio_lista
+                ? v.precio_lista.toLocaleString('es-AR')
+                : v.precio_base?.toLocaleString('es-AR')}
+            </div>
+            {canSeePrecioBase(rol) && v.precio_lista && v.precio_base && v.precio_base !== v.precio_lista && (
+              <div style={{ fontSize: 11, color: 'var(--c-fg-3)' }}>
+                Piso: {moneda} {v.precio_base?.toLocaleString('es-AR')}
+              </div>
+            )}
+            {moneda === 'USD' && (
+              <div className="ars">
+                $ {precioARS.toLocaleString('es-AR')} ARS
+              </div>
+            )}
+          </>
+        })()}
       </div>
     </div>
   )

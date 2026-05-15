@@ -5,7 +5,7 @@ import StateBadge, { UBICACION_META, RECON_META } from '../components/StateBadge
 import Icon from '../components/Icon'
 import Modal from '../components/Modal'
 import FormField from '../components/FormField'
-import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores, deleteFotoVehiculo, reordenarFotos, uploadFotoVehiculo, saveFotoRecord } from '../lib/supabase'
+import { getVehiculo, updateVehiculo, getGastosByVehiculo, createGasto, getReservasByVehiculo, createReserva, getDocumentacion, upsertDocumentacion, getHistorialVehiculo, addHistorialEntry, iniciarNegociacion, liberarNegociacion, getVendedores, deleteFotoVehiculo, reordenarFotos, setFotoPortada, uploadFotoVehiculo, saveFotoRecord } from '../lib/supabase'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -582,7 +582,7 @@ export default function Detalle({ onLogout }) {
       link_ml: v.link_ml || '', link_drive: v.link_drive || '',
       ubicacion: v.ubicacion || 'showroom',
       estado_recon: v.estado_recon || 'ingresado',
-      edit_moneda: 'USD',
+      edit_moneda: v.moneda || 'USD',
     })
     setEditing(true)
   }
@@ -593,15 +593,15 @@ export default function Detalle({ onLogout }) {
     setSaving(true)
     try {
       const moneda = editForm.edit_moneda || 'USD'
-      const divisor = moneda === 'ARS' && TC > 0 ? TC : 1
       const { edit_moneda, ...rest } = editForm
       await updateVehiculo(v.id, {
         ...rest,
+        moneda,
         anio: Number(editForm.anio),
         km_hs: editForm.km_hs ? Number(editForm.km_hs) : null,
-        precio_lista: editForm.precio_lista ? Math.round(Number(editForm.precio_lista) / divisor) : null,
-        precio_base: editForm.precio_base ? Math.round(Number(editForm.precio_base) / divisor) : null,
-        costo_compra: editForm.costo_compra ? Math.round(Number(editForm.costo_compra) / divisor) : null,
+        precio_lista: editForm.precio_lista ? Math.round(Number(editForm.precio_lista)) : null,
+        precio_base: editForm.precio_base ? Math.round(Number(editForm.precio_base)) : null,
+        costo_compra: editForm.costo_compra ? Math.round(Number(editForm.costo_compra)) : null,
       })
       setEditing(false)
       getVehiculo(id).then(setData)
@@ -1019,8 +1019,12 @@ export default function Detalle({ onLogout }) {
                               onClick={async () => {
                                 setSavingOrden(true)
                                 const current = fotosOrden || fotos
-                                const newOrder = [current[foto], ...current.filter((_, i) => i !== foto)]
-                                await reordenarFotos(newOrder.map(f => f.id))
+                                const selected = current[foto]
+                                const newOrder = [selected, ...current.filter((_, i) => i !== foto)]
+                                await Promise.all([
+                                  reordenarFotos(newOrder.map(f => f.id)),
+                                  setFotoPortada(v.id, selected.id),
+                                ])
                                 setSavingOrden(false)
                                 setFotosOrden(null)
                                 setFoto(0)

@@ -90,7 +90,7 @@ export async function getVehiculos({ estado, tipo, search } = {}) {
 export async function getVehiculo(id) {
   const [{ data: v }, { data: medias }] = await Promise.all([
     supabase.from('vehiculos').select('*').eq('id', id).single(),
-    supabase.from('media').select('*').eq('vehiculo_id', id).order('orden'),
+    supabase.from('media').select('*').eq('vehiculo_id', id).order('es_portada', { ascending: false }).order('orden'),
   ])
   return { vehiculo: v, medias: medias || [] }
 }
