@@ -109,7 +109,7 @@ body { margin: 0; background: var(--c-bg); color: var(--c-fg); font-family: var(
 /* ────────────────────────────────────────────────────────────── */
 /*  SHELL                                                         */
 /* ────────────────────────────────────────────────────────────── */
-.app { display: grid; grid-template-columns: auto 1fr; min-height: 100vh; }
+.app { display: grid; grid-template-columns: auto 1fr; min-height: 100vh; min-height: 100dvh; }
 
 /* ── Sidebar ─ monochrome white, active uses left border #00C48C */
 .side {
@@ -117,7 +117,11 @@ body { margin: 0; background: var(--c-bg); color: var(--c-fg); font-family: var(
   border-right: 1px solid var(--c-border);
   padding: 16px 12px;
   display: flex; flex-direction: column; gap: 4px;
-  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  position: sticky; top: 0;
+  height: 100vh;        /* fallback */
+  height: 100dvh;       /* dynamic viewport — respeta barras iOS/Android */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .brand {
   display: flex; align-items: center; gap: 10px;
@@ -806,6 +810,32 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   }
   .login-grid > div:last-child {
     min-height: 100vh;
+    min-height: 100dvh;
     padding: 32px 24px;
+  }
+}
+
+/* ─── adapta-movil (24/05/2026) — Cross-platform mobile guard ──────────
+   Aplicado por skill adapta-movil v2. Patrones canónicos validados en producción. */
+
+/* CP1 — Detección de input device */
+@media (any-pointer: coarse) {
+  /* Touch targets ≥48px en dispositivos táctiles (Apple HIG + Material) */
+  button, [role="button"], .nav-item, .filter-row select, .filter-row input {
+    min-height: 44px;
+  }
+}
+@media (any-hover: hover) {
+  /* Hover effects solo si hay mouse/trackpad */
+  .card:hover { transform: translateY(-2px); transition: transform .15s; }
+}
+
+/* CP3 — Safe-area iOS notch + home indicator + Android bottom nav */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .main {
+    padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
