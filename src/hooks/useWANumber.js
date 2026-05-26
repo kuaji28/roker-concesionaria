@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const FALLBACK = '5491162692000'
+const FALLBACK = '591153839101'
 let _cached = null
 
 export function useWANumber() {

@@ -6,7 +6,7 @@ import Icon from '../components/Icon'
 import FormField from '../components/FormField'
 import { getVehiculos } from '../lib/supabase'
 
-const WA_NUMBER = '5491162692000'
+const WA_NUMBER = '591153839101'
 import { useTc } from '../hooks/useTc'
 import { callAI, aiConfigured } from '../lib/api'
 
