@@ -171,7 +171,7 @@ export default function HomePublica() {
   }, [])
 
   const waMsg  = encodeURIComponent('Hola! Vi su catálogo en GH Cars. ¿Me podría dar más información?')
-  const phone   = waNumber || '5491162692000'
+  const phone   = waNumber || '591153839101'
 
   useEffect(() => { fetchTc().then(setTc) }, [])
 

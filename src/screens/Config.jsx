@@ -145,8 +145,8 @@ export default function Config({ onLogout }) {
             Número que se usa en el catálogo público y en los presupuestos por WhatsApp. Incluí el código de país sin el +.
           </p>
           <div style={{ display: 'grid', gap: 12 }}>
-            <FormField label="Número WhatsApp (ej: 5491162692000)" hint="Código de país + número, sin espacios ni guiones">
-              <input className="input" type="tel" value={waNumber} onChange={e => setWaNumber(e.target.value)} placeholder="5491162692000" />
+            <FormField label="Número WhatsApp (ej: 591153839101)" hint="Código de país + número, sin espacios ni guiones">
+              <input className="input" type="tel" value={waNumber} onChange={e => setWaNumber(e.target.value)} placeholder="591153839101" />
             </FormField>
             {waMsg && (
               <div className={`banner ${waMsg.type}`}>

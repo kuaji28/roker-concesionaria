@@ -490,7 +490,7 @@ async function seed() {
   console.log('\n── Config')
   const configRows = [
     { clave: 'tipo_cambio', valor: JSON.stringify({ valor: 1420 }) },
-    { clave: 'wa_number',   valor: '5491162692000' },
+    { clave: 'wa_number',   valor: '591153839101' },
   ]
   await upsert('config', configRows, 'clave')
 
