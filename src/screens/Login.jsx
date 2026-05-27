@@ -3,7 +3,7 @@ import { loginUsuario } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useIsMobile } from '../hooks/useIsMobile'
 
-const ADDRESS = 'Calle 1 1750, Benavídez'
+const ADDRESS = 'Buenos Aires, Argentina'
 
 /* ── Ripple helper ──────────────────────────────────────────── */
 function addRipple(e) {
@@ -180,15 +180,10 @@ export default function Login({ onLogin }) {
               opacity: 0, transform: 'translateY(-12px)',
               animation: 'lg-fade-down 700ms var(--e-out) forwards',
             }}>
-              <img
-                src="/logo.png"
-                alt="GH Cars"
-                style={{
-                  width: 80, height: 80, display: 'block',
-                  filter: isDark ? 'invert(1)' : 'none',
-                  objectFit: 'contain',
-                }}
-              />
+              <svg width="130" height="40" viewBox="0 0 130 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CarHub">
+                <text x="0" y="31" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="32" fill={isDark ? '#ffffff' : '#0f0f0f'} letterSpacing="-0.5">Car</text>
+                <text x="52" y="31" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="32" fill="#ff2d55" letterSpacing="-0.5">Hub</text>
+              </svg>
             </div>
 
             {/* Headline block */}
@@ -273,14 +268,10 @@ export default function Login({ onLogin }) {
           {/* Mobile logo */}
           {isMobile && (
             <div style={{ position: 'absolute', top: 20, left: 20 }}>
-              <img
-                src="/logo.png"
-                alt="GH Cars"
-                style={{
-                  width: 44, height: 44, objectFit: 'contain',
-                  filter: isDark ? 'invert(1)' : 'none',
-                }}
-              />
+              <svg width="90" height="28" viewBox="0 0 90 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CarHub">
+                <text x="0" y="21" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="22" fill={isDark ? '#ffffff' : '#0f0f0f'} letterSpacing="-0.5">Car</text>
+                <text x="35" y="21" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="22" fill="#ff2d55" letterSpacing="-0.5">Hub</text>
+              </svg>
             </div>
           )}
 

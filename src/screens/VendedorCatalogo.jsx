@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getVehiculos } from '../lib/supabase'
 import VendedorTabs from '../components/VendedorTabs'
 import { useTheme } from '../context/ThemeContext'
+import { useWANumber } from '../hooks/useWANumber'
 
 const CHIP_FILTERS = [
   { label: 'Todos',      estado: null,          extra: {} },
@@ -34,6 +35,7 @@ function fmt(n) { return (n || 0).toLocaleString('es-AR') }
 export default function VendedorCatalogo() {
   const navigate = useNavigate()
   const { resolved } = useTheme()
+  const waNumber = useWANumber()
   const [vehiculos, setVehiculos] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -55,14 +57,17 @@ export default function VendedorCatalogo() {
 
   function waLink(v) {
     const msg = encodeURIComponent(`Hola, te comparto el ${v.marca} ${v.modelo} ${v.anio} — USD ${fmt(v.precio)}. ¿Querés más info?`)
-    return `https://wa.me/541152348902?text=${msg}`
+    return `https://wa.me/${waNumber || ''}?text=${msg}`
   }
 
   return (
     <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--c-bg)', color: 'var(--c-fg)', maxWidth: 480, margin: '0 auto' }}>
       {/* Top bar */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <img src="/logo.png" alt="GH Cars" style={{ height: 28, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
+        <svg width="90" height="28" viewBox="0 0 90 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CarHub">
+            <text x="0" y="21" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="22" fill={resolved === 'dark' ? '#ffffff' : '#0f0f0f'} letterSpacing="-0.5">Car</text>
+            <text x="35" y="21" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="22" fill="#ff2d55" letterSpacing="-0.5">Hub</text>
+          </svg>
         <h1 style={{ flex: 1, fontSize: 16, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>Catálogo</h1>
         <button
           style={{ width: 36, height: 36, borderRadius: 999, background: 'var(--c-card)', border: 0, color: 'var(--c-fg)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}

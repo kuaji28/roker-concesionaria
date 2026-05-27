@@ -106,7 +106,7 @@ export default function DetallePublico() {
   function abrirWhatsApp() {
     const nombre = v ? `${v.marca} ${v.modelo} ${v.anio}` : 'un vehículo'
     const msg = encodeURIComponent(
-      `Hola! Vi el *${nombre}* en el catálogo de GH Cars.\n¿Podría darme más información? 🚗`
+      `Hola! Vi el *${nombre}* en el catálogo. ¿Podría darme más información? 🚗`
     )
     trackVehiculoAction(id, 'contacto_wsp', null, { isPublic: true })
     window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank')
@@ -119,7 +119,7 @@ export default function DetallePublico() {
     trackVehiculoAction(id, 'compartir', null, { isPublic: true })
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${nombre}${precio}`, text: `Mirá este vehículo en GH Cars`, url })
+        await navigator.share({ title: `${nombre}${precio}`, text: `Mirá este vehículo en CarHub`, url })
       } catch { /* cancelado */ }
     } else {
       await navigator.clipboard.writeText(url).catch(() => {})
@@ -182,8 +182,10 @@ export default function DetallePublico() {
             >
               ←
             </button>
-            <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 140, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
-            <span style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</span>
+            <svg width="80" height="26" viewBox="0 0 110 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CarHub">
+              <text x="0" y="24" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="26" fill={resolved === 'dark' ? '#ffffff' : '#0f0f0f'} letterSpacing="-0.5">Car</text>
+              <text x="42" y="24" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="26" fill="#ff2d55" letterSpacing="-0.5">Hub</text>
+            </svg>
           </div>
           {v && (
             <div style={{ display: 'flex', gap: 8 }}>
@@ -473,8 +475,8 @@ export default function DetallePublico() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--c-bg)' }}>
       <Helmet>
-        <title>{v ? `${v.marca} ${v.modelo} ${v.anio} | GH Cars` : 'GH Cars | Detalle de vehículo'}</title>
-        <meta name="description" content={v ? `${v.marca} ${v.modelo} ${v.anio}${v.km_hs ? `, ${Number(v.km_hs).toLocaleString('es-AR')} km` : ''}. En GH Cars, Benavídez. Consultá precio y financiamiento.` : 'Detalle de vehículo en GH Cars, concesionaria en Benavídez.'} />
+        <title>{v ? `${v.marca} ${v.modelo} ${v.anio} | CarHub` : 'CarHub | Detalle de vehículo'}</title>
+        <meta name="description" content={v ? `${v.marca} ${v.modelo} ${v.anio}${v.km_hs ? `, ${Number(v.km_hs).toLocaleString('es-AR')} km` : ''}. Consultá precio y financiamiento en CarHub.` : 'Detalle de vehículo en CarHub.'} />
       </Helmet>
 
       <header style={{
@@ -488,8 +490,10 @@ export default function DetallePublico() {
             style={{ background: 'none', border: 'none', cursor: 'pointer',
                      color: 'var(--c-fg-2)', fontSize: 20, padding: 4 }}
           >←</button>
-          <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 140, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
-          <div style={{ fontWeight: 700, fontSize: 15 }}>GH Cars</div>
+          <svg width="90" height="28" viewBox="0 0 110 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CarHub">
+            <text x="0" y="24" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="26" fill={resolved === 'dark' ? '#ffffff' : '#0f0f0f'} letterSpacing="-0.5">Car</text>
+            <text x="42" y="24" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="26" fill="#ff2d55" letterSpacing="-0.5">Hub</text>
+          </svg>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {v && (

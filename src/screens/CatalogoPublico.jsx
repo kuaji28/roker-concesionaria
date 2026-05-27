@@ -614,15 +614,14 @@ export default function CatalogoPublico() {
       }}>
         {/* Brand */}
         <div style={{ fontWeight: 800, fontSize: 15, color: c.fg, marginBottom: 4 }}>
-          GH Cars
+          CarHub
         </div>
         <div style={{ fontSize: 12, color: c.fg3, marginBottom: 20 }}>
-          Concesionaria de vehículos 0 km y usados
+          Compra · Venta · Consignaciones
         </div>
 
-        {/* CTAs principales */}
+        {/* CTA WhatsApp */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
-          {/* WhatsApp button */}
           <a
             href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola! Quiero información sobre el stock disponible.')}`}
             target="_blank" rel="noreferrer"
@@ -638,56 +637,13 @@ export default function CatalogoPublico() {
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
               <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.554 4.118 1.528 5.845L0 24l6.335-1.505A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.37l-.36-.214-3.724.885.935-3.618-.235-.372A9.818 9.818 0 1 1 12 21.818z"/>
             </svg>
-            +54 9 11 6269-2000
-          </a>
-
-          {/* Google Maps button */}
-          <a
-            href="https://maps.app.goo.gl/VYKu4otJrNhqwNNXA?g_st=ac"
-            target="_blank" rel="noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              height: 44, padding: '0 20px', borderRadius: 999,
-              background: 'transparent', color: c.fg2,
-              border: `1.5px solid ${c.border}`,
-              fontWeight: 600, fontSize: 13, textDecoration: 'none',
-              flexShrink: 0,
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-            </svg>
-            Calle 1 1750, Benavídez
+            Consultá por WhatsApp
           </a>
         </div>
 
         {/* Horario */}
         <div style={{ marginBottom: 20, fontSize: 12, color: c.fg3 }}>
           Lunes a Sábado · 9:00 - 18:00
-        </div>
-
-        {/* Redes sociales */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 20 }}>
-          <a href="https://www.instagram.com/ghcars.ok/" target="_blank" rel="noreferrer"
-             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: c.fg2,
-                      textDecoration: 'none', fontSize: 12, fontWeight: 600,
-                      height: 44, padding: '0 4px' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-            </svg>
-            @ghcars.ok
-          </a>
-          <a href="https://www.tiktok.com/@ghcars.ok" target="_blank" rel="noreferrer"
-             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: c.fg2,
-                      textDecoration: 'none', fontSize: 12, fontWeight: 600,
-                      height: 44, padding: '0 4px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.28 6.28 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.94a8.18 8.18 0 0 0 4.78 1.52V7.01a4.85 4.85 0 0 1-1.01-.32z"/>
-            </svg>
-            @ghcars.ok
-          </a>
         </div>
 
         {/* Legal */}
