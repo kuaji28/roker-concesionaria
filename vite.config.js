@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.png'],
       manifest: {
-        name: 'GH Cars',
-        short_name: 'GH Cars',
-        description: 'Concesionaria GH Cars — Catálogo y gestión',
+        name: 'CarHub',
+        short_name: 'CarHub',
+        description: 'CarHub — Catálogo y gestión de vehículos',
         theme_color: '#6C5CFF',
         background_color: '#0E1117',
         display: 'standalone',

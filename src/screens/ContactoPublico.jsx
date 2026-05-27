@@ -54,8 +54,8 @@ export default function ContactoPublico() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--c-bg)', color: 'var(--c-fg)', fontFamily: "'Inter', sans-serif" }}>
       <Helmet>
-        <title>Contacto | GH Cars — Consultá sin compromiso</title>
-        <meta name="description" content="Contactate con GH Cars en Benavídez. Tasación gratuita de tu auto, compra, venta y consignación. Respondemos en menos de 2 horas." />
+        <title>Contacto | CarHub — Consultá sin compromiso</title>
+        <meta name="description" content="Contactate con CarHub. Tasación gratuita de tu auto, compra, venta y consignación. Respondemos en menos de 2 horas." />
       </Helmet>
       {/* TopBar */}
       <header style={{
@@ -67,8 +67,8 @@ export default function ContactoPublico() {
         height: 60,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/p/home')}>
-          <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
-          <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>GH Cars</span>
+          <img src="/logo.png" alt="CarHub" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
+          <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>CarHub</span>
         </div>
         <nav style={{ display: isMobile ? 'none' : 'flex', gap: 4 }}>
           {[
@@ -95,7 +95,7 @@ export default function ContactoPublico() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <ThemeToggle />
           <a
-            href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola GH Cars, quería más información')}`}
+            href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola! Quería más información sobre los vehículos disponibles')}`}
             target="_blank" rel="noopener noreferrer"
             style={{ padding: '7px 16px', borderRadius: 10, background: '#25d366', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
           >
@@ -109,7 +109,7 @@ export default function ContactoPublico() {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(40px,6vw,80px) clamp(20px,5vw,56px)' }}>
         {/* Heading */}
         <div style={{ marginBottom: 48 }}>
-          <p style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--c-accent)', fontWeight: 600, margin: '0 0 12px' }}>GH Cars · Benavidez</p>
+          <p style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--c-accent)', fontWeight: 600, margin: '0 0 12px' }}>CarHub</p>
           <h1 style={{ fontSize: 'clamp(36px,5vw,56px)', fontWeight: 800, letterSpacing: '-0.04em', margin: 0, lineHeight: 1.1 }}>Hablemos.</h1>
           <p style={{ fontSize: 16, color: 'var(--c-fg-2)', marginTop: 12, maxWidth: 500 }}>
             Encontrá el auto que buscás o cotizá tu vehículo sin compromiso. Te respondemos en menos de 2 horas.
@@ -191,8 +191,7 @@ export default function ContactoPublico() {
             <div style={{ background: 'var(--c-card)', borderRadius: 16, padding: '28px 28px', border: '1px solid var(--c-border)' }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 20px' }}>Visitanos</h3>
               {[
-                { icon: '📍', label: 'Dirección', value: 'Calle 1 1750\nBenavídez, Buenos Aires' },
-                { icon: '📞', label: 'Teléfono', value: '+54 11 5234-8902' },
+                { icon: '📍', label: 'Dirección', value: 'Buenos Aires, Argentina' },
                 { icon: '🕐', label: 'Horarios', value: 'Lun–Vie: 9:00–18:00\nSáb: 9:00–14:00' },
               ].map(row => (
                 <div key={row.label} style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
@@ -204,19 +203,19 @@ export default function ContactoPublico() {
                 </div>
               ))}
               <a
-                href="https://maps.app.goo.gl/VYKu4otJrNhqwNNXA?g_st=ac"
+                href="https://www.google.com/maps/search/concesionaria+autos+Buenos+Aires"
                 target="_blank" rel="noopener noreferrer"
                 style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '10px 16px', borderRadius: 10, border: '1px solid var(--c-border)', background: 'var(--c-card-2)', color: 'var(--c-fg-2)', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}
               >
-                🗺️ Cómo llegar →
+                🗺️ Ver en mapa →
               </a>
             </div>
 
             {/* Map embed */}
             <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid var(--c-border)', aspectRatio: '4/3' }}>
               <iframe
-                title="GH Cars ubicación"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3284.0!2d-58.6951!3d-34.4118!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDI0JzQyLjUiUyA1OMKwNDEnNDIuNCJX!5e0!3m2!1ses!2sar!4v1700000000000!5m2!1ses!2sar"
+                title="CarHub — Buenos Aires"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d209791.0!2d-58.5993!3d-34.6036!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcd9eab0ae35a3%3A0x4450b9c274f8c7b9!2sBuenos%20Aires%2C%20Argentina!5e0!3m2!1ses!2sar!4v1700000000000!5m2!1ses!2sar"
                 width="100%" height="100%" style={{ border: 0, filter: 'var(--map-filter, none)' }}
                 allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
               />

@@ -11,11 +11,11 @@ import { useWANumber } from '../hooks/useWANumber'
 
 
 const FALLBACK_TC = 1415
-const ADDRESS    = 'Calle 1 1750, Benavídez, Buenos Aires'
-const GMAPS_EMBED = 'https://www.google.com/maps?q=Calle+1+1750,+Benavídez,+Buenos+Aires&output=embed&z=14'
-const GMAPS_LINK  = 'https://maps.app.goo.gl/VYKu4otJrNhqwNNXA?g_st=ac'
-const INSTAGRAM   = 'https://www.instagram.com/ghcars.ok/'
-const TIKTOK      = 'https://www.tiktok.com/@ghcars.ok'
+const ADDRESS    = 'Buenos Aires, Argentina'
+const GMAPS_EMBED = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d209791.0!2d-58.5993!3d-34.6036!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcd9eab0ae35a3%3A0x4450b9c274f8c7b9!2sBuenos%20Aires%2C%20Argentina!5e0!3m2!1ses!2sar!4v1700000000000!5m2!1ses!2sar'
+const GMAPS_LINK  = 'https://maps.google.com/maps?q=Buenos+Aires,+Argentina'
+const INSTAGRAM   = null
+const TIKTOK      = null
 
 async function fetchTc() {
   try {
@@ -86,7 +86,7 @@ function VehicleCard({ v, foto, tc, waNumber, c, navigate }) {
       : Math.round(precioNum / tc).toLocaleString('es-AR')
     : null
   const msg = encodeURIComponent(
-    `Hola! Vi el *${v.marca} ${v.modelo} ${v.anio}*${v.version ? ` (${v.version})` : ''} en el catálogo de GH Cars. ¿Sigue disponible? 🚗`
+    `Hola! Vi el *${v.marca} ${v.modelo} ${v.anio}*${v.version ? ` (${v.version})` : ''} en el catálogo. ¿Sigue disponible? 🚗`
   )
 
   return (
@@ -170,7 +170,7 @@ export default function HomePublica() {
     return () => obs.disconnect()
   }, [])
 
-  const waMsg  = encodeURIComponent('Hola! Vi su catálogo en GH Cars. ¿Me podría dar más información?')
+  const waMsg  = encodeURIComponent('Hola! Vi el catálogo y quería más información sobre los vehículos disponibles.')
   const phone   = waNumber || '591153839101'
 
   useEffect(() => { fetchTc().then(setTc) }, [])
@@ -209,8 +209,8 @@ export default function HomePublica() {
   return (
     <div style={{ background: c.bg, color: c.fg, minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", WebkitFontSmoothing: 'antialiased' }}>
       <Helmet>
-        <title>GH Cars | Compra y venta de autos en Benavídez</title>
-        <meta name="description" content="Comprá, vendé o consignás tu auto en GH Cars, Benavídez. Amplio stock de usados y 0km. Tasación sin compromiso. Te respondemos en menos de 2 horas." />
+        <title>CarHub | Compra y venta de autos</title>
+        <meta name="description" content="Comprá, vendé o consignás tu auto. Amplio stock de usados y 0km. Tasación sin compromiso. Te respondemos en menos de 2 horas." />
       </Helmet>
 
       {/* ── TOP BAR ───────────────────────────────────────────────── */}
@@ -224,7 +224,7 @@ export default function HomePublica() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => navigate('/p/home')}>
-            <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: isDark ? 'invert(1)' : 'none' }} />
+            <img src="/logo.png" alt="CarHub" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: isDark ? 'invert(1)' : 'none' }} />
           </div>
           <nav style={{ display: 'flex', gap: 2 }}>
             {[['Stock', '/p/catalogo'], ['Contacto', '/p/contacto']].map(([label, path]) => (
@@ -271,7 +271,7 @@ export default function HomePublica() {
         {/* Left */}
         <div>
           <p style={{ fontSize: 12, letterSpacing: '.18em', textTransform: 'uppercase', color: c.accent, margin: 0, fontWeight: 600 }}>
-            Concesionaria · Benavidez
+            Concesionaria · Buenos Aires
           </p>
           <h1 style={{ fontSize: 'clamp(48px,7vw,88px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 0.92, margin: '16px 0 0', color: c.fg }}>
             Encontrá tu<br />próximo auto.
@@ -566,16 +566,9 @@ export default function HomePublica() {
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) minmax(0,1.4fr)', gap: isMobile ? 32 : 48, alignItems: 'center' }}>
           <div>
             <p style={{ fontSize: 12, letterSpacing: '.16em', textTransform: 'uppercase', color: c.accent, margin: 0, fontWeight: 600 }}>Visitanos</p>
-            <h2 style={{ fontSize: 'clamp(32px,5vw,52px)', fontWeight: 800, margin: '16px 0 0', lineHeight: 1.05, letterSpacing: '-0.03em', color: c.fg }}>Showroom<br />en Benavídez</h2>
+            <h2 style={{ fontSize: 'clamp(32px,5vw,52px)', fontWeight: 800, margin: '16px 0 0', lineHeight: 1.05, letterSpacing: '-0.03em', color: c.fg }}>Showroom<br />en Buenos Aires</h2>
             <p style={{ fontSize: 15, color: c.fg2, marginTop: 16, lineHeight: 1.65 }}>{ADDRESS}<br />Lunes a Sábado · 9:00 – 18:00</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
-              <a href={GMAPS_LINK} target="_blank" rel="noreferrer" style={{
-                padding: '12px 20px', background: c.fg, color: c.bg, borderRadius: 999,
-                fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-              }}>
-                Cómo llegar <ArrowIcon size={12} />
-              </a>
               <a href={`https://wa.me/${phone}?text=${waMsg}`} target="_blank" rel="noreferrer" style={{
                 padding: '12px 20px', background: 'transparent', color: c.fg, border: `1px solid ${c.borderStrong}`,
                 borderRadius: 999, fontSize: 13, fontWeight: 600, textDecoration: 'none',
@@ -584,21 +577,13 @@ export default function HomePublica() {
                 <WaIcon size={13} /> Escribinos
               </a>
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
-              <a href={INSTAGRAM} target="_blank" rel="noreferrer" style={{ width: 40, height: 40, borderRadius: 999, border: `1px solid ${c.border}`, display: 'grid', placeItems: 'center', color: c.fg, textDecoration: 'none' }}>
-                <IgIcon />
-              </a>
-              <a href={TIKTOK} target="_blank" rel="noreferrer" style={{ width: 40, height: 40, borderRadius: 999, border: `1px solid ${c.border}`, display: 'grid', placeItems: 'center', color: c.fg, textDecoration: 'none' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.26 8.26 0 0 0 4.83 1.55V6.79a4.86 4.86 0 0 1-1.06-.1z"/></svg>
-              </a>
-            </div>
           </div>
           <div style={{ borderRadius: 24, overflow: 'hidden', height: 380, border: `1px solid ${c.border}`, boxShadow: c.shadowSm }}>
             <iframe
               src={GMAPS_EMBED}
               style={{ width: '100%', height: '100%', border: 0, filter: c.mapFilter, display: 'block' }}
               loading="lazy"
-              title="Showroom GH Cars"
+              title="CarHub — Showroom"
             />
           </div>
         </div>
@@ -607,8 +592,8 @@ export default function HomePublica() {
       {/* ── FOOTER ────────────────────────────────────────────────── */}
       <footer style={{ marginTop: 56, padding: 'clamp(16px,2vw,24px) clamp(20px,5vw,56px)', borderTop: `1px solid ${c.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10, color: '#fff' }}>GH</div>
-          <p style={{ fontSize: 12, color: c.fg2, margin: 0 }}>© GH Cars · Compra · Venta · Consignaciones · Benavídez</p>
+          <div style={{ width: 28, height: 28, borderRadius: 6, background: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 10, color: '#fff' }}>CH</div>
+          <p style={{ fontSize: 12, color: c.fg2, margin: 0 }}>© CarHub · Compra · Venta · Consignaciones</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <p style={{ fontSize: 12, color: c.fg2, margin: 0 }}>
