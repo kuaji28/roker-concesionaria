@@ -224,7 +224,10 @@ export default function HomePublica() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
           <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => navigate('/p/home')}>
-            <img src="/logo.png" alt="CarHub" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: isDark ? 'invert(1)' : 'none' }} />
+            <svg width="110" height="32" viewBox="0 0 110 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CarHub">
+              <text x="0" y="24" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="26" fill={isDark ? '#ffffff' : '#0f0f0f'} letterSpacing="-0.5">Car</text>
+              <text x="42" y="24" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="26" fill="#ff2d55" letterSpacing="-0.5">Hub</text>
+            </svg>
           </div>
           <nav style={{ display: 'flex', gap: 2 }}>
             {[['Stock', '/p/catalogo'], ['Contacto', '/p/contacto']].map(([label, path]) => (

@@ -103,7 +103,7 @@ function VehicleCard({ v, foto, tc, waNumber, c }) {
   function consultarWA(e) {
     e.stopPropagation()
     const msg = encodeURIComponent(
-      `Hola! Vi el *${v.marca} ${v.modelo} ${v.anio}*${v.version ? ` (${v.version})` : ''} en el catálogo de GH Cars.\n¿Sigue disponible? 🚗`
+      `Hola! Vi el *${v.marca} ${v.modelo} ${v.anio}*${v.version ? ` (${v.version})` : ''} en el catálogo. ¿Sigue disponible? 🚗`
     )
     window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank')
   }
@@ -305,8 +305,8 @@ export default function CatalogoPublico() {
       WebkitFontSmoothing: 'antialiased',
     }}>
       <Helmet>
-        <title>Catálogo | GH Cars — Autos usados en Benavídez</title>
-        <meta name="description" content="Explorá el stock de autos usados y 0km en GH Cars, Benavídez. Filtrá por marca, tipo y precio. Financiamiento disponible." />
+        <title>Catálogo | CarHub — Autos disponibles</title>
+        <meta name="description" content="Explorá el stock de autos usados y 0km en CarHub. Filtrá por marca, tipo y precio. Financiamiento disponible." />
       </Helmet>
 
       {/* ── Header ─────────────────────────────────────────── */}
@@ -322,14 +322,17 @@ export default function CatalogoPublico() {
       }}>
         {/* Logo */}
         <Link to="/p/home" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <img src="/logo.png" alt="GH Cars" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: c.resolved === 'dark' ? 'invert(1)' : 'none' }} />
+          <svg width="110" height="32" viewBox="0 0 110 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CarHub">
+            <text x="0" y="24" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="26" fill={c.resolved === 'dark' ? '#ffffff' : '#0f0f0f'} letterSpacing="-0.5">Car</text>
+            <text x="42" y="24" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="26" fill="#ff2d55" letterSpacing="-0.5">Hub</text>
+          </svg>
         </Link>
 
         {/* Nav + actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <ThemeToggle />
           <a
-            href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola GH Cars, quiero información sobre el stock disponible.')}`}
+            href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola! Quiero información sobre el stock disponible.')}`}
             target="_blank" rel="noreferrer"
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
@@ -579,7 +582,7 @@ export default function CatalogoPublico() {
               Consultanos por WhatsApp para próximos ingresos.
             </div>
             <a
-              href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola! Quería consultar sobre próximos ingresos de vehículos en GH Cars.')}`}
+              href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola! Quería consultar sobre próximos ingresos de vehículos.')}`}
               target="_blank" rel="noreferrer"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -621,7 +624,7 @@ export default function CatalogoPublico() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
           {/* WhatsApp button */}
           <a
-            href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola GH Cars, quiero información sobre el stock disponible.')}`}
+            href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Hola! Quiero información sobre el stock disponible.')}`}
             target="_blank" rel="noreferrer"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
