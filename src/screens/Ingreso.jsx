@@ -183,7 +183,7 @@ function Step1({ form, set, vendedores, moneda, setMoneda }) {
       <FormField label="Responsable (quien ingresa)">
         <select className="input" value={form.responsable_id} onChange={f('responsable_id')}>
           <option value="">Sin asignar</option>
-          <option value="gh_cars">GH Cars</option>
+          <option value="gh_cars">Concesionaria</option>
           {vendedores.map(v => <option key={v.id} value={v.id}>{v.nombre}</option>)}
         </select>
       </FormField>

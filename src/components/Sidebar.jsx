@@ -45,15 +45,14 @@ const TOGGLE_ICO = (collapsed) => (
 
 function GHLogo({ size = 36 }) {
   const { resolved } = useTheme()
+  const isDark = resolved === 'dark'
+  const textColor = isDark ? '#f1f5f9' : '#0f172a'
   return (
-    <img
-      src="/logo.png"
-      alt="GH Cars"
-      style={{
-        width: size, height: size, objectFit: 'contain', display: 'block', flexShrink: 0,
-        filter: resolved === 'dark' ? 'invert(1)' : 'none',
-      }}
-    />
+    <svg width={size} height={size} viewBox="0 0 36 36" fill="none" aria-label="CarHub" style={{ flexShrink: 0, display: 'block' }}>
+      <rect width="36" height="36" rx="8" fill="#ff2d55" />
+      <text x="4" y="24" fontFamily="'Inter', sans-serif" fontWeight="800" fontSize="13" fill="#fff" letterSpacing="-0.5">Car</text>
+      <text x="4" y="34" fontFamily="'Inter', sans-serif" fontWeight="400" fontSize="9" fill="rgba(255,255,255,0.75)" letterSpacing="0.5">Hub</text>
+    </svg>
   )
 }
 
@@ -104,7 +103,7 @@ export default function Sidebar({ tc }) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <GHLogo size={30} />
-            <span style={{ fontWeight: 700, fontSize: 14 }}>GH Cars</span>
+            <span style={{ fontWeight: 700, fontSize: 14 }}>CarHub</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <ThemeToggle />
@@ -141,7 +140,7 @@ export default function Sidebar({ tc }) {
         }}>
           <div className="brand" style={{ marginBottom: 10 }}>
             <GHLogo size={36} />
-            <div className="brand-txt">GH Cars<small>Gestión Automotriz</small></div>
+            <div className="brand-txt">CarHub<small>Sistema Automotriz</small></div>
           </div>
           <nav className="nav" onClick={handleNavClick}>
             {NAV.map(n => (
@@ -250,8 +249,8 @@ export default function Sidebar({ tc }) {
         <GHLogo size={collapsed ? 34 : 42} />
         {!collapsed && (
           <div className="brand-txt" style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
-            GH Cars
-            <small>Gestión Automotriz</small>
+            CarHub
+            <small>Sistema Automotriz</small>
           </div>
         )}
       </div>

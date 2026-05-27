@@ -30,7 +30,7 @@ function mensajeSeguimientoFinanciamiento(cliente, meses) {
   const nombre = (cliente?.nombre || '').split(' ')[0] || 'Cliente'
   return encodeURIComponent(
     `Hola ${nombre}! 👋\n\n` +
-    `Te contactamos desde GH Cars para hacerte un seguimiento.\n` +
+    `Te contactamos para hacerte un seguimiento.\n` +
     `Han pasado ${meses} meses desde que adquiriste tu vehículo con financiamiento bancario.\n\n` +
     `¿Cómo estás llevando las cuotas? ¿Necesitás ayuda con algo?\n\n` +
     `Quedamos a tu disposición 🙌`

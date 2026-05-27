@@ -82,7 +82,7 @@ export default function Config({ onLogout }) {
         <div className="page-head">
           <div>
             <h1 className="page-title">Configuración</h1>
-            <p className="page-caption">Ajustes del sistema GH Cars</p>
+            <p className="page-caption">Ajustes del sistema</p>
           </div>
         </div>
 

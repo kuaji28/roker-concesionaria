@@ -41,7 +41,7 @@ const MEJORAS = [
       },
       {
         titulo: 'Página web pública del catálogo',
-        descripcion: 'Una web pública de GH Cars donde los clientes pueden ver todos los vehículos disponibles con fotos, precio y un botón de contacto directo. Se actualiza sola cuando entra o sale un auto.',
+        descripcion: 'Una web pública donde los clientes pueden ver todos los vehículos disponibles con fotos, precio y un botón de contacto directo. Se actualiza sola cuando entra o sale un auto.',
         valor: 'Alto',
         esfuerzo: 'Medio',
         icon: '🌐',

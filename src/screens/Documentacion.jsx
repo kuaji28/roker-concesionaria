@@ -137,14 +137,14 @@ export default function Documentacion() {
       <div className="main" style={{ maxWidth: 720 }}>
         <div className="page-head">
           <div>
-            <h1 className="page-title">📋 Guía Rápida GH Cars</h1>
+            <h1 className="page-title">📋 Guía Rápida</h1>
             <p className="page-caption">Instrucciones paso a paso para las tareas más frecuentes</p>
           </div>
         </div>
 
         <div className="card" style={{ marginBottom: 20, padding: '14px 18px' }}>
           <p style={{ margin: 0, fontSize: 14, color: 'var(--c-fg-2)', lineHeight: 1.6 }}>
-            Esta guía cubre las operaciones del día a día en GH Cars.
+            Esta guía cubre las operaciones del día a día del sistema.
             Hacé clic en cada sección para ver los pasos detallados.
           </p>
         </div>
