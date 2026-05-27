@@ -973,7 +973,7 @@ export default function Ingreso({ onLogout }) {
         ...(form.combustible && { combustible: form.combustible }),
         ...(form.transmision && { transmision: form.transmision }),
         moneda_precio: moneda,
-        ...(form.responsable_id === 'gh_cars' && { responsable: 'GH Cars' }),
+        ...(form.responsable_id === 'gh_cars' && { responsable: 'Concesionaria' }),
         ...(form.responsable_nombre_libre && { responsable_custom: form.responsable_nombre_libre }),
       }
       const payload = {

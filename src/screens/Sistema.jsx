@@ -295,7 +295,7 @@ function TabRestaurar() {
       summary.forEach(t => { if (t.rows > 0) sel[t.key] = true })
       setSelected(sel)
     } catch {
-      setPreview({ error: 'Archivo inválido — no es un backup de GH Cars' })
+      setPreview({ error: 'Archivo inválido — no es un backup del sistema' })
     }
   }
 
