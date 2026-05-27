@@ -67,8 +67,10 @@ export default function ContactoPublico() {
         height: 60,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/p/home')}>
-          <img src="/logo.png" alt="CarHub" style={{ height: 40, maxWidth: 160, objectFit: 'contain', display: 'block', filter: resolved === 'dark' ? 'invert(1)' : 'none' }} />
-          <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>CarHub</span>
+          <svg width="110" height="34" viewBox="0 0 110 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CarHub">
+            <text x="0" y="26" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="27" fill={resolved === 'dark' ? '#ffffff' : '#0f0f0f'} letterSpacing="-0.5">Car</text>
+            <text x="43" y="26" fontFamily="'Arial Black','Arial Bold',sans-serif" fontWeight="900" fontStyle="italic" fontSize="27" fill="#ff2d55" letterSpacing="-0.5">Hub</text>
+          </svg>
         </div>
         <nav style={{ display: isMobile ? 'none' : 'flex', gap: 4 }}>
           {[
