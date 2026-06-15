@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
+import RayLabsSplash, { shouldShowBoot } from './components/RayLabsSplash'
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Icon from './components/Icon'
@@ -126,6 +127,7 @@ function AppShell({ onLogout, user }) {
 }
 
 export default function App() {
+  const [bootSplash, setBootSplash] = useState(shouldShowBoot)
   const [auth, setAuth] = useState(() => !!sessionStorage.getItem('gh_auth_user'))
   const [user, setUser] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('gh_auth_user') || 'null') } catch { return null }
@@ -162,6 +164,8 @@ export default function App() {
   }, [])
 
   return (
+    <>
+    {bootSplash && <RayLabsSplash onDone={() => setBootSplash(false)} />}
     <HelmetProvider>
     <ThemeProvider>
     <BrowserRouter>
@@ -189,5 +193,6 @@ export default function App() {
     </BrowserRouter>
     </ThemeProvider>
     </HelmetProvider>
+    </>
   )
 }
