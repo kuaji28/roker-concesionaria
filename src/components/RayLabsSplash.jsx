@@ -132,8 +132,20 @@ const RLB_CSS = `
 .rlb-arm { position:absolute; inset:0; transform:rotate(var(--base,0deg)); opacity:0; will-change:transform;
   animation: rlbOrbit 1.7s cubic-bezier(.3,0,.2,1) .75s forwards, rlbDotIO 1.7s ease .75s forwards; }
 .rlb-arm.a1 { --base:0deg; } .rlb-arm.a2 { --base:120deg; } .rlb-arm.a3 { --base:240deg; }
-.rlb-dot { position:absolute; left:50%; top:1%; width:7.5%; aspect-ratio:1; margin-left:-3.75%;
-  border-radius:50%; background:#fff; box-shadow:0 0 9px #fff, 0 0 18px rgba(253,186,2,.9); }
+/* ESTELA (cola de cometa): anillo conic que se desvanece DETRÁS del punto (transparente lejos
+   → oro en la cabeza). Enmascarado a una línea fina; gira junto al brazo = el punto "arrastra
+   la línea" mientras orbita. Esto es lo que pidió Roker. */
+.rlb-arm::before { content:''; position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(from 0deg,
+    rgba(253,186,2,0) 0deg, rgba(253,186,2,0) 286deg,
+    rgba(253,186,2,.12) 312deg, rgba(253,186,2,.5) 342deg, #FFE08A 358deg, #fff 360deg);
+  -webkit-mask:radial-gradient(circle, transparent 0 46%, #000 48.4%, #000 49.6%, transparent 52%);
+          mask:radial-gradient(circle, transparent 0 46%, #000 48.4%, #000 49.6%, transparent 52%);
+  filter:drop-shadow(0 0 2px rgba(253,186,2,.65)); }
+/* PUNTO = cabeza del cometa, en lo alto del anillo (12 h = 0deg del conic, alineado con la estela). */
+.rlb-dot { position:absolute; left:50%; top:0; width:7%; aspect-ratio:1; margin-left:-3.5%; transform:translateY(-50%);
+  border-radius:50%; background:radial-gradient(circle at 38% 34%, #fff, #FFE08A 58%, #FDBA02);
+  box-shadow:0 0 7px #fff, 0 0 15px rgba(253,186,2,.95), 0 0 28px rgba(253,186,2,.55); }
 .rlb-bolt { inset:0; width:100%; height:100%; overflow:visible; opacity:0;
   transform-box:fill-box; transform-origin:50% 0%;
   filter:drop-shadow(0 0 14px rgba(253,186,2,.9)) drop-shadow(0 0 30px rgba(253,186,2,.45));
