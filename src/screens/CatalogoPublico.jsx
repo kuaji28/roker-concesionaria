@@ -89,8 +89,171 @@ const IcoCombustible = () => (
   </svg>
 )
 
+/* ─── Vidriera premium: estilos + helpers ───────────────────── */
+const PREFERS_REDUCED = typeof window !== 'undefined'
+  && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+
+function VidrieraStyles() {
+  return (
+    <style>{`
+      @keyframes ghKenburns { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.12) translate(-1.5%,-1.5%); } }
+      @keyframes ghReveal { 0% { opacity:0; transform: translateY(14px); } 100% { opacity:1; transform: translateY(0); } }
+      .gh-reveal { animation: ghReveal .5s ease-out both; }
+    `}</style>
+  )
+}
+
+function useInView(ref, threshold = 0.25) {
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof IntersectionObserver === 'undefined') { setInView(true); return }
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  return inView
+}
+
+/* Carrusel auto-rotativo de fotos del vehículo (fade + Ken Burns) */
+function MediaCarousel({ fotos, alt, c, aspect = '16/10', kenburns = true }) {
+  const wrap = useRef(null)
+  const inView = useInView(wrap)
+  const [hover, setHover] = useState(false)
+  const [idx, setIdx] = useState(0)
+  const imgs = (fotos && fotos.length) ? fotos : [null]
+  const multi = imgs.length > 1
+
+  useEffect(() => {
+    if (!multi || PREFERS_REDUCED || !inView || hover) return
+    const t = setInterval(() => setIdx(i => (i + 1) % imgs.length), 3600)
+    return () => clearInterval(t)
+  }, [multi, inView, hover, imgs.length])
+
+  useEffect(() => { if (idx > imgs.length - 1) setIdx(0) }, [imgs.length])
+
+  return (
+    <div
+      ref={wrap}
+      style={{ position: 'relative', overflow: 'hidden', aspectRatio: aspect, background: c.bg2 }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {imgs.map((src, i) => (
+        src ? (
+          <img
+            key={i}
+            src={src}
+            alt={i === idx ? alt : ''}
+            loading="lazy"
+            style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%',
+              objectFit: 'cover', display: 'block',
+              opacity: i === idx ? 1 : 0,
+              transition: 'opacity .9s ease',
+              animation: (kenburns && i === idx && inView && !PREFERS_REDUCED) ? 'ghKenburns 12s ease-out forwards' : 'none',
+            }}
+          />
+        ) : (
+          <div key={i} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke={c.border} strokeWidth="1" strokeLinecap="round">
+              <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
+              <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
+            </svg>
+          </div>
+        )
+      ))}
+      {multi && (
+        <div style={{ position: 'absolute', bottom: 8, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 5, zIndex: 2, pointerEvents: 'none' }}>
+          {imgs.map((_, i) => (
+            <span key={i} style={{
+              width: i === idx ? 16 : 6, height: 6, borderRadius: 99,
+              background: i === idx ? '#fff' : 'rgba(255,255,255,0.5)',
+              transition: 'all .3s', boxShadow: '0 1px 2px rgba(0,0,0,.4)',
+            }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* Hero rotativo de destacados — va ARRIBA de los filtros */
+function HeroDestacados({ items, tc, c, navigate }) {
+  const wrap = useRef(null)
+  const inView = useInView(wrap)
+  const [idx, setIdx] = useState(0)
+  const n = items.length
+  useEffect(() => {
+    if (n < 2 || PREFERS_REDUCED || !inView) return
+    const t = setInterval(() => setIdx(i => (i + 1) % n), 5000)
+    return () => clearInterval(t)
+  }, [n, inView])
+  if (!n) return null
+  const cur = items[idx]
+  const moneda = cur.moneda || 'USD'
+  const precioNum = cur.precio_lista || cur.precio_base
+  return (
+    <div style={{ padding: '14px 16px 0', maxWidth: 1100, margin: '0 auto' }}>
+      <div
+        ref={wrap}
+        onClick={() => navigate(`/p/vehiculo/${cur.id}`)}
+        style={{
+          position: 'relative', borderRadius: 18, overflow: 'hidden', cursor: 'pointer',
+          aspectRatio: '21/9', border: `1px solid ${c.border}`, background: c.bg2,
+        }}
+      >
+        {items.map((it, i) => (
+          it.foto ? (
+            <img
+              key={it.id}
+              src={it.foto}
+              alt={i === idx ? `${it.marca} ${it.modelo}` : ''}
+              style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                opacity: i === idx ? 1 : 0, transition: 'opacity 1s ease',
+                animation: (i === idx && inView && !PREFERS_REDUCED) ? 'ghKenburns 12s ease-out forwards' : 'none',
+              }}
+            />
+          ) : null
+        ))}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)' }} />
+        <span style={{ position: 'absolute', top: 14, left: 14, padding: '4px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: c.accent, color: '#fff', letterSpacing: '.02em' }}>★ Destacados</span>
+        <div key={cur.id} className="gh-reveal" style={{ position: 'absolute', left: 18, right: 18, bottom: 16, color: '#fff' }}>
+          <div style={{ fontSize: 'clamp(18px,3.4vw,28px)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, textShadow: '0 2px 12px rgba(0,0,0,.5)' }}>
+            {cur.marca} {cur.modelo} <span style={{ opacity: .85, fontWeight: 600 }}>{cur.anio}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'clamp(15px,2.6vw,22px)', fontWeight: 800 }}>
+              {precioNum ? `${moneda} ${Number(precioNum).toLocaleString('es-AR')}` : 'Consultar'}
+            </span>
+            {cur.km_hs != null && <span style={{ fontSize: 12, opacity: .9 }}>{Number(cur.km_hs).toLocaleString('es-AR')} km</span>}
+            {cur.transmision && <span style={{ fontSize: 12, opacity: .9 }}>· {cur.transmision}</span>}
+          </div>
+        </div>
+        {n > 1 && (
+          <div style={{ position: 'absolute', bottom: 14, right: 16, display: 'flex', gap: 6, zIndex: 2 }}>
+            {items.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Destacado ${i + 1}`}
+                onClick={(e) => { e.stopPropagation(); setIdx(i) }}
+                style={{
+                  width: i === idx ? 20 : 8, height: 8, borderRadius: 99, padding: 0, cursor: 'pointer',
+                  border: 'none', background: i === idx ? '#fff' : 'rgba(255,255,255,0.5)', transition: 'all .3s',
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Card ──────────────────────────────────────────────────── */
-function VehicleCard({ v, foto, tc, waNumber, c }) {
+function VehicleCard({ v, fotos, tc, waNumber, c }) {
+  const [hover, setHover] = useState(false)
   const navigate  = useNavigate()
   const moneda    = v.moneda || 'USD'
   const precioNum = v.precio_lista || v.precio_base
