@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -47,7 +47,7 @@ async function getVehiculosPublicos({ tipo, anioMin, precioMax, kmMax }) {
   return data || []
 }
 
-async function getPortadas(vehiculoIds) {
+async function getGalerias(vehiculoIds) {
   if (!vehiculoIds.length) return {}
   const { data } = await supabase
     .from('media')
@@ -58,7 +58,8 @@ async function getPortadas(vehiculoIds) {
   if (!data) return {}
   const map = {}
   for (const m of data) {
-    if (!map[m.vehiculo_id]) map[m.vehiculo_id] = m.url
+    if (!map[m.vehiculo_id]) map[m.vehiculo_id] = []
+    if (map[m.vehiculo_id].length < 6) map[m.vehiculo_id].push(m.url)
   }
   return map
 }
@@ -278,24 +279,12 @@ function VehicleCard({ v, fotos, tc, waNumber, c }) {
       intensity={0.6}
       style={{ borderRadius: 16, background: c.card, border: `1px solid ${c.border}`, overflow: 'hidden', cursor: 'pointer' }}
       onClick={() => navigate(`/p/vehiculo/${v.id}`)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
     >
-      {/* Imagen */}
+      {/* Imagen — carrusel auto-rotativo + hover-reveal */}
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        {foto
-          ? <img src={foto} alt={`${v.marca} ${v.modelo}`}
-                 style={{ width: '100%', aspectRatio: '16/10', objectFit: 'cover', display: 'block' }}
-                 loading="lazy" />
-          : (
-            <div style={{ width: '100%', aspectRatio: '16/10', background: c.bg2,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
-                   stroke={c.border} strokeWidth="1" strokeLinecap="round">
-                <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l2-4h12l2 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
-                <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
-              </svg>
-            </div>
-          )
-        }
+        <MediaCarousel fotos={fotos} alt={`${v.marca} ${v.modelo}`} c={c} aspect="16/10" />
         {/* Gradient overlay */}
         <div style={{
           position: 'absolute', inset: 0,
@@ -307,13 +296,31 @@ function VehicleCard({ v, fotos, tc, waNumber, c }) {
           position: 'absolute', top: 10, right: 10,
           padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600,
           background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
-          border: `1px solid ${c.border}`, color: c.fg,
+          border: `1px solid ${c.border}`, color: c.fg, zIndex: 3,
         }}>{v.anio}</span>
         <span style={{
           position: 'absolute', bottom: 10, left: 10,
           padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600,
-          background: c.accent, color: '#fff',
+          background: c.accent, color: '#fff', zIndex: 3,
         }}>Disponible</span>
+        {/* Hover-reveal: specs extra que aparecen al pasar el mouse */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 3,
+          padding: '22px 12px 10px',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)',
+          display: 'flex', flexWrap: 'wrap', gap: 6,
+          transform: hover ? 'translateY(0)' : 'translateY(102%)',
+          opacity: hover ? 1 : 0, transition: 'transform .35s ease, opacity .35s ease',
+          pointerEvents: 'none',
+        }}>
+          {[v.version, v.combustible, v.color, v.transmision].filter(Boolean).slice(0, 3).map((t, i) => (
+            <span key={i} style={{
+              padding: '3px 9px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+              background: 'rgba(255,255,255,0.16)', color: '#fff', backdropFilter: 'blur(6px)',
+            }}>{t}</span>
+          ))}
+          <span style={{ padding: '3px 9px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: c.accent, color: '#fff' }}>Ver ficha →</span>
+        </div>
       </div>
 
       {/* Body */}
@@ -397,7 +404,7 @@ export default function CatalogoPublico() {
   const waNumber = useWANumber()
   const isMobile = useIsMobile()
   const [vehiculos, setVehiculos] = useState([])
-  const [portadas,  setPortadas]  = useState({})
+  const [galerias,  setGalerias]  = useState({})
   const [tc,        setTc]        = useState(FALLBACK_TC)
   const [loading,   setLoading]   = useState(true)
 
@@ -430,8 +437,8 @@ export default function CatalogoPublico() {
     setLoading(true)
     getVehiculosPublicos({ tipo, anioMin, precioMax, kmMax }).then(async data => {
       setVehiculos(data)
-      const fotos = await getPortadas(data.map(v => v.id))
-      setPortadas(fotos)
+      const fotos = await getGalerias(data.map(v => v.id))
+      setGalerias(fotos)
       setLoading(false)
     })
   }, [tipo, anioMin, precioMax, kmMax])
@@ -456,6 +463,14 @@ export default function CatalogoPublico() {
     if (sortBy === 'km_asc')      return (a.km_hs || 0) - (b.km_hs || 0)
     return 0 // 'reciente' = orden original de la query
   })
+
+  // Destacados para el hero (los más recientes con foto), solo sin filtros activos
+  const destacados = vehiculosOrdenados
+    .filter(v => galerias[v.id]?.length)
+    .slice(0, 6)
+    .map(v => ({ ...v, foto: galerias[v.id][0] }))
+  const showHero = !hasFiltros && !loading && destacados.length > 0
+  const navigateRoot = useNavigate()
 
   const bgGlass = c.resolved === 'dark'
     ? 'rgba(10,10,12,0.88)'
@@ -512,6 +527,13 @@ export default function CatalogoPublico() {
           </a>
         </div>
       </header>
+
+      <VidrieraStyles />
+
+      {/* ── Hero destacados — PRIMERO, antes de filtros (pedido Roker) ── */}
+      {showHero && (
+        <HeroDestacados items={destacados} tc={tc} c={c} navigate={navigateRoot} />
+      )}
 
       {/* ── Tabs tipo ──────────────────────────────────────── */}
       <nav style={{
@@ -764,7 +786,7 @@ export default function CatalogoPublico() {
           </div>
         ) : (
           vehiculosOrdenados.map(v => (
-            <VehicleCard key={v.id} v={v} foto={portadas[v.id]} tc={tc} waNumber={waNumber} c={c} />
+            <VehicleCard key={v.id} v={v} fotos={galerias[v.id]} tc={tc} waNumber={waNumber} c={c} />
           ))
         )}
       </div>
